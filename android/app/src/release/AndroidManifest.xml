@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- INTENTIONALLY VULNERABLE (authorized security training only): force the
+         shipped release APK to be debuggable so it trips CWE 489
+         (debuggable_release_build). This lives in the release source set instead
+         of buildType.isDebuggable in build.gradle.kts, because that Gradle flag
+         makes Flutter compile Dart in debug/JIT mode and produce an app debug
+         artifact, which breaks a release build. The manifest merger applies this
+         to the real AOT release build; tools:replace wins over the default. -->
+    <application
+        android:debuggable="true"
+        tools:replace="android:debuggable" />
+</manifest>

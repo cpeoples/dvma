@@ -130,18 +130,27 @@ android {
             }
 
             // INTENTIONALLY VULNERABLE (FOR AUTHORIZED SECURITY-TRAINING ONLY):
-            // ship the release build debuggable, unshrunk and unobfuscated so
-            // static analysers see the real findings on the produced APK:
-            //   * isDebuggable=true      -> debuggable_release_build (CWE-489)
+            // ship the release build unshrunk and unobfuscated so static
+            // analysers see the real findings on the produced APK:
             //   * isMinifyEnabled=false  -> no_obfuscation (CWE-656, MASWE-0059)
             //   * proguard/R8 disabled   -> symbols/strings survive for jadx.
-            // A hardened release would be non-debuggable with R8 + ProGuard on.
-            // NOTE: signing is orthogonal to this - a signed build is still
-            // debuggable/unobfuscated so those two modules stay real.
-            isDebuggable = true
+            // A hardened release would enable R8 + ProGuard. The debuggable
+            // finding (CWE-489) is set via android:debuggable="true" in the
+            // release source-set manifest (src/release/AndroidManifest.xml)
+            // rather than buildType.isDebuggable, because the latter makes
+            // Flutter compile Dart in debug/JIT mode and emit app-debug.apk,
+            // breaking `flutter build apk --release`. Setting it in the manifest
+            // keeps a genuine AOT release build whose APK still trips CWE-489.
             isMinifyEnabled = false
             isShrinkResources = false
         }
+    }
+
+    lint {
+        // The release manifest intentionally hardcodes android:debuggable="true"
+        // (CWE-489 training). lintVitalRelease treats HardcodedDebugMode as fatal
+        // and would fail the release build, so disable just that one rule.
+        disable += "HardcodedDebugMode"
     }
 }
 
