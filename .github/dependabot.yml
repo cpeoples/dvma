@@ -23,6 +23,14 @@ updates:
     groups:
       flutter-deps:
         patterns: ["*"]
+    ignore:
+      # Intentionally pinned behind the latest release: the vulnerable_dependencies
+      # training module (lib/modules/code_quality/vulnerable_dependencies/) teaches
+      # that these two are kept a major version behind and flagged by
+      # `dart pub outdated` / OSV-Scanner. Bumping them neutralizes that module and
+      # desyncs its hardcoded version strings, so Dependabot must leave them alone.
+      - dependency-name: dart_jsonwebtoken
+      - dependency-name: app_links
 
   - package-ecosystem: npm
     directory: /automation/appium
@@ -41,6 +49,16 @@ updates:
     groups:
       android-deps:
         patterns: ["*"]
+    ignore:
+      # The androidTest instrumentation deps are pinned to versions aligned with
+      # what Flutter itself resolves (see android/app/build.gradle.kts). Dependabot
+      # mis-bumps them as a group to versions that don't all exist on Maven (e.g.
+      # androidx.test.ext:junit only reaches 1.3.x, not 1.7.x), producing an
+      # unresolvable build. Keep them on the working, Flutter-aligned pins.
+      - dependency-name: androidx.test:*
+      - dependency-name: androidx.test.ext:*
+      - dependency-name: androidx.test.espresso:*
+      - dependency-name: androidx.test.uiautomator:*
 
   - package-ecosystem: gradle
     directory: /companion/dvma-attacker

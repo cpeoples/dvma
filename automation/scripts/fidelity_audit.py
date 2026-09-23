@@ -186,9 +186,9 @@ def main():
     for c in sorted(by_cat):
         x = by_cat[c]
         L.append(
-            f"| {c} | {x.get('REAL-IO',0)} | {x.get('REAL-NATIVE',0)} | "
-            f"{x.get('REAL-CRYPTO',0)} | {x.get('REAL-LOGIC',0)} | "
-            f"{x.get('NARRATION',0)} |"
+            f"| {c} | {x.get('REAL-IO', 0)} | {x.get('REAL-NATIVE', 0)} | "
+            f"{x.get('REAL-CRYPTO', 0)} | {x.get('REAL-LOGIC', 0)} | "
+            f"{x.get('NARRATION', 0)} |"
         )
 
     narr = [r for r in results if r["verdict"] == "NARRATION"]
@@ -211,7 +211,7 @@ def main():
 
     print(f"audited {len(results)} modules")
     for v in ORDER:
-        print(f"  {v:12s}: {by_v.get(v,0)}")
+        print(f"  {v:12s}: {by_v.get(v, 0)}")
     print(f"NARRATION set: {[r['id'] for r in narr]}")
     return 0
 

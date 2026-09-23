@@ -57,17 +57,17 @@ BRIDGES = {
     "provider_ipc_bridge": {
         "channel": "dvma/provider_ipc",
         "ios": "nosim",
-        "note": "Android ContentProvider / URI-grant / FileProvider, no iOS " "equivalent.",
+        "note": "Android ContentProvider / URI-grant / FileProvider, no iOS equivalent.",
     },
     "component_ipc_bridge": {
         "channel": "dvma/component_ipc",
         "ios": "nosim",
-        "note": "Android exported components / Intent redirection / Binder, no " "iOS equivalent.",
+        "note": "Android exported components / Intent redirection / Binder, no iOS equivalent.",
     },
     "broadcast_ipc_bridge": {
         "channel": "dvma/broadcast_ipc",
         "ios": "nosim",
-        "note": "Android implicit/ordered/dynamic BroadcastReceiver, no iOS " "equivalent.",
+        "note": "Android implicit/ordered/dynamic BroadcastReceiver, no iOS equivalent.",
     },
     "otp_broadcast_bridge": {
         "channel": "dvma/otp_broadcast",
@@ -221,9 +221,7 @@ def main() -> None:
         "Re-run after registry/bridge changes._"
     )
     lines.append("")
-    lines.append(
-        "For every iOS-enabled module, this records how real its finding " "is on iOS today."
-    )
+    lines.append("For every iOS-enabled module, this records how real its finding is on iOS today.")
     lines.append("")
     lines.append("## Totals")
     lines.append("")

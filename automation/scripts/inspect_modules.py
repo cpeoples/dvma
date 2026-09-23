@@ -231,9 +231,9 @@ def main():
     for cat in sorted(by_cat):
         c = by_cat[cat]
         lines.append(
-            f"| {cat} | {c.get('REAL-ARTIFACT',0)} | "
-            f"{c.get('REAL-BEHAVIOR',0)} | {c.get('MODELED',0)} | "
-            f"{c.get('UNCLEAR',0)} |"
+            f"| {cat} | {c.get('REAL-ARTIFACT', 0)} | "
+            f"{c.get('REAL-BEHAVIOR', 0)} | {c.get('MODELED', 0)} | "
+            f"{c.get('UNCLEAR', 0)} |"
         )
 
     # Highlight the ones below the bar first (everything not REAL-ARTIFACT).
@@ -271,7 +271,7 @@ def main():
     # console summary
     print(f"inspected {len(results)} modules")
     for v in ORDER:
-        print(f"  {v:14s}: {by_verdict.get(v,0)}")
+        print(f"  {v:14s}: {by_verdict.get(v, 0)}")
     print("report: automation/artifacts/module_inspection.md")
     print("json  : automation/artifacts/module_inspection.json")
     return 0

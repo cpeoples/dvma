@@ -126,7 +126,7 @@ def _serve(port: int, https: bool) -> None:
         httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
         scheme = "https"
     print(
-        f"[dvma-capture] listening on {scheme}://0.0.0.0:{port}  " f"(flows -> {_LOG_PATH})",
+        f"[dvma-capture] listening on {scheme}://0.0.0.0:{port}  (flows -> {_LOG_PATH})",
         file=sys.stderr,
         flush=True,
     )

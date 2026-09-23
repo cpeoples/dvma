@@ -155,9 +155,7 @@ def check() -> int:
         for u in unresolved:
             print(f"  unresolved (no mas.owasp.org page): {u}", file=sys.stderr)
         return 1
-    print(
-        f"standards_mapping_audit: {total} modules, all standard ids " "well-formed and resolvable."
-    )
+    print(f"standards_mapping_audit: {total} modules, all standard ids well-formed and resolvable.")
     return 0
 
 
@@ -211,10 +209,10 @@ def report() -> None:
     out.append("## Coverage by category")
     out.append("")
     out.append(
-        "| Category | OWASP Mobile | Modules | Has MASWE | Has MASTG | " "MASWE gap | MASTG gap |"
+        "| Category | OWASP Mobile | Modules | Has MASWE | Has MASTG | MASWE gap | MASTG gap |"
     )
     out.append(
-        "|----------|:------------:|:-------:|:---------:|:---------:|" ":--------:|:---------:|"
+        "|----------|:------------:|:-------:|:---------:|:---------:|:--------:|:---------:|"
     )
     for cid in order:
         vs = cats[cid].get("vulnerabilities", [])
@@ -244,7 +242,7 @@ def report() -> None:
         if not miss:
             continue
         reason = GAP_REASON.get(
-            cid, "No matching MASTG test in the current " "catalog; mapped to MASVS + MASWE."
+            cid, "No matching MASTG test in the current catalog; mapped to MASVS + MASWE."
         )
         out.append(f"**{cats[cid].get('title', cid)}** ({len(miss)}): {reason}")
         out.append("")

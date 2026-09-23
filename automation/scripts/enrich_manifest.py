@@ -23,7 +23,7 @@ INSPECT = REPO / "automation" / "artifacts" / "module_inspection.json"
 SIGNAL_DOC = {
     "evidence_record": (
         "DvmaEvidence artifact",
-        "adb logcat -s DVMA-EVIDENCE  //  adb pull the app's " "files/dvma-artifacts/<id>.txt",
+        "adb logcat -s DVMA-EVIDENCE  //  adb pull the app's files/dvma-artifacts/<id>.txt",
     ),
     "prefs_write": (
         "SharedPreferences entry",

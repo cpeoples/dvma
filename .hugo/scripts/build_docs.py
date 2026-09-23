@@ -270,7 +270,7 @@ def _platform_chips(platforms: list[str]) -> str:
     return (
         '<span class="framework-chips">'
         + "".join(
-            f'<span class="platform-chip platform-chip-{p}">' f"{_PLATFORM_LABEL.get(p, p)}</span>"
+            f'<span class="platform-chip platform-chip-{p}">{_PLATFORM_LABEL.get(p, p)}</span>'
             for p in order
         )
         + "</span>"
@@ -524,14 +524,13 @@ def _exploit_steps(v: dict, cat_id: str, cat_title: str) -> str:
     has_detail = bool((v.get("detail") or "").strip())
     locate = (
         f"**Locate the target.** From the home index, open **{title}** "
-        f"(`{v.get('id','')}`). "
+        f"(`{v.get('id', '')}`). "
         + (
             "The **How it works** section above describes this module's specific "
             "weakness; the screen states the intended-secure behavior and exposes "
             "the vulnerable action."
             if has_detail
-            else "The screen states the intended-secure behavior and exposes the "
-            "vulnerable action."
+            else "The screen states the intended-secure behavior and exposes the vulnerable action."
         )
     )
     steps = [
@@ -762,10 +761,10 @@ def _child_page(
     they all wrap a committed docs/ body in the same title/linkTitle/[desc]/
     weight front matter, so the format lives in exactly one place.
     """
-    front = "---\n" f'title: "{title}"\n' f'linkTitle: "{title}"\n'
+    front = f'---\ntitle: "{title}"\nlinkTitle: "{title}"\n'
     if desc:
         front += f'description: "{desc}"\n'
-    front += f"weight: {weight}\n" f'lastmod: "{BUILD_TS}"\n' "---\n\n"
+    front += f'weight: {weight}\nlastmod: "{BUILD_TS}"\n---\n\n'
     (out_dir / path).write_text(front + body.strip() + "\n")
     print(f"  content/{out_dir.name}/{path}")
 
@@ -952,7 +951,7 @@ def build_device_access() -> None:
     prepend front matter — the SOURCE lives in docs/ but the output is unchanged.
     """
     if not DEVICE_ACCESS_SRC.exists():
-        print(f"  WARNING: missing {DEVICE_ACCESS_SRC}; " "skipping content/device-access/")
+        print(f"  WARNING: missing {DEVICE_ACCESS_SRC}; skipping content/device-access/")
         return
     da_dir = CONTENT / "device-access"
     da_dir.mkdir(parents=True, exist_ok=True)
@@ -1211,23 +1210,17 @@ def build_detail_pages(reg: dict) -> None:
                 f"{cat_title} category, mapped to OWASP MASVS/MASTG and CWE.",
             )
             front = (
-                "---\n"
-                f'title: "{title_txt}"\n'
-                f'description: "{desc}"\n'
-                f'lastmod: "{BUILD_TS}"\n'
-                "---\n\n"
+                f'---\ntitle: "{title_txt}"\ndescription: "{desc}"\nlastmod: "{BUILD_TS}"\n---\n\n'
             )
             # Top crumb: one click back to the exact category the user came from.
             crumb_url = siteurl(f"/vulnerabilities/{cat_id}/")
-            crumb = (
-                f'<p class="detail-crumb"><a href="{crumb_url}">' f"&larr; {cat_title}</a></p>\n\n"
-            )
+            crumb = f'<p class="detail-crumb"><a href="{crumb_url}">&larr; {cat_title}</a></p>\n\n'
             # Thorough metadata header: difficulty + clickable framework chips
             # (OWASP Mobile, MASVS, MASTG, CWE) + tools.
             owasp_id = v.get("owasp_mobile", cat_owasp)
             header = (
                 f'<code class="vuln-id">{vid}</code> &nbsp; '
-                f'{_badge(v.get("difficulty", "medium"))}\n\n'
+                f"{_badge(v.get('difficulty', 'medium'))}\n\n"
                 "| | |\n|---|---|\n"
                 f"| **Category** | {cat_title} |\n"
             )
@@ -1240,7 +1233,7 @@ def build_detail_pages(reg: dict) -> None:
             # MAS 2.0 mappings (MASWE weakness + MASTG v2 tests / demos): only
             # rendered when the module has a genuine mapping (never fabricated).
             if v.get("maswe"):
-                header += f"| **MASWE** | " f"{_chips(v.get('maswe', []), 'maswe', _maswe_url)} |\n"
+                header += f"| **MASWE** | {_chips(v.get('maswe', []), 'maswe', _maswe_url)} |\n"
             if v.get("mastg_v2"):
                 header += (
                     f"| **MASTG (v2 tests)** | "
@@ -1321,17 +1314,13 @@ def build_detail_pages(reg: dict) -> None:
             if prev_v:
                 prev_url = siteurl(f"/vulnerabilities/detail/{prev_v['id']}/")
                 prev_title = prev_v.get("title", prev_v["id"])
-                prev_link = (
-                    f'<a class="detail-nav-prev" href="{prev_url}">' f"&larr; {prev_title}</a>"
-                )
+                prev_link = f'<a class="detail-nav-prev" href="{prev_url}">&larr; {prev_title}</a>'
             else:
                 prev_link = "<span></span>"
             if next_v:
                 next_url = siteurl(f"/vulnerabilities/detail/{next_v['id']}/")
                 next_title = next_v.get("title", next_v["id"])
-                next_link = (
-                    f'<a class="detail-nav-next" href="{next_url}">' f"{next_title} &rarr;</a>"
-                )
+                next_link = f'<a class="detail-nav-next" href="{next_url}">{next_title} &rarr;</a>'
             else:
                 next_link = "<span></span>"
             footer += (
@@ -1541,10 +1530,8 @@ def build_llms_txt(reg: dict) -> None:
         "DVMA, and run it on a device or emulator.",
         f"- [Architecture]({url('/architecture/')}): how the Flutter UI, native "
         "host, and companion attacker app produce real artifacts.",
-        f"- [Dashboard]({url('/dashboard/')}): coverage matrix by category and "
-        "difficulty.",
-        f"- [Vulnerabilities]({url('/vulnerabilities/')}): the full catalog, by "
-        "category.",
+        f"- [Dashboard]({url('/dashboard/')}): coverage matrix by category and difficulty.",
+        f"- [Vulnerabilities]({url('/vulnerabilities/')}): the full catalog, by category.",
         f"- [Manual Testing]({url('/manual-testing/')}): external-tool verification "
         "steps (MITM, Frida, drozer, static analysis).",
         f"- [Root & Jailbreak]({url('/device-access/')}): root a Pixel (Magisk) or "

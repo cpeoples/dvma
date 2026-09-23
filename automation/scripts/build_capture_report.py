@@ -128,17 +128,14 @@ def main() -> int:
     lines: list[str] = []
     lines.append("# DVMA capture report\n")
     lines.append(
-        "_Real artifacts observed while walking every module. "
-        "FOR AUTHORIZED TRAINING USE ONLY._\n"
+        "_Real artifacts observed while walking every module. FOR AUTHORIZED TRAINING USE ONLY._\n"
     )
     lines.append("## Summary\n")
     lines.append(f"- Modules that emitted a real evidence artifact: **{len(modules)}**")
     lines.append(f"- Network flows captured by the listener: **{len(flows)}**")
-    lines.append(
-        f"- shared_prefs files pulled: **{len(prefs)}** " f"({', '.join(prefs) or 'none'})"
-    )
-    lines.append(f"- SQLite databases pulled: **{len(dbs)}** " f"({', '.join(dbs) or 'none'})")
-    lines.append(f"- Cross-app captures by companion attacker app: " f"**{len(attacker)}**\n")
+    lines.append(f"- shared_prefs files pulled: **{len(prefs)}** ({', '.join(prefs) or 'none'})")
+    lines.append(f"- SQLite databases pulled: **{len(dbs)}** ({', '.join(dbs) or 'none'})")
+    lines.append(f"- Cross-app captures by companion attacker app: **{len(attacker)}**\n")
 
     lines.append("## Per-module evidence\n")
     if not modules:

@@ -143,7 +143,7 @@ def main() -> int:
 
     if errors:
         print(
-            f"validate_registry: {len(errors)} problem(s) in " f"{module_count} modules:",
+            f"validate_registry: {len(errors)} problem(s) in {module_count} modules:",
             file=sys.stderr,
         )
         for e in errors:
