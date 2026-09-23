@@ -1,14 +1,19 @@
-# Dependabot keeps dependencies and pinned GitHub Actions current via PRs.
-# GitHub Actions is the priority: it bumps the SHA pins (and their version
-# comments) in .github/workflows/, closing the supply-chain gap that SHA-pinning
-# opens (stale pins). App/tooling ecosystems run monthly and grouped to keep the
-# PR volume low; this is a training app, so dependency churn is not a goal.
+# Dependabot config. This is a security-training app, not a shipping product, so
+# routine dependency freshness is a non-goal and version-update PRs are disabled
+# (open-pull-requests-limit: 0) for the app/tooling ecosystems. Security-update
+# PRs still come through regardless of that limit, so real advisories aren't
+# missed. GitHub Actions is the one ecosystem left on a schedule because keeping
+# the SHA pins current is genuine supply-chain hygiene.
+#
+# The ignore rules below stay in force for the security-update path so an
+# advisory fix can't quietly neutralize an intentional vulnerability or the
+# pinned toolchain.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
       actions:
         patterns: ["*"]
@@ -19,58 +24,43 @@ updates:
     directory: /
     schedule:
       interval: monthly
-    open-pull-requests-limit: 5
-    groups:
-      flutter-deps:
-        patterns: ["*"]
+    # Version-update PRs off; security updates still flow.
+    open-pull-requests-limit: 0
     ignore:
       # Intentionally pinned behind the latest release: the vulnerable_dependencies
       # training module (lib/modules/code_quality/vulnerable_dependencies/) teaches
       # that these two are kept a major version behind and flagged by
-      # `dart pub outdated` / OSV-Scanner. Bumping them neutralizes that module and
-      # desyncs its hardcoded version strings, so Dependabot must leave them alone.
+      # `dart pub outdated` / OSV-Scanner. A bump neutralizes that module and
+      # desyncs its hardcoded version strings, so leave them alone.
       - dependency-name: dart_jsonwebtoken
       - dependency-name: app_links
-      # This is a training app, not a product: major bumps churn the UI/build for
-      # no benefit and land in noisy group PRs. Take patch/minor (incl. security)
-      # only; do any major upgrade deliberately by hand.
-      - dependency-name: "*"
-        update-types: [version-update:semver-major]
 
   - package-ecosystem: npm
     directory: /automation/appium
     schedule:
       interval: monthly
-    open-pull-requests-limit: 5
-    groups:
-      appium-deps:
-        patterns: ["*"]
+    open-pull-requests-limit: 0
 
   - package-ecosystem: gradle
     directory: /android
     schedule:
       interval: monthly
-    open-pull-requests-limit: 5
-    groups:
-      android-deps:
-        patterns: ["*"]
+    open-pull-requests-limit: 0
     ignore:
       # AGP/Kotlin are pinned in gradle/libs.versions.toml to what Flutter 3.47.2
       # supports. Bumping AGP past that range breaks the release APK copy step
-      # (Flutter fails to move app-release.apk into flutter-apk/), so Dependabot
-      # must leave the toolchain pins alone.
+      # (Flutter fails to move app-release.apk into flutter-apk/), so leave the
+      # toolchain pins alone even on the security-update path.
       - dependency-name: com.android.application
       - dependency-name: com.android.tools.build:gradle
       - dependency-name: org.jetbrains.kotlin.android
       - dependency-name: org.jetbrains.kotlin:*
-      # Gradle wrapper is pinned to the version paired with our AGP in
-      # gradle/libs.versions.toml and kept identical to the companion's wrapper.
-      # Letting Dependabot bump it drifts the two apart again, so hold it here.
+      # Gradle wrapper is paired with our AGP in gradle/libs.versions.toml and
+      # kept identical to the companion's wrapper; bumping it re-drifts the two.
       - dependency-name: gradle
-      # what Flutter itself resolves (see gradle/libs.versions.toml). Dependabot
-      # mis-bumps them as a group to versions that don't all exist on Maven (e.g.
-      # androidx.test.ext:junit only reaches 1.3.x, not 1.7.x), producing an
-      # unresolvable build. Keep them on the working, Flutter-aligned pins.
+      # androidTest deps are aligned with what Flutter resolves; the group bump
+      # picks versions that don't all exist on Maven (androidx.test.ext:junit
+      # only reaches 1.3.x, not 1.7.x), producing an unresolvable build.
       - dependency-name: androidx.test:*
       - dependency-name: androidx.test.ext:*
       - dependency-name: androidx.test.espresso:*
@@ -80,16 +70,12 @@ updates:
     directory: /companion/dvma-attacker
     schedule:
       interval: monthly
-    open-pull-requests-limit: 5
-    groups:
-      attacker-deps:
-        patterns: ["*"]
+    open-pull-requests-limit: 0
     ignore:
-      # Toolchain shared with the app via gradle/libs.versions.toml; keep AGP and
-      # Kotlin aligned there rather than letting Dependabot drift the companion.
+      # Toolchain shared with the app via gradle/libs.versions.toml; keep AGP,
+      # Kotlin and the wrapper aligned there, not drifted by a security bump.
       - dependency-name: com.android.application
       - dependency-name: com.android.tools.build:gradle
       - dependency-name: org.jetbrains.kotlin.android
       - dependency-name: org.jetbrains.kotlin:*
-      # Gradle wrapper stays identical to the app's; holding it prevents drift.
       - dependency-name: gradle

@@ -74,9 +74,7 @@ def main() -> int:
     for wf in (".github/workflows/ci.yml", ".github/workflows/release.yml"):
         found = _workflow_flutter(wf)
         if found != flutter:
-            errors.append(
-                f"{wf}: FLUTTER_VERSION {found} != .tool-versions {flutter}."
-            )
+            errors.append(f"{wf}: FLUTTER_VERSION {found} != .tool-versions {flutter}.")
 
     ios_target = _catalog_version("iosDeploymentTarget")
     targets = _pbxproj_values("IPHONEOS_DEPLOYMENT_TARGET")
@@ -89,9 +87,7 @@ def main() -> int:
     swift = _catalog_version("swift")
     swifts = _pbxproj_values("SWIFT_VERSION")
     if swifts != {swift}:
-        errors.append(
-            f"ios project SWIFT_VERSION {sorted(swifts)} != catalog swift={swift}."
-        )
+        errors.append(f"ios project SWIFT_VERSION {sorted(swifts)} != catalog swift={swift}.")
 
     if errors:
         print("Version drift detected:", file=sys.stderr)
