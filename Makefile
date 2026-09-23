@@ -1,7 +1,7 @@
 # DVMA local validation entrypoints. `make check` is the single command a
 # contributor runs before opening a PR; it mirrors the fast half of CI.
 #
-#   make check      fast gate: format, analyze, generator drift, app-id, schema, standards
+#   make check      fast gate: format, analyze, generator drift, app-id, schema, standards, workflows
 #   make test       check + full Dart unit/widget suite (`flutter test`)
 #   make check-all  test + the whole pre-commit suite (multi-language lint/format/secret)
 #   make ci-local   closest local mirror of the required PR CI jobs
@@ -9,23 +9,26 @@
 #   make generate   regenerate the registry/router/manifest from the YAML
 #   make docs       build the Hugo documentation site locally
 #
-# `make check` is Dart-focused for speed. The full multi-language gate (Python
-# via ruff, JS via prettier, Markdown, YAML, shell, GitHub Actions, secrets) runs
-# under `make check-all` / `make precommit`. `flutter test` and the native
-# harness compiles (companion APK / androidTest / iOS RunnerUITests, i.e. the
-# Kotlin/Swift/C syntax gate) are intentionally NOT in `make check`: they are
-# slower and belong in CI. `make ci-local` runs the ones that work without a device.
+# `make check` is Dart-focused for speed, plus a fast actionlint pass over the
+# workflows (see `workflows`) so a shell/Actions edit CI would reject is caught
+# before pushing. The full multi-language gate (Python via ruff, JS via prettier,
+# Markdown, YAML, secrets) runs under `make check-all` / `make precommit`.
+# `flutter test` and the native harness compiles (companion APK / androidTest /
+# iOS RunnerUITests, i.e. the Kotlin/Swift/C syntax gate) are intentionally NOT
+# in `make check`: they are slower and belong in CI. `make ci-local` runs the
+# ones that work without a device.
 
 .DEFAULT_GOAL := check
 .PHONY: check test check-all ci-local fix generate docs precommit \
-        format analyze drift appid schema standards versions companion androidtest help
+        format analyze drift appid schema standards versions workflows \
+        companion androidtest help
 
 help:
 	@grep -E '^# ' $(firstword $(MAKEFILE_LIST)) | sed 's/^# \{0,1\}//' | sed '/^$$/q'
 
 # --- Fast gate (mirrors the fast half of CI) ---------------------------------
 
-check: format analyze drift appid schema standards versions
+check: format analyze drift appid schema standards versions workflows
 	@echo "make check: OK"
 
 format:
@@ -54,6 +57,22 @@ standards:
 # gradle/libs.versions.toml (the versions the catalog can't set itself).
 versions:
 	python3 automation/scripts/check_versions.py
+
+# GitHub Actions workflow lint (actionlint, which also shellcheck-lints every
+# run: script). This is the fast gate for the .github/workflows/ surface, so a
+# workflow/shell edit that CI's shellcheck would reject (e.g. SC2012) is caught
+# here rather than only after a push. Uses actionlint if installed, else the
+# pinned pre-commit hook; if neither is present it prints how to get one and
+# does not fail the build (CI still enforces it).
+workflows:
+	@if command -v actionlint >/dev/null 2>&1; then \
+		actionlint; \
+	elif command -v pre-commit >/dev/null 2>&1; then \
+		pre-commit run --all-files actionlint; \
+	else \
+		echo "workflows: skipped (install 'actionlint' via 'brew install actionlint',"; \
+		echo "  or 'pip install pre-commit' to run the pinned hook). CI still enforces this."; \
+	fi
 
 # --- Deeper gates ------------------------------------------------------------
 

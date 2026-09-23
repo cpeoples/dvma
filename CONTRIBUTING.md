@@ -42,7 +42,7 @@ Vulnerability metadata is authored in **one** place - the YAML registry under
 4. **Run the local gate** before pushing (mirrors CI):
 
    ```sh
-   make check      # format, analyze, generator drift, app-id sync, registry schema, standards links
+   make check      # format, analyze, generator drift, app-id sync, registry schema, standards links, workflow lint
    make test       # the above + the full Dart unit/widget suite
    ```
 
@@ -79,7 +79,7 @@ module missing one**, so a PR without full standards mapping fails the build.
 A second gate, `standards_mapping_audit.py --check` (in pre-commit and CI),
 additionally verifies every MASVS/CWE/MASWE/MASTG id is well-formed **and
 resolves to a real `mas.owasp.org` page**, so a mistyped or invented id fails
-too. Map honestly — never invent an id to satisfy the gate; if a standard has no
+too. Map honestly: never invent an id to satisfy the gate; if a standard has no
 genuine match, that's usually a sign the module needs rethinking. `owasp_llm` /
 `owasp_agentic` and `mastg_v2` / `mastg_demo` are optional and added only when a
 real mapping exists.
@@ -93,10 +93,10 @@ sorts a module within its category.
 
 ### Platform applicability
 
-- Shared cross-platform class → omit `platforms:` (defaults to both). Add a
+- Shared cross-platform class: omit `platforms:` (defaults to both). Add a
   `platform_note:` if the behavior differs per OS, and split OS-specific tools
   into `tools_android:` / `tools_ios:`.
-- Platform-specific class → `platforms: [android]` or `platforms: [ios]`.
+- Platform-specific class: `platforms: [android]` or `platforms: [ios]`.
 
 The `platforms` value drives which Manual Testing page a module appears on, so
 set it accurately.
