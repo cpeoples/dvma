@@ -50,12 +50,12 @@ dependencies:
   # cleartext/mixed-content load in the insecure_webview_networking demo).
   webview_flutter_android: ^4.13.0
   app_links: ^6.3.2
-  mobile_scanner: ^7.4.0
+  mobile_scanner: ^7.4.2
 
   # Storage/platform: clipboard leakage + archive (zip-slip / path traversal).
   archive: ^4.0.0
 
-  sqflite: ^2.3.3+2
+  sqflite: ^2.4.4
 
 dev_dependencies:
   flutter_test:
