@@ -13,9 +13,9 @@
     "test:ios:walk": "wdio run ./wdio.ios.conf.js --spec ./test/walk-all-modules.e2e.js"
   },
   "devDependencies": {
-    "@wdio/cli": "^9.0.0",
-    "@wdio/local-runner": "^9.0.0",
-    "@wdio/mocha-framework": "^9.0.0",
+    "@wdio/cli": "^9.31.9",
+    "@wdio/local-runner": "^9.31.9",
+    "@wdio/mocha-framework": "^9.31.9",
     "@wdio/spec-reporter": "^9.0.0",
     "webdriverio": "^9.0.0"
   },
