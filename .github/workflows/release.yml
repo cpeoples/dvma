@@ -26,6 +26,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Check Flutter version matches .tool-versions
+        run: |
+          pinned=$(sed -n 's/^flutter \([0-9.]*\).*/\1/p' .tool-versions)
+          if [ "$pinned" != "$FLUTTER_VERSION" ]; then
+            echo "::error::.tool-versions pins Flutter $pinned but env.FLUTTER_VERSION is $FLUTTER_VERSION. Update both to match (.tool-versions is the source of truth)."
+            exit 1
+          fi
+
       - name: Set up Java
         uses: actions/setup-java@v6
         with:

@@ -137,3 +137,20 @@ iOS build only iOS + shared. Override the detected platform at build time with
 `--dart-define=DVMA_PLATFORM=ios|android` (useful for cross-building or tests).
 The docs site shows an Android and/or iOS chip on every module (a shared module
 shows both).
+
+## Toolchain versions (single source of truth)
+
+Android toolchain and dependency versions live in one place,
+`gradle/libs.versions.toml`, read by both the app (`android/`) and the companion
+attacker (`companion/dvma-attacker/`): AGP, Kotlin, `compileSdk`/`minSdk`/
+`targetSdk`, the JVM bytecode target, and the `androidx.test` stack. Bump a
+version there and both Gradle builds follow.
+
+A few versions can't read that file because their tools require their own
+format, so they're pinned in their native location and kept in step by hand:
+
+| Version | Lives in | Notes |
+| --- | --- | --- |
+| Gradle wrapper | `android/gradle/wrapper/gradle-wrapper.properties` and the companion's wrapper | Keep both on the `gradle` version noted in the catalog. |
+| Flutter SDK | `.tool-versions` | CI's `FLUTTER_VERSION` is checked against this in the lint job, so they can't drift. |
+| iOS deployment target / Swift | `ios/Runner.xcodeproj` | Mirrored as `iosDeploymentTarget` / `swift` in the catalog for reference. |

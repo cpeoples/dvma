@@ -33,6 +33,14 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Check Flutter version matches .tool-versions
+        run: |
+          pinned=$(sed -n 's/^flutter \([0-9.]*\).*/\1/p' .tool-versions)
+          if [ "$pinned" != "$FLUTTER_VERSION" ]; then
+            echo "::error::.tool-versions pins Flutter $pinned but CI env.FLUTTER_VERSION is $FLUTTER_VERSION. Update both to match (.tool-versions is the source of truth)."
+            exit 1
+          fi
+
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:

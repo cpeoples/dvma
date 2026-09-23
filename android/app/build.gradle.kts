@@ -39,11 +39,10 @@ val hasReleaseSigning = keyProps.getProperty("storeFile") != null
 
 android {
     namespace = dvmaAppId
-    // compileSdk is centralized in android/gradle.properties (dvma.compileSdk) so
-    // the API level lives in exactly one place. We pin it rather than inherit
-    // flutter.compileSdkVersion because several AndroidX deps pulled in by our
-    // plugins require compiling against API 33+.
-    compileSdk = (project.findProperty("dvma.compileSdk") as String).toInt()
+    // Toolchain versions come from the repo-root catalog (gradle/libs.versions.toml).
+    // compileSdk is pinned there (not inherited from flutter.compileSdkVersion)
+    // because several AndroidX deps pulled in by our plugins require API 33+.
+    compileSdk = libs.versions.compileSdk.get().toInt()
     ndkVersion = flutter.ndkVersion
 
     // Generate BuildConfig so runtime code can read BuildConfig.APPLICATION_ID
@@ -56,8 +55,9 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        val javaVersion = JavaVersion.toVersion(libs.versions.jvmTarget.get())
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
     }
 
     // Real vulnerable NDK library for native_code_memory_bugs (src/main/cpp).
@@ -156,21 +156,24 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(
+            libs.versions.jvmTarget.get(),
+        )
     }
 }
 
 // Espresso/UiAutomator instrumentation deps - only pulled in when the opt-in
 // suite is enabled (`-PdvmaAndroidTest=true`). See automation/README.md.
-// Versions are aligned with the androidx.test versions Flutter already pins on
-// the runtime classpath (AGP consistent resolution rejects mismatches).
+// Versions live in the repo-root catalog (gradle/libs.versions.toml), aligned
+// with the androidx.test versions Flutter already pins on the runtime classpath
+// (AGP consistent resolution rejects mismatches).
 if (dvmaAndroidTest) {
     dependencies {
-        androidTestImplementation("androidx.test.ext:junit:1.1.3")
-        androidTestImplementation("androidx.test:runner:1.3.0")
-        androidTestImplementation("androidx.test:rules:1.2.0")
-        androidTestImplementation("androidx.test.uiautomator:uiautomator:2.2.0")
-        androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
+        androidTestImplementation(libs.androidx.test.junit)
+        androidTestImplementation(libs.androidx.test.runner)
+        androidTestImplementation(libs.androidx.test.rules)
+        androidTestImplementation(libs.androidx.test.uiautomator)
+        androidTestImplementation(libs.androidx.test.espresso.core)
     }
 }
 

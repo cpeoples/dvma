@@ -50,8 +50,16 @@ updates:
       android-deps:
         patterns: ["*"]
     ignore:
+      # AGP/Kotlin are pinned in gradle/libs.versions.toml to what Flutter 3.47.2
+      # supports. Bumping AGP past that range breaks the release APK copy step
+      # (Flutter fails to move app-release.apk into flutter-apk/), so Dependabot
+      # must leave the toolchain pins alone.
+      - dependency-name: com.android.application
+      - dependency-name: com.android.tools.build:gradle
+      - dependency-name: org.jetbrains.kotlin.android
+      - dependency-name: org.jetbrains.kotlin:*
       # The androidTest instrumentation deps are pinned to versions aligned with
-      # what Flutter itself resolves (see android/app/build.gradle.kts). Dependabot
+      # what Flutter itself resolves (see gradle/libs.versions.toml). Dependabot
       # mis-bumps them as a group to versions that don't all exist on Maven (e.g.
       # androidx.test.ext:junit only reaches 1.3.x, not 1.7.x), producing an
       # unresolvable build. Keep them on the working, Flutter-aligned pins.
@@ -68,3 +76,10 @@ updates:
     groups:
       attacker-deps:
         patterns: ["*"]
+    ignore:
+      # Toolchain shared with the app via gradle/libs.versions.toml; keep AGP and
+      # Kotlin aligned there rather than letting Dependabot drift the companion.
+      - dependency-name: com.android.application
+      - dependency-name: com.android.tools.build:gradle
+      - dependency-name: org.jetbrains.kotlin.android
+      - dependency-name: org.jetbrains.kotlin:*

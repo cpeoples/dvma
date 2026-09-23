@@ -1,0 +1,61 @@
+# Single source of truth for Android toolchain and dependency versions, shared
+# by the Flutter host app (android/) and the standalone companion attacker
+# (companion/dvma-attacker/). Both settings.gradle.kts files import this file so
+# a version is edited in exactly one place.
+#
+# Not covered here (each tool requires its own config format, so they cannot read
+# this file):
+#   * Gradle wrapper version  -> android/gradle/wrapper/gradle-wrapper.properties
+#                                and companion/dvma-attacker/gradle/wrapper/...
+#     Keep both on the gradle version noted in [versions].gradle below.
+#   * Flutter SDK             -> .tool-versions (CI reads it from there)
+#   * iOS deployment target   -> ios/Runner.xcodeproj (see ios.deploymentTarget)
+#
+# The main app's AGP/Kotlin are constrained to what Flutter supports; keep this
+# set within that range when bumping.
+
+[versions]
+# Android Gradle Plugin. Paired Gradle version (wrapper) is noted for reference:
+agp = "9.1.0"
+# Gradle wrapper version that pairs with the AGP above (kept in wrapper files).
+gradle = "9.3.1"
+kotlin = "2.4.0"
+
+# SDK levels. minSdk/targetSdk for the Flutter host come from Flutter's vended
+# defaults; the companion pins them explicitly to these values.
+compileSdk = "36"
+minSdk = "24"
+targetSdk = "36"
+
+# JVM/Java bytecode target for Kotlin and Java compilation.
+jvmTarget = "17"
+
+# iOS toolchain (informational; applied in Xcode project settings, not Gradle).
+iosDeploymentTarget = "15.0"
+swift = "5.0"
+
+# androidx.test stack for the opt-in Espresso/UiAutomator instrumentation suite.
+# Aligned with the versions Flutter resolves on the runtime classpath (AGP
+# consistent resolution rejects mismatches).
+androidxTestJunit = "1.1.3"
+androidxTestRunner = "1.3.0"
+androidxTestRules = "1.2.0"
+androidxTestUiautomator = "2.2.0"
+androidxTestEspresso = "3.3.0"
+
+# Companion attacker runtime deps.
+androidxCoreKtx = "1.13.1"
+androidxAppcompat = "1.8.0"
+
+[libraries]
+androidx-test-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestJunit" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
+androidx-test-rules = { module = "androidx.test:rules", version.ref = "androidxTestRules" }
+androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "androidxTestUiautomator" }
+androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidxTestEspresso" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCoreKtx" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidxAppcompat" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
