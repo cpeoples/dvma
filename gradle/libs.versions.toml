@@ -5,11 +5,11 @@
 #
 # Not covered here (each tool requires its own config format, so they cannot read
 # this file):
-#   * Gradle wrapper version  -> android/gradle/wrapper/gradle-wrapper.properties
-#                                and companion/dvma-attacker/gradle/wrapper/...
-#     Keep both on the gradle version noted in [versions].gradle below.
+#   * Gradle wrapper version  -> gradle-wrapper.properties in android/ and
+#                                companion/dvma-attacker/ (keep both on the
+#                                gradle version noted in [versions].gradle below)
 #   * Flutter SDK             -> .tool-versions (CI reads it from there)
-#   * iOS deployment target   -> ios/Runner.xcodeproj (see ios.deploymentTarget)
+#   * iOS deployment target   -> ios/Runner.xcodeproj (see iosDeploymentTarget)
 #
 # The main app's AGP/Kotlin are constrained to what Flutter supports; keep this
 # set within that range when bumping.
