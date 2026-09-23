@@ -187,8 +187,8 @@ It builds + signs the **APK and AAB** from the `ANDROID_*` secrets and attaches
 them to the GitHub Release. The **iOS job always runs**: with the `IOS_*` secrets
 (incl. `IOS_TEAM_ID`) + a paid Apple account it builds + signs a `.ipa` (the
 workflow generates `ios/ExportOptions.plist` from `IOS_TEAM_ID`); **without** those
-secrets it instead publishes an **unsigned `Runner-unsigned.ipa`** that each user
-re-signs for their own device with a free account (see "The re-sign path" above).
+secrets it instead publishes an **unsigned `dvma-<version>-unsigned.ipa`** that each
+user re-signs for their own device with a free account (see "The re-sign path" above).
 
 ## Docker images - none required
 
@@ -205,7 +205,7 @@ there's nothing to containerize:
 
 The release workflow's iOS job **branches on the Apple secrets** rather than
 skipping: with the `IOS_*` secrets present it produces a **signed** `.ipa`;
-without them it still builds and publishes an **unsigned** `Runner-unsigned.ipa`
+without them it still builds and publishes an **unsigned** `dvma-<version>-unsigned.ipa`
 for users to re-sign locally, so tagging always yields an installable artifact
 and never hard-fails. Android is fully live once the four `ANDROID_*` secrets
 exist. To enable **signed** iOS: (1) obtain a paid Apple account + Ad

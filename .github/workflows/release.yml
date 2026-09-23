@@ -77,6 +77,14 @@ jobs:
       - name: Build signed App Bundle (AAB)
         run: flutter build appbundle --release
 
+      - name: Rename artifacts with app name and version
+        id: android_artifacts
+        run: |
+          version=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' pubspec.yaml)
+          cp build/app/outputs/flutter-apk/app-release.apk "build/dvma-${version}.apk"
+          cp build/app/outputs/bundle/release/app-release.aab "build/dvma-${version}.aab"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Scrub signing material
         if: always()
         run: rm -f android/app/dvma-release.jks android/app/key.properties
@@ -85,8 +93,8 @@ jobs:
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           files: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
+            build/dvma-${{ steps.android_artifacts.outputs.version }}.apk
+            build/dvma-${{ steps.android_artifacts.outputs.version }}.aab
 
   # iOS: build + sign a distributable .ipa. Auto-SKIPS when the Apple secrets
   # are absent, so this workflow never hard-fails before you have a paid Apple
@@ -179,7 +187,12 @@ jobs:
 
       - name: Build signed IPA
         if: steps.gate.outputs.have_secrets == 'true'
-        run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+        run: |
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+          version=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' pubspec.yaml)
+          built=$(ls build/ios/ipa/*.ipa | head -1)
+          mv "$built" "build/ios/ipa/dvma-${version}.ipa"
+          echo "Signed IPA: build/ios/ipa/dvma-${version}.ipa"
 
       - name: Build UNSIGNED IPA (no Apple secrets - users re-sign locally)
         if: steps.gate.outputs.have_secrets == 'false'
@@ -190,10 +203,13 @@ jobs:
             echo "::error::$APP_DIR not found - unsigned build failed."
             exit 1
           fi
+          version=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' pubspec.yaml)
           mkdir -p build/ios/ipa/Payload
           cp -R "$APP_DIR" build/ios/ipa/Payload/
-          ( cd build/ios/ipa && zip -qr Runner-unsigned.ipa Payload && rm -rf Payload )
-          echo "Packaged unsigned IPA: build/ios/ipa/Runner-unsigned.ipa"
+          ( cd build/ios/ipa \
+            && zip -qr "dvma-${version}-unsigned.ipa" Payload \
+            && rm -rf Payload )
+          echo "Packaged unsigned IPA: build/ios/ipa/dvma-${version}-unsigned.ipa"
 
       - name: Clean up keychain
         if: always() && steps.gate.outputs.have_secrets == 'true'
