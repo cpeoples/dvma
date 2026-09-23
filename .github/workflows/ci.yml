@@ -123,11 +123,13 @@ jobs:
             flutter build apk --debug
             flutter test integration_test
 
-  # Compile smoke: builds a debug APK so a compile/tree-shake/resource
-  # regression is caught even though signed release artifacts are still
-  # produced only on tagged releases (see .github/workflows/release.yml).
+  # Compile smoke: builds a release APK (unsigned) so the release-mode Dart AOT
+  # and tree-shake passes used for tagged releases run on every push, instead of
+  # first being exercised when a v* tag triggers .github/workflows/release.yml.
+  # R8/shrinking stays off by design (see android/app/build.gradle.kts), and
+  # signing still happens only on a tagged release with the ANDROID_* secrets.
   build-smoke-android:
-    name: Build smoke (debug APK)
+    name: Build smoke (release APK, unsigned)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -149,8 +151,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build debug APK (compile smoke, unsigned)
-        run: flutter build apk --debug
+      # No key.properties present, so the release build type falls back to the
+      # debug signing key (see android/app/build.gradle.kts) while still running
+      # the full release Dart AOT compile.
+      - name: Build release APK (AOT compile smoke, unsigned)
+        run: flutter build apk --release
 
   # Compiles the standalone companion attacker app. Proves a contributor has not
   # broken the cross-app demo harness. Reproduce locally with `make companion`.
