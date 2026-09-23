@@ -73,6 +73,23 @@ def siteurl(path: str) -> str:
 
 DIFFICULTY_WEIGHT = {"easy": 0, "medium": 1, "hard": 2}
 
+# Search engines and LLM crawlers truncate meta descriptions around 155-160
+# chars, so cap there on a word boundary.
+_DESC_MAX = 160
+
+
+def _meta_desc(text: str, fallback: str = "") -> str:
+    """Collapse [text] to a single clean line suitable for a `description:`
+    front-matter value (feeds <meta description> and og:description). Strips
+    markdown/quotes, squeezes whitespace, and truncates on a word boundary."""
+    s = " ".join((text or "").split())
+    if not s:
+        s = " ".join((fallback or "").split())
+    s = s.replace('"', "'").replace("`", "").replace("\\", "")
+    if len(s) > _DESC_MAX:
+        s = s[:_DESC_MAX].rsplit(" ", 1)[0].rstrip(",.;:") + "…"
+    return s
+
 
 def _load_mas_links() -> dict[str, str]:
     """id -> canonical relative path on mas.owasp.org for MASWE weaknesses and
@@ -1059,7 +1076,14 @@ def build_dashboard(reg: dict) -> None:
     categories = reg["categories"]
     total = sum(len(c.get("vulnerabilities", [])) for c in categories.values())
 
-    page = f'---\ntitle: "Dashboard"\nweight: 5\n' f'lastmod: "{BUILD_TS}"\n---\n\n'
+    page = (
+        "---\n"
+        'title: "Dashboard"\n'
+        'description: "DVMA coverage matrix: vulnerability counts by OWASP MASVS '
+        'category and difficulty across Android and iOS."\n'
+        "weight: 5\n"
+        f'lastmod: "{BUILD_TS}"\n---\n\n'
+    )
     page += "## Coverage overview\n\n"
     page += "| Metric | Value |\n|--------|-------|\n"
     page += f"| Total vulnerabilities | **{total}** |\n"
@@ -1093,7 +1117,10 @@ def build_category_pages(reg: dict) -> None:
 
     index_front = (
         "---\n"
-        'title: "Vulnerabilities"\nweight: 10\n'
+        'title: "Vulnerabilities"\n'
+        'description: "Every DVMA vulnerability by OWASP MASVS category, mapped to '
+        'the OWASP Mobile Top 10, MASVS/MASTG, CWE, and the LLM/Agentic Top 10."\n'
+        "weight: 10\n"
         "collapsibleMenu: true\nalwaysopen: false\n"
         f'lastmod: "{BUILD_TS}"\n---\n\n'
     )
@@ -1114,10 +1141,20 @@ def build_category_pages(reg: dict) -> None:
             ),
         )
         label = cat.get("title", cat_id)
-        page = (
-            f'---\ntitle: "{label}"\nweight: {weight_idx * 10}\n' f'lastmod: "{BUILD_TS}"\n---\n\n'
-        )
         desc = " ".join((cat.get("description") or "").split())
+        meta_desc = _meta_desc(
+            desc,
+            fallback=f"{len(vulns)} intentionally vulnerable DVMA modules in the "
+            f"{label} category, mapped to OWASP Mobile Top 10, MASVS/MASTG, and CWE.",
+        )
+        page = (
+            "---\n"
+            f'title: "{label}"\n'
+            f'description: "{meta_desc}"\n'
+            f"weight: {weight_idx * 10}\n"
+            f'lastmod: "{BUILD_TS}"\n'
+            "---\n\n"
+        )
         if desc:
             page += f"{desc}\n\n"
         page += f"**{len(vulns)}** vulnerabilities. OWASP Mobile: {_owasp_chip(cat.get('owasp_mobile', ''))}\n\n"
@@ -1167,7 +1204,19 @@ def build_detail_pages(reg: dict) -> None:
             vid = v["id"]
             prev_v = ordered[pos - 1] if pos > 0 else None
             next_v = ordered[pos + 1] if pos < len(ordered) - 1 else None
-            front = f'---\ntitle: "{v.get("title", vid)}"\n' f'lastmod: "{BUILD_TS}"\n---\n\n'
+            title_txt = v.get("title", vid)
+            desc = _meta_desc(
+                v.get("summary", ""),
+                fallback=f"{title_txt}: an intentionally vulnerable DVMA module in the "
+                f"{cat_title} category, mapped to OWASP MASVS/MASTG and CWE.",
+            )
+            front = (
+                "---\n"
+                f'title: "{title_txt}"\n'
+                f'description: "{desc}"\n'
+                f'lastmod: "{BUILD_TS}"\n'
+                "---\n\n"
+            )
             # Top crumb: one click back to the exact category the user came from.
             crumb_url = siteurl(f"/vulnerabilities/{cat_id}/")
             crumb = (
@@ -1451,6 +1500,86 @@ def build_manual_testing() -> None:
         print(f"  content/manual-testing/{platform}.md ({count} steps)")
 
 
+def build_llms_txt(reg: dict) -> None:
+    """Emit /llms.txt: a curated, machine-friendly map of the site for LLM
+    crawlers (ChatGPT, Perplexity, Claude, etc.), per the llms.txt convention
+    (https://llmstxt.org/). It lists the key guides and every vulnerability
+    module with a one-line summary and an absolute URL, so an assistant can
+    understand and cite DVMA without scraping 265 HTML pages.
+
+    Written to .hugo/static/ so Hugo serves it verbatim at the site root.
+    Absolute URLs use the deploy baseURL (SITE_BASEPATH) so links resolve on the
+    project Pages subpath.
+    """
+    base = (
+        f"https://cpeoples.github.io{SITE_BASEPATH}"
+        if SITE_BASEPATH
+        else "https://cpeoples.github.io/dvma"
+    )
+
+    def url(path: str) -> str:
+        return f"{base}{path}"
+
+    categories = reg["categories"]
+    total = sum(len(c.get("vulnerabilities", [])) for c in categories.values())
+
+    lines = [
+        "# DVMA — Damn Vulnerable Mobile App",
+        "",
+        "> A single-codebase, intentionally vulnerable Flutter app for mobile "
+        "security training and pentest practice. It ships "
+        f"{total} intentional vulnerability modules across "
+        f"{len(categories)} OWASP MASVS categories, each mapped to the OWASP "
+        "Mobile Top 10 (2024), MASVS/MASTG, CWE, and the OWASP Top 10 for "
+        "LLM/GenAI and Agentic applications (2025). Every module produces a "
+        "real, device-extractable artifact on Android and/or iOS.",
+        "",
+        "## Guides",
+        "",
+        f"- [Home]({url('/')}): project overview, what's inside, and quickstart.",
+        f"- [Getting Started]({url('/getting-started/')}): install Flutter, build "
+        "DVMA, and run it on a device or emulator.",
+        f"- [Architecture]({url('/architecture/')}): how the Flutter UI, native "
+        "host, and companion attacker app produce real artifacts.",
+        f"- [Dashboard]({url('/dashboard/')}): coverage matrix by category and "
+        "difficulty.",
+        f"- [Vulnerabilities]({url('/vulnerabilities/')}): the full catalog, by "
+        "category.",
+        f"- [Manual Testing]({url('/manual-testing/')}): external-tool verification "
+        "steps (MITM, Frida, drozer, static analysis).",
+        f"- [Root & Jailbreak]({url('/device-access/')}): root a Pixel (Magisk) or "
+        "jailbreak iOS, then recover on-device artifacts.",
+        f"- [Contributing]({url('/getting-started/contributing/')}): standards "
+        "mapping and validation gates for new modules.",
+        "",
+    ]
+
+    for cat_id, cat in categories.items():
+        label = cat.get("title", cat_id)
+        vulns = sorted(
+            cat.get("vulnerabilities", []),
+            key=lambda v: (
+                DIFFICULTY_WEIGHT.get(v.get("difficulty", "medium"), 1),
+                v.get("id", ""),
+            ),
+        )
+        if not vulns:
+            continue
+        lines.append(f"## {label}")
+        lines.append("")
+        for v in vulns:
+            vid = v["id"]
+            summary = _meta_desc(v.get("summary", ""), fallback=v.get("title", vid))
+            detail_url = url(f"/vulnerabilities/detail/{vid}/")
+            lines.append(f"- [{v.get('title', vid)}]({detail_url}): {summary}")
+        lines.append("")
+
+    static_dir = HUGO_DIR / "static"
+    static_dir.mkdir(parents=True, exist_ok=True)
+    (static_dir / "llms.txt").write_text("\n".join(lines).rstrip() + "\n")
+    print(f"  static/llms.txt ({total} modules)")
+
+
 def main() -> None:
     print("Building DVMA Hugo docs from the vulnerability registry...")
     reg = load_registry()
@@ -1464,6 +1593,7 @@ def main() -> None:
     build_category_pages(reg)
     build_detail_pages(reg)
     build_manual_testing()
+    build_llms_txt(reg)
     total = sum(len(c.get("vulnerabilities", [])) for c in reg["categories"].values())
     print(f"Done: {total} vulnerabilities across {len(reg['categories'])} categories.")
 

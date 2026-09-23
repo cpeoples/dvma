@@ -1,6 +1,54 @@
 <!-- Google Search Console site verification. -->
 <meta name="google-site-verification" content="ZwtXu4I3Awbxnd1dDpGjRBlCxxOHHW5Eplsw6rG8ujs" />
 
+<!-- Curated site map for LLM crawlers (llmstxt.org). -->
+<link rel="alternate" type="text/markdown" href="{{ "llms.txt" | relURL }}" title="llms.txt" />
+
+<!-- Structured data. The site node is emitted on every page; the home page adds
+     a richer SoftwareSourceCode node describing the project itself. -->
+{{- $siteDesc := "A single-codebase, intentionally vulnerable Flutter app for mobile security training, mapped to the OWASP Mobile Top 10, MASVS/MASTG, CWE, and the OWASP LLM/Agentic Top 10." }}
+{{- $homeURL := .Site.Home.Permalink }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "DVMA \u2014 Damn Vulnerable Mobile App",
+  "url": "{{ $homeURL }}",
+  "description": "{{ $siteDesc }}"
+}
+</script>
+{{- if .IsHome }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "DVMA \u2014 Damn Vulnerable Mobile App",
+  "description": "{{ $siteDesc }}",
+  "codeRepository": "https://github.com/cpeoples/dvma",
+  "programmingLanguage": ["Dart", "Kotlin", "Swift"],
+  "runtimePlatform": ["Android", "iOS"],
+  "license": "https://github.com/cpeoples/dvma/blob/main/LICENSE",
+  "url": "{{ .Permalink }}"
+}
+</script>
+{{- else }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "{{ .Title }}",
+  "description": "{{ or .Description $siteDesc }}",
+  "url": "{{ .Permalink }}",
+  "dateModified": "{{ .Lastmod.Format "2006-01-02" }}",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "DVMA \u2014 Damn Vulnerable Mobile App",
+    "url": "{{ $homeURL }}"
+  }
+}
+</script>
+{{- end }}
+
 <!-- Load DVMA's custom stylesheet and script (mirrors the theme default this
      partial overrides, so overriding it here does not drop the CSS/JS). -->
 {{- $filePath := "css/custom.css" }}
