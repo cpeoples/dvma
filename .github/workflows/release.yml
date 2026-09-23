@@ -190,8 +190,8 @@ jobs:
         run: |
           flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
           version=$(sed -n 's/^version:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' pubspec.yaml)
-          built=$(ls build/ios/ipa/*.ipa | head -1)
-          mv "$built" "build/ios/ipa/dvma-${version}.ipa"
+          # flutter build ipa emits a single Runner.ipa in build/ios/ipa/.
+          mv build/ios/ipa/Runner.ipa "build/ios/ipa/dvma-${version}.ipa"
           echo "Signed IPA: build/ios/ipa/dvma-${version}.ipa"
 
       - name: Build UNSIGNED IPA (no Apple secrets - users re-sign locally)
