@@ -45,7 +45,9 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          # No caching: release artifacts must be built clean every time so a
+          # stale Gradle/pub cache can't ship a bad or unreproducible build.
+          cache: false
 
       - name: Install dependencies
         run: flutter pub get
@@ -113,7 +115,9 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          # No caching: release artifacts must be built clean every time so a
+          # stale Gradle/pub cache can't ship a bad or unreproducible build.
+          cache: false
 
       - name: Install dependencies
         run: flutter pub get

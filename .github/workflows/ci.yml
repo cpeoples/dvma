@@ -46,7 +46,11 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          # Caching disabled: a warm Gradle/pub cache once reused a plugin's
+          # stale compiled classes across a dependency bump and produced a
+          # "cannot find symbol" release build that a clean checkout compiles
+          # fine. Clean builds every run keep CI honest for a security artifact.
+          cache: false
 
       - name: Install dependencies
         run: flutter pub get
@@ -66,7 +70,11 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          # Caching disabled: a warm Gradle/pub cache once reused a plugin's
+          # stale compiled classes across a dependency bump and produced a
+          # "cannot find symbol" release build that a clean checkout compiles
+          # fine. Clean builds every run keep CI honest for a security artifact.
+          cache: false
 
       - name: Install dependencies
         run: flutter pub get
@@ -109,7 +117,11 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          # Caching disabled: a warm Gradle/pub cache once reused a plugin's
+          # stale compiled classes across a dependency bump and produced a
+          # "cannot find symbol" release build that a clean checkout compiles
+          # fine. Clean builds every run keep CI honest for a security artifact.
+          cache: false
 
       - name: Install dependencies
         run: flutter pub get
@@ -151,7 +163,11 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          # Caching disabled: a warm Gradle/pub cache once reused a plugin's
+          # stale compiled classes across a dependency bump and produced a
+          # "cannot find symbol" release build that a clean checkout compiles
+          # fine. Clean builds every run keep CI honest for a security artifact.
+          cache: false
 
       - name: Install dependencies
         run: flutter pub get
@@ -174,8 +190,10 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Cache Gradle
+      - name: Set up Gradle (no cache)
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          cache-disabled: true
 
       - name: Assemble companion debug APK
         working-directory: companion/dvma-attacker
@@ -203,13 +221,19 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          # Caching disabled: a warm Gradle/pub cache once reused a plugin's
+          # stale compiled classes across a dependency bump and produced a
+          # "cannot find symbol" release build that a clean checkout compiles
+          # fine. Clean builds every run keep CI honest for a security artifact.
+          cache: false
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Cache Gradle
+      - name: Set up Gradle (no cache)
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          cache-disabled: true
 
       - name: Compile androidTest sources (no device)
         working-directory: android
@@ -235,7 +259,11 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          # Caching disabled: a warm Gradle/pub cache once reused a plugin's
+          # stale compiled classes across a dependency bump and produced a
+          # "cannot find symbol" release build that a clean checkout compiles
+          # fine. Clean builds every run keep CI honest for a security artifact.
+          cache: false
 
       - name: Install dependencies
         run: flutter pub get
@@ -268,7 +296,11 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          # Caching disabled: a warm Gradle/pub cache once reused a plugin's
+          # stale compiled classes across a dependency bump and produced a
+          # "cannot find symbol" release build that a clean checkout compiles
+          # fine. Clean builds every run keep CI honest for a security artifact.
+          cache: false
 
       - name: Install dependencies
         run: flutter pub get
@@ -293,7 +325,11 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
-          cache: true
+          # Caching disabled: a warm Gradle/pub cache once reused a plugin's
+          # stale compiled classes across a dependency bump and produced a
+          # "cannot find symbol" release build that a clean checkout compiles
+          # fine. Clean builds every run keep CI honest for a security artifact.
+          cache: false
 
       - name: Install dependencies
         run: flutter pub get
