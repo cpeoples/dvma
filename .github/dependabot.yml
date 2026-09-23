@@ -1,0 +1,52 @@
+# Dependabot keeps dependencies and pinned GitHub Actions current via PRs.
+# GitHub Actions is the priority: it bumps the SHA pins (and their version
+# comments) in .github/workflows/, closing the supply-chain gap that SHA-pinning
+# opens (stale pins). App/tooling ecosystems run monthly and grouped to keep the
+# PR volume low; this is a training app, so dependency churn is not a goal.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: pub
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      flutter-deps:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /automation/appium
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      appium-deps:
+        patterns: ["*"]
+
+  - package-ecosystem: gradle
+    directory: /android
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      android-deps:
+        patterns: ["*"]
+
+  - package-ecosystem: gradle
+    directory: /companion/dvma-attacker
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      attacker-deps:
+        patterns: ["*"]
