@@ -1,0 +1,795 @@
+# DVMA registry category: platform (shard 02_capability)
+# Proximity, shortcuts, provider/capability, accessibility, telephony, cross-profile.
+# Shards merge in sorted filename order; append within the right shard,
+# then run: dart run tool/generate.dart
+
+platform:
+  title: Improper Platform Usage
+  owasp_mobile: M4
+  description: WebView JS-bridge RCE and file:// access, deep-link/URL-scheme hijack, exported components, content-provider SQLi, pending-intent hijack, tapjacking, over-privilege, push leakage, QR injection, zip-slip, and missing FLAG_SECURE.
+  vulnerabilities:
+  - id: proximity_transfer_unsafe_parsing
+    platform_note: Android Quick Share; iOS AirDrop.
+    title: Proximity Transfer Unsafe Parsing (AirDrop / Quick Share)
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-776
+    - CWE-674
+    - CWE-20
+    display_tags:
+    - CWE-776
+    - CWE-674
+    - MASVS-PLATFORM-2
+    tools:
+    - radamsa
+    tools_android:
+    - Quick Share
+    tools_ios:
+    - AirDrop
+    attack_inputs:
+    - crafted plist
+    summary: The app parses an untrusted, pre-authentication proximity-transfer payload (AirDrop / Quick Share plist / XML / archive) with a naive, unbounded parser, so a malformed plist, a deeply-nested XML recursion bomb, or a decompression bomb causes resource exhaustion / state-machine confusion with no prior pairing (AirDrop & Quick Share proximity-protocol research class).
+    manual_test: >-
+      feed a malformed plist / deeply nested XML entity-expansion bomb as a
+      proximity-transfer (AirDrop/Quick Share) payload and confirm the naive
+      parser blows up (huge expansion / state confusion) with no pairing;
+      verify the secure build caps depth, entity expansion, and size and
+      rejects it (AirDrop & Quick Share proximity-protocol research class).
+    detail: >-
+      The app parses an untrusted, pre-authentication proximity-transfer payload
+      (an AirDrop or Quick Share plist, XML, or archive) with a naive, unbounded
+      parser: no pairing, no size cap, no recursion-depth cap, no
+      entity-expansion cap. A tiny deeply-nested "billion laughs" entity bomb
+      therefore expands to a colossal node count and exhausts memory with no
+      prior interaction. On Android a compiled-C TLV parser over-reads on a lying
+      length field; on every host a real recursive entity expander materializes a
+      genuine billion-laughs XML in memory and reports the observed byte blowup.
+      The secure path enforces a max depth, a max entity-expansion, and a max
+      size, rejecting the bomb before it can expand.
+    references:
+    - 'Protocol Prying: AirDrop & Quick Share proximity-protocol vulnerabilities|https://arxiv.org/abs/2606.26967'
+  - id: shortcuts_path_symlink_sandbox_escape
+    platforms:
+    - ios
+    title: Shortcuts / App Intents Path + Symlink Sandbox Escape
+    difficulty: hard
+    masvs:
+    - MASVS-STORAGE-2
+    - MASVS-PLATFORM-3
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-59
+    - CWE-22
+    - CWE-367
+    display_tags:
+    - CWE-59
+    - CWE-22
+    - MASVS-PLATFORM-3
+    tools:
+    - ifuse
+    - afcclient
+    attack_inputs:
+    - crafted shortcut
+    summary: Untrusted Shortcuts / App Intents input drives a file operation whose path is resolved through a symlink or a `../` traversal with no canonicalization, so the automation reaches files outside the app's sandbox / container and exposes sensitive user data (iOS Shortcuts CVE-2026-20677 symlink race / CVE-2026-20653 path class).
+    manual_test: >-
+      drive a Shortcut/App-Intents file op with a `../` or symlinked path and
+      confirm it resolves outside the app container to a sensitive file;
+      verify the secure build canonicalizes and confines the real path to the
+      container (iOS Shortcuts CVE-2026-20677 / CVE-2026-20653 class).
+    detail: >-
+      Untrusted Shortcuts or App-Intents input drives a file operation whose path
+      is resolved through a symlink or a "../" traversal with no canonicalization,
+      so the automation reaches files outside the app's sandbox or container (iOS
+      Shortcuts CVE-2026-20677 symlink race / CVE-2026-20653 path class; the same
+      class also appears when an App Intent's perform() reads a caller-supplied
+      path directly, CVE-2026-28995 / CVE-2026-64740). On device this plants a
+      real symlink inside the container pointing outside it and seeds sensitive
+      files beyond the sandbox, then reads them off the real filesystem. The
+      secure path canonicalizes, resolves symlinks, and asserts the real path
+      stays under the container root before reading.
+    references:
+    - CVE-2026-20677 (iOS Shortcuts symlink race -> sandbox bypass, CVSS 9.0)|https://nvd.nist.gov/vuln/detail/cve-2026-20677
+    - About the security content of iOS 18.7.5 (CVE-2026-20653 Shortcuts path)|https://support.apple.com/en-us/126347
+    - CVE-2026-28995 (App Intents sandbox escape via a path parameter, iOS 26.5)|https://support.apple.com/en-us/127110
+    - CVE-2026-64740 (App Intents directory-path traversal -> sandbox escape, CWE-22, iOS 26.6)|https://nvd.nist.gov/vuln/detail/CVE-2026-64740
+  - id: exported_component_state_manipulation
+    platforms:
+    - android
+    title: Exported Component -> Unauthorized State Manipulation
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0364
+    mastg_demo:
+    - MASTG-DEMO-0128
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-862
+    - CWE-639
+    - CWE-284
+    display_tags:
+    - CWE-862
+    - CWE-639
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    summary: An exported component accepts an attacker-controlled identifier in its intent extras and performs a security-sensitive STATE CHANGE (e.g. cancelling the victim's AI-chat notification) with no caller/ownership validation, so any co-resident app mutates state it does not own (Datadog Android CVE-2026-47361 class).
+    manual_test: >-
+      from a `com.evil.*` app, send the exported component an intent naming
+      the victim's notification id and confirm it is cancelled with no
+      ownership check; verify the secure build requires owner==caller (or a
+      signature permission) and refuses the cross-owner mutation (Datadog
+      Android CVE-2026-47361 class).
+    detail: >-
+      An exported component accepts an attacker-controlled notification id in its
+      intent extras and performs a security-sensitive state change (cancelling
+      the notification) with no caller or ownership validation. Because it is
+      exported, a co-resident unprivileged app sends an intent naming the victim
+      AI-chat app's notification id and the system cancels it on the attacker's
+      behalf (the Datadog Android CVE-2026-47361 class), suppressing an alert the
+      attacker does not own. This is an offline, deterministic simulation: an
+      in-memory notification center holds notifications owned by package ids. The
+      secure path verifies the notification's owner package matches the caller
+      (or a signature permission) before mutating, so the cross-owner request is
+      refused and the victim's notification stays active.
+    references:
+    - CVE-2026-47361 (Datadog Android exported-activity notification cancel)|https://nvd.nist.gov/vuln/detail/CVE-2026-47361
+  - id: contentprovider_filename_path_traversal
+    platforms:
+    - android
+    title: ContentProvider File-Import Filename Path Traversal
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0357
+    mastg_demo:
+    - MASTG-DEMO-0139
+    - MASTG-DEMO-0141
+    maswe:
+    - MASWE-0032
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-22
+    - CWE-73
+    - CWE-926
+    display_tags:
+    - CWE-22
+    - CWE-73
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: A ContentProvider / file-import API takes the caller-supplied display name / filename and writes or reads it under the app's storage with no canonicalization, so a `../` filename traverses out of the intended directory and overwrites/reads arbitrary app files (Android ContentProvider import traversal CVE-2025-65814 / CVE-2025-65815 class).
+    manual_test: >-
+      import a file whose display name is `../../shared_prefs/secrets.xml` and
+      confirm it escapes the import dir and overwrites/reads an app file;
+      verify the secure build canonicalizes and confines the path under the
+      import root (Android ContentProvider import traversal CVE-2025-65814 /
+      CVE-2025-65815 class).
+    detail: >-
+      A ContentProvider or file-import API takes the caller-supplied display name
+      and joins it under the app's import directory with no canonicalization,
+      then writes the bytes there on the real filesystem. A "../" filename
+      therefore traverses out of the import directory and overwrites or reads
+      arbitrary app-private files; here the crafted display name escapes and
+      clobbers the app's stored auth token on disk (the Android ContentProvider
+      import-traversal CVE-2025-65814 / CVE-2025-65815 class). The secure path
+      strips path separators, canonicalizes, and confines the result under the
+      import root, rejecting the traversal so the secrets survive.
+    references:
+    - CVE-2025-65814 (Android ContentProvider filename traversal)|https://nvd.nist.gov/vuln/detail/CVE-2025-65814
+    - CVE-2025-65815 (Android ContentProvider filename traversal)|https://nvd.nist.gov/vuln/detail/CVE-2025-65815
+    - CVE-2026-38093 (Flutter file_picker DISPLAY_NAME traversal - plugin-layer variant)|https://github.com/advisories/GHSA-r2rg-pm28-j8gw
+  - id: app_intent_parameter_authorization
+    platforms:
+    - ios
+    title: App Intent / Siri Parameter -> Privileged Action (No Authz)
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-3
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-862
+    - CWE-639
+    - CWE-20
+    display_tags:
+    - CWE-862
+    - CWE-639
+    - MASVS-PLATFORM-3
+    tools:
+    - Siri
+    attack_inputs:
+    - crafted shortcut
+    summary: An App Intent / Siri / Shortcuts / Spotlight entry point maps an untrusted, system-supplied parameter straight to a privileged app action (transfer, delete, export) with no per-invocation authorization or ownership check, so a crafted shortcut invokes the action on the user's behalf (Apple App Intents capability-confusion class).
+    manual_test: >-
+      invoke a privileged App Intent/Shortcut (transfer/export) with an
+      untrusted parameter targeting another user's entity and confirm it runs
+      with no authorization; verify the secure build requires a verified auth
+      token and an ownership check (Apple App Intents capability-confusion
+      class).
+    detail: >-
+      An App Intent, Siri, Shortcuts, or Spotlight entry point maps an untrusted,
+      system-supplied parameter straight to a privileged app action (transfer,
+      delete, export) with no per-invocation authorization and no ownership
+      check. A crafted shortcut here names another user's account id and the app
+      exports it directly from the parameter, capability confusion where the
+      intent's privilege is applied to an entity the invoker does not own (the
+      Apple App Intents class). This is an offline, deterministic simulation over
+      a tiny in-memory bank. The secure path requires the invocation to carry a
+      verified user-authorization token and checks the current user owns the
+      target entity, refusing the unauthorized or other-user parameter.
+    references:
+    - Discover new capabilities in the App Intents framework (WWDC26)|https://developer.apple.com/videos/play/wwdc2026/345/
+    - CVE-2026-43704 (iOS Web Extension privileged-capability class)|https://support.apple.com/en-us/127594
+  - id: content_uri_resolver_confused_deputy
+    platforms:
+    - android
+    title: content:// URI -> ContentResolver Confused Deputy
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0355
+    mastg_demo:
+    - MASTG-DEMO-0121
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-441
+    - CWE-862
+    - CWE-639
+    display_tags:
+    - CWE-441
+    - CWE-862
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: The app takes an attacker-supplied content:// URI (e.g. from an intent extra) and reads it through its OWN ContentResolver, so it becomes a proxy for a privileged provider / file the caller cannot reach directly - a confused deputy with no owner/permission validation on the URI (Android DownloadProvider CVE-2025-26417 class).
+    manual_test: >-
+      hand the app an attacker `content://com.dvma.private/...` URI in an
+      intent extra and confirm it reads the privileged provider through its
+      own ContentResolver and returns the data to you (confused deputy);
+      verify the secure build validates the caller may access that authority
+      and refuses the privileged read (Android DownloadProvider CVE-2025-26417
+      class).
+    detail: >-
+      The app takes an attacker-supplied content:// URI (for example from an
+      intent extra) and reads it through its own ContentResolver. Because the
+      resolver runs with the app's identity, the app becomes a confused-deputy
+      proxy for a privileged, app-private provider the untrusted caller could
+      never reach directly, with no owner or permission validation on the URI
+      (the Android DownloadProvider CVE-2025-26417 class). This is an offline,
+      deterministic simulation over in-memory providers. The secure path
+      validates that the caller is actually permitted to reach that authority (an
+      allowlisted authority plus a granted read permission), refusing to proxy
+      the privileged read for an untrusted caller.
+    references:
+    - CVE-2025-26417 (Android DownloadProvider confused deputy)|https://nvd.nist.gov/vuln/detail/cve-2025-26417
+    - 'Android: content resolver confused-deputy risks|https://developer.android.com/privacy-and-security/risks/content-resolver'
+  - id: accessibility_service_privilege_abuse
+    platforms:
+    - android
+    title: AccessibilityService Privilege Abuse
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0040
+    owasp_mobile: M4
+    cwe:
+    - CWE-862
+    - CWE-284
+    - CWE-441
+    display_tags:
+    - CWE-862
+    - CWE-284
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - accessibility inspector
+    - jadx
+    - drozer
+    summary: An AccessibilityService performs a privileged action (launching an activity from the background, hiding/suppressing UI, injecting a gesture/click) with insufficient caller / service-state validation, so the a11y capability is abused for privilege escalation or UI manipulation (Android AccessibilityServiceConnection CVE-2025-26462 / CVE-2023-21109 class).
+    manual_test: >-
+      from the a11y service trigger a background activity launch / UI-hide /
+      injected gesture with no valid a11y event and confirm the privileged
+      action fires; verify the secure build requires a user-enabled service, a
+      genuine foreground event, and an action allowlist (Android
+      AccessibilityServiceConnection CVE-2025-26462 / CVE-2023-21109 class).
+    detail: >-
+      An AccessibilityService performs a privileged action (launching an activity
+      from the background, hiding or suppressing UI, injecting a gesture) with
+      insufficient caller or service-state validation, so the accessibility
+      capability is abused for privilege escalation or UI manipulation (Android
+      AccessibilityServiceConnection CVE-2025-26462 / CVE-2023-21109 class). Here
+      the vulnerable service launches a fake consent activity from the background
+      with no genuine foreground accessibility event behind it. This is an
+      offline, deterministic simulation. The secure path requires the service to
+      be user-enabled, the action to be tied to a real foreground accessibility
+      event, and the action to be on an allowlist, refusing background launches
+      and UI hiding.
+    references:
+    - CVE-2025-26462 (Android AccessibilityServiceConnection background activity launch)|https://nvd.nist.gov/vuln/detail/CVE-2025-26462
+  - id: notification_listener_authorization_bypass
+    platforms:
+    - android
+    title: Notification Listener Authorization Bypass
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-862
+    - CWE-284
+    - CWE-306
+    display_tags:
+    - CWE-862
+    - CWE-306
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    summary: Notification-listener access is effectively granted without a proper user grant - above the lock screen, or via an unverified NotificationListenerService intent filter - so a listener reads notification contents with no authorization / no user interaction (Android CVE-2025-22427 above-lock grant / CVE-2025-26442 intent-filter verification class).
+    manual_test: >-
+      bind a notification listener with no recorded user grant (above lock /
+      unverified filter) and read all notification contents; verify the secure
+      build requires a persisted grant recorded while unlocked and a verified
+      listener component (Android CVE-2025-22427 / CVE-2025-26442 class).
+    detail: >-
+      Notification-listener access is effectively granted with no proper user
+      grant, recorded above the lock screen or via an unverified
+      NotificationListenerService intent filter, so a listener reads notification
+      contents (OTP codes, medical messages) with no authorization and no user
+      interaction (Android CVE-2025-22427 above-lock grant / CVE-2025-26442
+      intent-filter verification class). This is an offline, deterministic
+      simulation. The secure path requires a persisted user grant recorded while
+      unlocked and a verified listener component, refusing the read otherwise.
+    references:
+    - CVE-2025-22427 (Android notification access granted above lock screen)|https://nvd.nist.gov/vuln/detail/cve-2025-22427
+    - CVE-2025-26442 (Android notification-listener intent-filter verification)|https://nvd.nist.gov/vuln/detail/CVE-2025-26442
+  - id: background_activity_launch_abuse
+    platforms:
+    - android
+    title: Background Activity Launch Abuse
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-PLATFORM-3
+    mastg_v2:
+    - MASTG-TEST-0364
+    mastg_demo:
+    - MASTG-DEMO-0128
+    maswe:
+    - MASWE-0032
+    - MASWE-0039
+    owasp_mobile: M4
+    cwe:
+    - CWE-862
+    - CWE-1021
+    - CWE-284
+    display_tags:
+    - CWE-862
+    - CWE-1021
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: An untrusted / local caller drives a background component to startActivity() reaching security-sensitive UI, so with no background-activity-launch restriction the app is coerced into phishing overlays, task hijacking, or consent-dialog manipulation on the user's behalf (Android background-activity-launch CVE-2025-26462 class).
+    manual_test: >-
+      from a background caller drive a component to `startActivity()` onto a
+      security-sensitive/consent surface and confirm the phishing/task-hijack
+      UI appears; verify the secure build enforces BAL (foreground or valid
+      launch token) and refuses the launch (Android CVE-2025-26462 class).
+    detail: >-
+      An untrusted or local caller drives a background component to
+      startActivity() and reaches a security-sensitive UI, a phishing overlay, a
+      task-hijack surface, or a consent dialog it can manipulate, because there
+      is no background-activity-launch restriction (Android CVE-2025-26462
+      class). Here a background attacker surfaces a fake consent dialog over the
+      user. This is an offline, deterministic simulation. The secure path
+      enforces background-activity-launch rules: the caller must be in the
+      foreground or present a valid launch token, refusing the background launch
+      otherwise.
+    references:
+    - CVE-2025-26462 (Android unauthorized background activity launch -> LPE)|https://nvd.nist.gov/vuln/detail/CVE-2025-26462
+  - id: clipboard_unauthorized_write_integrity
+    title: Clipboard Unauthorized Write / Integrity Tampering
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0030
+    owasp_mobile: M4
+    cwe:
+    - CWE-345
+    - CWE-471
+    - CWE-668
+    display_tags:
+    - CWE-345
+    - CWE-471
+    - MASVS-PLATFORM-2
+    tools: []
+    tools_android:
+    - adb
+    tools_ios:
+    - idb
+    summary: Untrusted content (a page loaded in the app's WebView, or another app) can OVERWRITE the system clipboard through the app with no user gesture / origin check, so what the user later pastes is attacker-controlled - a clipboard integrity failure distinct from clipboard read/leak (Lenovo Android web-to-clipboard CVE-2026-7516 class).
+    manual_test: >-
+      from untrusted content (a page in the app WebView / another app)
+      overwrite the system clipboard with no user gesture and confirm the user
+      pastes attacker-controlled data (e.g. a swapped crypto address); verify
+      the secure build requires a trusted origin + user gesture (Lenovo
+      Android web-to-clipboard CVE-2026-7516 class).
+    detail: >-
+      Untrusted content, a page loaded in the app WebView or another app,
+      overwrites the system clipboard with no user gesture and no origin check.
+      The user copies their own wallet address, but before they paste,
+      attacker-controlled content silently swaps the clipboard for the attacker's
+      address, so the user pastes the wrong value (a clipboard-hijack or
+      address-swap). The attacker address is written to the real system
+      clipboard; the origin and gesture decision is the offline contrast. The
+      secure path requires a trusted origin plus a genuine user-gesture token and
+      refuses untrusted writes, preserving what the user copied.
+    references:
+    - 'CVE-2026-7516 (Lenovo Android: web page overwrites system clipboard)|https://nvd.nist.gov/vuln/detail/CVE-2026-7516'
+  - id: clipboard_to_privileged_action_injection
+    title: Clipboard -> Privileged Action Injection
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0030
+    owasp_mobile: M4
+    cwe:
+    - CWE-20
+    - CWE-77
+    - CWE-441
+    display_tags:
+    - CWE-20
+    - CWE-441
+    - MASVS-PLATFORM-2
+    tools: []
+    tools_android:
+    - adb
+    tools_ios:
+    - idb
+    summary: Clipboard content sourced from an untrusted origin flows into a privileged action (auto-paste into a payment/command field, an assistant/automation step) with no validation or origin check, so a malicious page-to-clipboard write is laundered into a privileged operation (webpage -> clipboard -> automation -> privileged app capability boundary; CVE-2026-17766 cross-origin clipboard class).
+    manual_test: >-
+      seed the clipboard from an untrusted origin and confirm it flows into a
+      privileged action (auto-paste into a payment/command field / automation
+      step) with no validation; verify the secure build validates/allowlists
+      the value and requires explicit confirmation (webpage → clipboard →
+      automation → privileged capability; CVE-2026-17766 class).
+    detail: >-
+      Clipboard content sourced from an untrusted origin flows into a privileged
+      action, an auto-paste into a payment field or an assistant/automation step,
+      with no validation and no confirmation. The taint chain is untrusted
+      origin, then clipboard, then automation, then privileged capability. Here a
+      hostile page seeds a "pay to attacker" instruction and the automation
+      executes the payment. The tainted value is placed on and read back from the
+      real system clipboard; the payment-decision logic is the offline contrast.
+      The secure path refuses clipboard values that did not originate from a
+      trusted source, validates the payee against an allowlist, and requires
+      explicit user confirmation.
+    references:
+    - CVE-2026-17766 (Android Chrome clipboard cross-origin data leak)|https://nvd.nist.gov/vuln/detail/CVE-2026-17766
+  - id: authorization_by_mutable_resource_state
+    platforms:
+    - android
+    title: Authorization Based on Mutable Resource State
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-367
+    - CWE-708
+    - CWE-863
+    display_tags:
+    - CWE-367
+    - CWE-863
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: A security/authorization decision is made on mutable resource existence or state (e.g. doesFileExist() -> grant access -> the file is then created/changed), so an app gains read/write to a resource - including files that do not yet exist - by racing or manipulating that state after the check (Android MediaProvider createRequest file-existence LPE CVE-2026-0035 class).
+    manual_test: >-
+      request access using a file-existence/state pre-check, then
+      create/replace the resource and confirm you gain read/write to a file
+      you shouldn't own (incl. not-yet-existing files); verify the secure
+      build binds authorization to a stable owner captured atomically (Android
+      MediaProvider CVE-2026-0035 class).
+    detail: >-
+      A security decision is made on the mutable existence of a resource: "if the
+      file does not exist yet, grant the caller ownership and create it,"
+      decoupling the authorization check from the resource binding. An attacker
+      wins read/write access to a path a victim has legitimately reserved but not
+      yet written (a TOCTOU or logic flaw, the Android MediaProvider
+      CVE-2026-0035 class). This is an offline, deterministic simulation with an
+      in-memory filesystem. The secure path binds authorization to a stable owner
+      identity captured atomically, never to mutable existence.
+    references:
+    - CVE-2026-0035 (Android MediaProvider read/write to non-existing files -> LPE)|https://nvd.nist.gov/vuln/detail/CVE-2026-0035
+  - id: telephony_capability_abuse
+    platforms:
+    - android
+    title: Telephony / Phone-Account Capability Abuse
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0365
+    mastg_demo:
+    - MASTG-DEMO-0129
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-862
+    - CWE-284
+    - CWE-441
+    display_tags:
+    - CWE-862
+    - CWE-284
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: A loosely-guarded / exported flow lets an untrusted caller drive a telephony capability - place a call, send an SMS, register or manipulate a phone account, redirect/intercept a call - via the Telecom component with no per-invocation permission check, so the app's real impact is far larger than its visible UI suggests (Android Telecom unauthorized-call permission-bypass CVE-2026-28615 class).
+    manual_test: >-
+      from an untrusted/exported caller invoke a telephony capability (place a
+      call to a premium number / send SMS / register a phone account) with no
+      per-invocation permission check; verify the secure build requires the
+      matching permission + per-invocation confirmation (Android Telecom
+      CVE-2026-28615 class).
+    detail: >-
+      An exported Telecom-like component drives telephony capabilities (place a
+      call, send an SMS, register a phone account) but performs no per-invocation
+      permission check. An untrusted local app that holds none of the required
+      permissions therefore dials a premium-rate number on the user's behalf
+      (Android Telecom permission-bypass CVE-2026-28615 class). This is an
+      offline, deterministic simulation, no call is placed. The secure path
+      requires the caller to hold the matching permission plus a per-invocation
+      user confirmation for sensitive actions.
+    references:
+    - CVE-2026-28615 (Android Telecom permission bypass -> unauthorized phone call)|https://nvd.nist.gov/vuln/detail/CVE-2026-28615
+  - id: document_picker_trusted_file_confusion
+    platforms:
+    - ios
+    title: Document Picker -> Trusted-File Confusion
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-20
+    - CWE-829
+    - CWE-73
+    display_tags:
+    - CWE-20
+    - CWE-829
+    - MASVS-PLATFORM-1
+    tools:
+    - frida
+    - objection
+    - r2frida
+    - ipsw
+    - class-dump
+    - Hopper
+    - r2ghidra
+    - Ghidra
+    summary: The app assumes a file returned by the system document / file picker (or a security-scoped URL) is trustworthy simply because the OS handed it over, and feeds its path / type / contents into a sensitive sink with no re-validation, so an attacker-controlled document provider supplies a malicious path/type that the app trusts - the opposite direction to an over-broad FileProvider (Apple Document Picker / security-scoped URL trust-confusion class).
+    manual_test: >-
+      return a document from the system picker whose declared type/path is
+      hostile (mislabeled type, a path into a privileged location) and confirm
+      the app trusts it into a sensitive sink; verify the secure build
+      re-validates real content/type and confines the path (Document Picker /
+      security-scoped-URL trust class).
+    detail: >-
+      The app assumes a file returned by the system document or file picker (or a
+      security-scoped URL) is trustworthy just because the OS handed it over. It
+      feeds the declared type, name, or path into a sensitive sink with no
+      re-validation, so a document that claims to be a harmless "text/plain" file
+      but whose real bytes are an executable script is parsed or executed, and
+      its declared path is followed into a privileged location. The picked bytes
+      are written to a real temp file and the magic bytes are re-read off disk;
+      the secure path re-validates that real content type and confines the
+      canonical path under the import sandbox.
+    references:
+    - 'Apple: App extensions (File Provider / Document Picker trust boundaries)|https://developer.apple.com/documentation/uikit/app-extensions'
+  - id: system_surface_privileged_appintent_exposure
+    platforms:
+    - ios
+    title: System-Surface -> Privileged App Intent Exposure
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-3
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0362
+    mastg_demo:
+    - MASTG-DEMO-0127
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-862
+    - CWE-284
+    - CWE-267
+    display_tags:
+    - CWE-862
+    - CWE-284
+    - MASVS-PLATFORM-3
+    tools:
+    - Siri
+    attack_inputs:
+    - crafted shortcut
+    summary: An App Intent surfaced to many system entry points (Siri, Spotlight, Shortcuts, Widget, Control, Live Activity, Action Button, Apple Intelligence) reaches a privileged operation with no per-surface authorization, so ANY of those externally-invocable surfaces can trigger the action - the surface fan-out widens the attack surface far beyond the app UI (Apple App Intents multi-surface capability-exposure class).
+    manual_test: >-
+      fire a privileged App Intent from a surface that shouldn't be allowed to
+      (Widget/Control/Action Button) with no unlock and confirm it runs;
+      verify the secure build enforces per-surface authorization + auth for
+      sensitive intents (Apple App Intents multi-surface exposure class).
+    detail: >-
+      An App Intent is surfaced to many system entry points (Siri, Spotlight,
+      Shortcuts, Widget, Control, Live Activity, Action Button, Apple
+      Intelligence) and reaches a privileged operation ("export all data") with
+      no per-surface authorization. A passive, lock-screen-reachable surface such
+      as a Control therefore fires the privileged op with no unlock and no
+      confirmation. This is the surface fan-out problem, distinct from
+      untrusted-parameter authorization. This is an offline, deterministic
+      simulation. The secure path enforces a per-surface allowlist and requires
+      device authentication for sensitive intents.
+    references:
+    - 'Apple: App Intents (Siri / Spotlight / Widgets / Controls / Action Button / Apple Intelligence surfaces)|https://developer.apple.com/documentation/appintents'
+  - id: cross_profile_data_capability_leakage
+    platforms:
+    - android
+    title: Cross-Profile (Work/Personal) Data & Capability Leakage
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-STORAGE-1
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-200
+    - CWE-668
+    - CWE-863
+    display_tags:
+    - CWE-200
+    - CWE-668
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - cross-profile forwarding intent
+    - malicious companion app
+    summary: Managed (work) and primary (personal) profiles are a security boundary, but the app crosses it unsafely - forwarded intents, URI grants, shared files, notifications, clipboard, contacts, or account data move between profiles without the required affordance/authorization, so work data leaks to a personal surface (or vice-versa). This is a tenant-boundary violation on top of Android's cross-profile intent-forwarding machinery, distinct from ordinary intent redirection (Android managed-profile cross-profile leakage class).
+    manual_test: >-
+      forward a work-profile credential to a personal surface (share sheet /
+      clipboard / intent) and confirm it crosses; verify the secure build
+      enforces a cross-profile policy (only allowlisted, non-sensitive items
+      may cross, with the required user affordance) so work data is blocked
+      (Android managed-profile leakage class).
+    detail: >-
+      Work (managed) and personal (primary) profiles are a security boundary, but
+      the app crosses it unsafely. A forwarded intent, URI grant, or shared item
+      moves between profiles with no policy check and no required user affordance,
+      so a work credential (a corporate VPN password) lands on a personal
+      surface. This is a tenant-boundary violation on top of Android
+      cross-profile intent-forwarding, distinct from ordinary intent redirection.
+      This offline demo forwards an in-memory work credential to a personal share
+      sheet. The secure path enforces a cross-profile policy, so only
+      whitelisted, non-sensitive item types may cross with the required
+      affordance, and the sensitive work credential is denied and never crosses.
+    references:
+    - 'Android CDD: cross-profile intent forwarding and managed-profile UI separation|https://source.android.com/docs/compatibility/16/android-16-cdd'
+  - id: unauthenticated_local_loopback_service
+    platforms:
+    - android
+    - ios
+    platform_note: A loopback HTTP/TCP or unix-domain socket the app opens for its own components, reachable by other local apps / web content.
+    title: Unauthenticated Local / Loopback Service
+    difficulty: hard
+    masvs:
+    - MASVS-NETWORK-1
+    - MASVS-PLATFORM-1
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-306
+    - CWE-668
+    - CWE-350
+    display_tags:
+    - CWE-306
+    - CWE-668
+    - MASVS-NETWORK-1
+    tools:
+    - mitmproxy
+    - Burp Suite
+    - adb
+    - nc
+    - tcpdump
+    attack_inputs:
+    - localhost request
+    - DNS-rebinding page
+    summary: The app opens a local HTTP/TCP or unix-domain socket (for IPC, a debug bridge, a companion SDK, or a WebView bridge) with no authentication, so any co-resident app - or remote web content via DNS rebinding against 127.0.0.1 - reaches privileged functionality or reads data on that port. The loopback service is treated as trusted merely because it is local. The secure path binds an unpredictable per-session token / origin check to every local request.
+    manual_test: >-
+      hit the app's loopback HTTP/TCP or unix-domain socket from a co-resident
+      app or a DNS-rebinding web origin (no token) and confirm privileged
+      data/functionality is served; verify the secure build requires a
+      per-session token and validates the Origin/Host, rejecting rebinding +
+      untokened callers.
+    detail: >-
+      The app opens a privileged service (an IPC, debug, or WebView bridge) on
+      the loopback interface and trusts every caller simply because the socket is
+      "only local". With no token and no Origin or Host check, a co-resident app
+      can invoke privileged operations, and a remote web page can reach 127.0.0.1
+      via DNS rebinding and read the app's secrets. This demo binds a real
+      loopback HTTP server on 127.0.0.1 with no token or Origin check and issues
+      an unauthenticated GET /getSecrets over the socket, recording the exposed
+      response as a pullable artifact. The secure path requires an unpredictable
+      per-session token and validates the Origin and Host, rejecting untokened
+      and rebinding callers.
+    references:
+    - 'OWASP MASTG: local service exposure and DNS-rebinding against loopback|https://mas.owasp.org/MASTG/tests/'

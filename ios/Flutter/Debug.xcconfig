@@ -1,0 +1,5 @@
+#include "Generated.xcconfig"
+// Optional local override for DEVELOPMENT_TEAM (gitignored). See
+// Signing.xcconfig.example. The "?" makes it optional so builds don't fail if
+// it's absent (e.g. Simulator builds, which need no signing).
+#include? "Signing.xcconfig"

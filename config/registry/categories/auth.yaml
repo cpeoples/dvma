@@ -1,0 +1,971 @@
+# DVMA registry category: auth
+# Append new modules here, then run: dart run tool/generate.dart
+
+auth:
+  title: Insecure Authentication / Authorization
+  owasp_mobile: M3
+  description: Sessions that never expire or use predictable tokens, bypassable biometrics, weak password policy, client-side-only authorization, JWT alg:none / weak secrets, and OAuth implicit-flow token leakage.
+  vulnerabilities:
+  - id: weak_session_management
+    title: Weak Session Management
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-AUTH-2
+    maswe:
+    - MASWE-0024
+    owasp_mobile: M3
+    cwe:
+    - CWE-613
+    - CWE-330
+    display_tags:
+    - CWE-613
+    - CWE-330
+    - MASVS-AUTH-2
+    tools:
+    - mitmproxy
+    - Burp Suite
+    - token analysis
+    summary: Sessions never expire and use predictable, incrementing tokens.
+    manual_test: >-
+      capture the session token and confirm it is predictable / never rotated
+      on privilege change / never expires (replay it after logout).
+    detail: >-
+      Session tokens are a simple incrementing counter, so given one token an
+      attacker guesses the next users' tokens directly. Sessions also never
+      expire, so a captured token is valid forever.
+  - id: insecure_biometric_prompt
+    platform_note: Android BiometricPrompt; iOS LocalAuthentication (LAContext).
+    title: Insecure / Bypassable Biometric Prompt
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-2
+    mastg_v2:
+    - MASTG-TEST-0327
+    - MASTG-TEST-0266
+    - MASTG-TEST-0267
+    - MASTG-TEST-0329
+    mastg_demo:
+    - MASTG-DEMO-0090
+    - MASTG-DEMO-0092
+    maswe:
+    - MASWE-0020
+    owasp_mobile: M3
+    cwe:
+    - CWE-287
+    - CWE-603
+    tools:
+    - frida
+    - objection
+    - r2frida
+    - frida-trace
+    summary: Local auth is event-bound UI only; failure path is trivially bypassed.
+    manual_test: >-
+      hook the auth callback with Frida and force the success path.
+    detail: >-
+      The biometric prompt is decorative: success or failure just flips a
+      client-side boolean and the protected secret is already in memory. Nothing
+      is cryptographically bound to a Keystore/Keychain key that requires user
+      authentication, so a frida hook or a patched boolean unlocks it. The
+      buttons simulate the auth callbacks. A secure design binds the secret to a
+      key that only releases after real user authentication.
+    references:
+    - CVE-2025-48528 (Android biometric UI overlay)|https://nvd.nist.gov/vuln/detail/CVE-2025-48528
+  - id: weak_password_policy
+    title: Weak / No Password Policy
+    difficulty: easy
+    masvs:
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M3
+    cwe:
+    - CWE-521
+    tools:
+    - Burp Suite
+    - mitmproxy
+    summary: Accepts single-character passwords; no complexity or length checks.
+    manual_test: >-
+      register/change password to a trivial value (`123456`, `password`) and
+      confirm it is accepted (no length/complexity/breach check).
+    detail: >-
+      The registration form accepts any non-empty password, including a single
+      character or "123456". There are no length, complexity, or
+      breached-password checks, so accounts are trivially brute-forceable.
+  - id: client_side_only_authorization
+    title: Client-Side-Only Authorization
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-3
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M3
+    cwe:
+    - CWE-602
+    - CWE-639
+    tools:
+    - frida
+    - objection
+    - r2frida
+    summary: Admin-only actions gated purely by a client-side boolean flag.
+    manual_test: >-
+      flip the client-side admin flag with Frida/objection and confirm
+      privileged actions unlock.
+    detail: >-
+      Admin-only actions are gated solely by a client-side isAdmin flag. An
+      attacker flips the boolean with a tool such as frida or objection, or
+      replays the request; since the server never re-authorizes, the privileged
+      action succeeds. The toggle simulates the flip.
+  - id: jwt_vulnerabilities
+    title: JWT Vulnerabilities (alg:none, weak secret)
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-2
+    maswe:
+    - MASWE-0020
+    owasp_mobile: M3
+    cwe:
+    - CWE-347
+    - CWE-345
+    tools:
+    - jwt_tool
+    - hashcat
+    - Burp Suite
+    - mitmproxy
+    summary: Accepts alg:none tokens and verifies with a weak, guessable secret.
+    manual_test: >-
+      forge an `alg:none` token / crack the weak secret with `jwt_tool` and
+      confirm acceptance.
+    detail: >-
+      The token verifier accepts alg:none (no signature at all) and, when a
+      signature is present, checks it with a weak, guessable secret. Either path
+      lets an attacker mint an admin token, and a forged attacker/admin token is
+      accepted.
+  - id: oauth_misconfiguration
+    title: OAuth Misconfiguration (implicit flow token leakage)
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M3
+    cwe:
+    - CWE-598
+    - CWE-200
+    tools:
+    - mitmproxy
+    - Burp Suite
+    summary: Implicit-flow access token leaks via redirect URL and logs.
+    manual_test: >-
+      capture the implicit-flow token from the redirect/logs under mitmproxy.
+    detail: >-
+      The app uses the deprecated OAuth implicit flow (response_type=token), so
+      the access token is returned in the redirect URL fragment and exposed to
+      browser history, Referer headers, and the app logs. The leaked token is an
+      HS256 JWT signed with a weak secret, so a captured token can be decoded and
+      re-forged with elevated claims. Modern apps use auth-code plus PKCE and
+      never put tokens in URLs.
+  - id: passkey_weak_attestation
+    title: Passkey Weak / No Attestation Verification
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-2
+    maswe:
+    - MASWE-0020
+    owasp_mobile: M3
+    cwe:
+    - CWE-345
+    - CWE-347
+    tools:
+    - webauthn test harness
+    - mitmproxy
+    - Burp Suite
+    summary: Accepts WebAuthn/passkey registrations with 'none' attestation and never verifies the authenticator attestation statement.
+    manual_test: >-
+      register with `none` attestation via a WebAuthn test harness and confirm
+      acceptance.
+    detail: >-
+      During passkey registration the app never verifies the authenticator
+      attestation. It accepts fmt:"none" (no statement at all) and never
+      validates a certificate chain, so a rogue software authenticator is
+      registered as if it were genuine hardware. Scope: the FIDO2 signature is
+      assumed valid (signature verification is out of scope); the flaw
+      demonstrated is in the relying-party authorization logic on top of it.
+  - id: passkey_origin_binding_bypass
+    title: Passkey Origin / RP-ID Binding Bypass
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-2
+    - MASVS-PLATFORM-1
+    maswe:
+    - MASWE-0020
+    owasp_mobile: M3
+    cwe:
+    - CWE-346
+    - CWE-287
+    display_tags:
+    - CWE-346
+    - CWE-287
+    - MASVS-AUTH-2
+    tools:
+    - webauthn test harness
+    - mitmproxy
+    - Burp Suite
+    summary: rpId/origin is not properly validated, so a passkey assertion is accepted across origins (relying-party confusion).
+    manual_test: >-
+      assert from an origin that merely contains the rpId and confirm
+      acceptance.
+    detail: >-
+      The assertion check uses a substring match on the asserting origin instead
+      of verifying the exact origin and rpId binding, so an attacker-controlled
+      origin that merely contains "dvma.training" is accepted.
+      That enables relying-party confusion and cross-origin replay of a passkey
+      assertion. The secure verifier compares the full origin and rpId exactly
+      and rejects the crafted origin. Scope: the FIDO2 signature is assumed valid
+      (signature verification is out of scope); the flaw is in the relying-party
+      authorization logic on top of it.
+    references:
+    - CVE-2025-24180 (iOS/Safari WebKit registrable-suffix RP confusion)|https://nvd.nist.gov/vuln/detail/CVE-2025-24180
+    - 'W3C WebAuthn: validating the origin and RP ID|https://www.w3.org/TR/webauthn-2/#sctn-validating-origin'
+  - id: passkey_credential_exfiltration
+    title: Passkey Credential Exfiltration
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-2
+    - MASVS-STORAGE-1
+    - MASVS-CRYPTO-2
+    mastg_v2:
+    - MASTG-TEST-0287
+    - MASTG-TEST-0301
+    - MASTG-TEST-0302
+    mastg_demo:
+    - MASTG-DEMO-0059
+    - MASTG-DEMO-0068
+    maswe:
+    - MASWE-0003
+    owasp_mobile: M3
+    cwe:
+    - CWE-522
+    - CWE-312
+    display_tags:
+    - CWE-522
+    - CWE-312
+    - MASVS-AUTH-2
+    tools:
+    - objection
+    - frida
+    - r2frida
+    tools_android:
+    - adb
+    - run-as
+    - SharedPreferences/XML inspection
+    tools_ios:
+    - objection
+    - keychain-dumper
+    - ifuse
+    summary: Passkey/credential material is cached in app-private storage without hardware-backed protection, allowing extraction.
+    manual_test: >-
+      pull the credential store off-device and confirm private-key material is
+      present.
+    detail: >-
+      Passkey private-key material must stay in hardware-backed storage (Keystore
+      StrongBox / Secure Enclave) and be non-exportable. Here the app caches the
+      private key in cleartext SharedPreferences, so it can be pulled off-device
+      with adb or objection and the passkey cloned. Scope: the FIDO2 signature is
+      assumed valid (signature verification is out of scope); the flaw
+      demonstrated is in the relying-party authorization logic on top of it.
+  - id: passkey_fallback_downgrade
+    title: Passkey Fallback / Downgrade Attack
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-AUTH-2
+    maswe:
+    - MASWE-0021
+    owasp_mobile: M3
+    cwe:
+    - CWE-757
+    - CWE-287
+    display_tags:
+    - CWE-757
+    - CWE-287
+    - MASVS-AUTH-1
+    tools:
+    - webauthn test harness
+    - mitmproxy
+    - Burp Suite
+    summary: Passkey auth silently falls back to a weak password/OTP path an attacker can force (authentication downgrade).
+    manual_test: >-
+      force "passkey unavailable" and confirm the weak fallback path is
+      accepted.
+    detail: >-
+      The login flow silently downgrades to a weak password fallback when
+      passkeys appear unavailable, and an attacker can force that by signalling
+      "no passkey", defeating the phishing resistance passkeys provide. No
+      step-up or risk check gates the downgrade. Scope: the FIDO2 signature is
+      assumed valid (signature verification is out of scope); the flaw
+      demonstrated is in the relying-party authorization logic on top of it.
+  - id: passkey_assertion_replay_signcount
+    title: Passkey Assertion Replay (Sign-Count Not Enforced)
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-2
+    maswe:
+    - MASWE-0020
+    owasp_mobile: M3
+    cwe:
+    - CWE-294
+    - CWE-304
+    tools:
+    - webauthn test harness
+    - mitmproxy
+    - Burp Suite
+    summary: The authenticator sign-count / credential counter is never persisted or compared, so a captured WebAuthn assertion replays to create additional authenticated sessions (Craft CMS CVE-2026-72780 class).
+    manual_test: >-
+      capture a WebAuthn assertion and replay it; confirm it is accepted again
+      because the sign-count/credential counter is never compared (Craft CMS
+      CVE-2026-72780 class).
+    detail: >-
+      The relying party never persists or compares the authenticator signature
+      counter. A single captured assertion (sign-count = 5) is replayed to mint
+      several authenticated sessions. A correct verifier stores the last counter
+      and rejects any assertion that does not strictly advance it. Scope: the
+      FIDO2 signature is assumed valid (signature verification is out of scope);
+      the flaw demonstrated is in the relying-party authorization logic on top of
+      it.
+    references:
+    - CVE-2026-72780 (Craft CMS WebAuthn counter replay)|https://nvd.nist.gov/vuln/detail/CVE-2026-72780
+    - 'W3C WebAuthn: signature counter|https://www.w3.org/TR/webauthn-2/#sctn-sign-counter'
+  - id: passkey_challenge_reuse
+    title: Passkey Challenge Reuse / Not Bound
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-2
+    maswe:
+    - MASWE-0020
+    owasp_mobile: M3
+    cwe:
+    - CWE-294
+    - CWE-330
+    - CWE-287
+    tools:
+    - webauthn test harness
+    - mitmproxy
+    - Burp Suite
+    summary: The server challenge is static / reused / never bound to a single ceremony, so a recorded assertion for one challenge is accepted again (assertion replay via challenge reuse).
+    manual_test: >-
+      record an assertion for the server's challenge and replay it; confirm
+      the static/reused challenge accepts it.
+    detail: >-
+      The server hands out a fixed challenge and never invalidates it after use,
+      so a recorded assertion that signs over that challenge is accepted again on
+      replay. A correct server issues a unique, single-use challenge per ceremony
+      and consumes it on first verify. Scope: the FIDO2 signature is assumed
+      valid (signature verification is out of scope); the flaw demonstrated is in
+      the relying-party authorization logic on top of it.
+    references:
+    - 'USENIX Security 2026: The State of Passkeys|https://www.usenix.org/conference/usenixsecurity26/presentation/jannett'
+    - 'W3C WebAuthn: verifying an assertion|https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion'
+  - id: passkey_user_verification_bypass
+    title: Passkey User-Verification (UV) Enforcement Bypass
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-2
+    maswe:
+    - MASWE-0020
+    owasp_mobile: M3
+    cwe:
+    - CWE-287
+    - CWE-306
+    tools:
+    - webauthn test harness
+    - mitmproxy
+    - Burp Suite
+    summary: A configured userVerification=REQUIRED is silently not enforced, so assertions with the UV flag unset (presence-only) are accepted (Spring Security CVE-2026-47841 class).
+    manual_test: >-
+      submit an assertion with the UV flag unset under a
+      `userVerification=REQUIRED` policy and confirm it is accepted (Spring
+      Security CVE-2026-47841 class).
+    detail: >-
+      The relying party requests userVerification=REQUIRED but only checks the
+      User-Presence flag, ignoring the User-Verification flag. A presence-only
+      assertion (a tap, no biometric or PIN) is therefore accepted. A correct
+      verifier rejects UP-only assertions when the policy is REQUIRED. Scope: the
+      FIDO2 signature is assumed valid (signature verification is out of scope);
+      the flaw demonstrated is in the relying-party authorization logic on top of
+      it.
+    references:
+    - CVE-2026-47841 (Spring Security WebAuthn UV bypass)|https://spring.io/security/cve-2026-47841/
+    - 'W3C WebAuthn: user verification|https://www.w3.org/TR/webauthn-2/#user-verification'
+  - id: passkey_stepup_auth_bypass
+    title: Passkey Step-Up Authentication Bypass
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-AUTH-2
+    maswe:
+    - MASWE-0023
+    owasp_mobile: M3
+    cwe:
+    - CWE-287
+    - CWE-863
+    tools:
+    - webauthn test harness
+    - mitmproxy
+    - Burp Suite
+    summary: A sensitive action's 'step-up verified' flag is set from the mere existence of a registered passkey instead of a completed assertion, so step-up is satisfied without actually authenticating (New-API AI gateway CVE-2026-32879 class).
+    manual_test: >-
+      trigger a sensitive action and confirm step-up is marked "verified" from
+      a registered passkey without completing an assertion (New-API AI gateway
+      CVE-2026-32879 class).
+    detail: >-
+      The sensitive action clears its "step-up verified" gate because the account
+      merely has a passkey registered, with no fresh assertion required. A
+      correct flow issues a step-up challenge and requires a fresh assertion that
+      signs exactly that challenge. Scope: the FIDO2 signature is assumed valid
+      (signature verification is out of scope); the flaw demonstrated is in the
+      relying-party authorization logic on top of it.
+    references:
+    - CVE-2026-32879 (New-API AI gateway passkey step-up bypass)|https://www.cve.org/CVERecord?id=CVE-2026-32879
+  - id: passkey_credential_management_authz
+    title: Passkey Registration/Deletion Authorization Missing
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-AUTH-2
+    maswe:
+    - MASWE-0020
+    owasp_mobile: M3
+    cwe:
+    - CWE-862
+    - CWE-639
+    tools:
+    - webauthn test harness
+    - Burp Suite
+    - mitmproxy
+    summary: Passkey register/replace/delete endpoints don't re-authorize the acting user, so an attacker can add their own passkey or delete the victim's, causing account takeover or lockout (USENIX 2026 PASSKEYS-ATTACKER class).
+    manual_test: >-
+      call the register/delete passkey endpoint as a different user and
+      confirm you can add your own passkey or delete the victim's (account
+      takeover / lockout; USENIX 2026 class).
+    detail: >-
+      The passkey register and delete endpoints trust the caller-supplied target
+      account and never re-authorize the acting user. An attacker enrolls their
+      own passkey onto the victim (takeover) and deletes the victim's passkey
+      (lockout). A correct endpoint checks that the caller owns the target
+      account. Scope: the FIDO2 signature is assumed valid (signature
+      verification is out of scope); the flaw demonstrated is in the
+      relying-party authorization logic on top of it.
+    references:
+    - 'USENIX Security 2026: The State of Passkeys|https://www.usenix.org/conference/usenixsecurity26/presentation/jannett'
+  - id: passkey_session_fixation
+    title: Session Fixation After WebAuthn Assertion
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-3
+    - MASVS-AUTH-2
+    maswe:
+    - MASWE-0024
+    owasp_mobile: M3
+    cwe:
+    - CWE-384
+    tools:
+    - webauthn test harness
+    - Burp Suite
+    - mitmproxy
+    summary: The session identifier is not rotated after a successful passkey assertion, so a pre-set (attacker-known) session id remains valid post-login (session fixation).
+    manual_test: >-
+      set a known pre-auth session id, complete a passkey assertion, and
+      confirm the id is not rotated afterwards.
+    detail: >-
+      The session id set before login is kept unchanged after a successful
+      passkey assertion. An attacker who planted that pre-auth id still knows it
+      afterward, so their copy is now an authenticated session. A correct flow
+      rotates the session id on authentication. Scope: the FIDO2 signature is
+      assumed valid (signature verification is out of scope); the flaw
+      demonstrated is in the relying-party authorization logic on top of it.
+    references:
+    - 'OWASP: Session Fixation|https://owasp.org/www-community/attacks/Session_fixation'
+  - id: passkey_thirdparty_pairing_authz
+    title: Third-Party Authenticator / Cross-Device Pairing Authorization Missing
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-2
+    - MASVS-PLATFORM-1
+    maswe:
+    - MASWE-0020
+    owasp_mobile: M3
+    cwe:
+    - CWE-862
+    - CWE-306
+    tools:
+    - webauthn test harness
+    - mitmproxy
+    tools_android:
+    - adb
+    - drozer
+    tools_ios:
+    - xcrun simctl openurl
+    - idb
+    summary: Third-party authenticator / cross-device passkey-entry pairing is approved without a permission/authorization check, so an unauthorized app or device is paired for passkey entry (Android CVE-2025-48640 / BLE passkey-entry CVE-2026-65935 class).
+    manual_test: >-
+      approve a third-party authenticator / cross-device pairing and confirm
+      no permission check gates it (Android CVE-2025-48640 / BLE
+      CVE-2026-65935 class).
+    detail: >-
+      The pairing broker auto-approves any third-party authenticator or
+      cross-device requester with no allow-list, permission, or consent check, so
+      a rogue app or device is paired for passkey entry. A correct broker
+      requires an allow-listed requester, the pairing permission, and explicit
+      user consent. Scope: the FIDO2 signature is assumed valid (signature
+      verification is out of scope); the flaw demonstrated is in the
+      relying-party authorization logic on top of it.
+    references:
+    - CVE-2025-48640 (Android third-party passkey pairing approval)|https://nvd.nist.gov/vuln/detail/CVE-2025-48640
+    - CVE-2026-65935 (Silicon Labs BLE passkey-entry pairing)|https://nvd.nist.gov/vuln/detail/CVE-2026-65935
+    - CVE-2024-9956 (Chrome Android WebAuthn LPE)|https://nvd.nist.gov/vuln/detail/CVE-2024-9956
+  - id: insecure_credential_manager
+    platform_note: Android Credential Manager / autofill; iOS AutoFill Credential Provider.
+    title: Insecure Credential Manager / Autofill Integration
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-2
+    - MASVS-STORAGE-2
+    - MASVS-PLATFORM-3
+    mastg_v2:
+    - MASTG-TEST-0393
+    - MASTG-TEST-0313
+    - MASTG-TEST-0316
+    mastg_demo:
+    - MASTG-DEMO-0151
+    maswe:
+    - MASWE-0019
+    owasp_mobile: M3
+    cwe:
+    - CWE-522
+    - CWE-524
+    display_tags:
+    - CWE-522
+    - CWE-524
+    - MASVS-AUTH-2
+    tools:
+    - objection
+    - frida
+    - r2frida
+    tools_android:
+    - adb
+    - drozer
+    - jadx
+    - apktool
+    tools_ios:
+    - ipsw
+    - class-dump
+    - Hopper
+    summary: 'Misuses the Android Credential Manager / iOS AutoFill: associates credentials with an unverified domain and lets autofill cache secrets into insecure fields.'
+    manual_test: >-
+      confirm a credential is associated with an unverified domain (no Digital
+      Asset Links / AASA) and autofills into an insecure field.
+    detail: >-
+      The app associates saved credentials with any requested domain without
+      verifying the Digital Asset Links (Android) or AASA (iOS) association, so a
+      phishing look-alike domain is trusted like the real one. It then autofills
+      the secret into a plaintext, keyboard-cacheable field. A secure integration
+      only associates with cryptographically verified domains and requires secure
+      fields.
+  - id: username_enumeration
+    title: Username Enumeration
+    difficulty: easy
+    masvs:
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M3
+    cwe:
+    - CWE-204
+    - CWE-203
+    tools:
+    - Burp Suite
+    - mitmproxy
+    summary: Login returns distinguishable responses for valid vs invalid usernames, allowing account enumeration.
+    manual_test: >-
+      compare login responses for valid vs invalid usernames and confirm they
+      differ.
+    detail: >-
+      The login helper returns "No such user" for an unknown account but "Invalid
+      password" for a real account with the wrong password. By observing which
+      error comes back, an attacker enumerates valid usernames without knowing
+      any password. A secure login returns a single generic error for every
+      failure.
+  - id: insecure_password_reset_token
+    title: Insecure Password Reset Token / Magic Link
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-CRYPTO-1
+    maswe:
+    - MASWE-0012
+    owasp_mobile: M3
+    cwe:
+    - CWE-640
+    - CWE-330
+    display_tags:
+    - CWE-640
+    - CWE-330
+    - MASVS-AUTH-1
+    tools:
+    - Burp Suite
+    - mitmproxy
+    - token analysis
+    summary: Password-reset tokens / magic-login links are short, predictable, and never expire.
+    manual_test: >-
+      request multiple reset tokens/magic links and confirm they are short,
+      related/predictable, and never expire.
+    detail: >-
+      Reset tokens are short 6-digit values from a seeded, non-secure Random()
+      and never expire. Two tokens issued in sequence are related and guessable,
+      and an old link works forever, so an attacker can brute-force or predict a
+      valid reset link and take over accounts. A secure token is long, drawn from
+      a cryptographically secure random source, and has a short TTL.
+  - id: developer_backdoor
+    title: Developer Backdoor
+    difficulty: easy
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-CODE-2
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M3
+    cwe:
+    - CWE-798
+    - CWE-489
+    - CWE-912
+    display_tags:
+    - CWE-798
+    - CWE-489
+    - MASVS-CODE-2
+    tools:
+    - strings
+    - r2
+    - MobSF
+    - JEB
+    tools_android:
+    - jadx
+    - apktool
+    - apkleaks
+    tools_ios:
+    - ipsw
+    - class-dump
+    - Hopper
+    - otool
+    summary: A hidden hardcoded backdoor credential / debug route grants privileged access.
+    manual_test: >-
+      decompile with jadx / `strings` and recover the hardcoded backdoor
+      credential or debug route.
+    detail: >-
+      Alongside normal login, the authenticator special-cases a hidden,
+      hardcoded "dev_backdoor" master credential that immediately grants admin.
+      The check runs on the real username and password you enter, so anyone who
+      reads the shipped binary with standard reverse-engineering tools
+      (jadx/strings on Android, class-dump/nm/strings on iOS) recovers the
+      credential and bypasses authentication entirely. The
+      secure authenticator drops the special case and only honors real accounts,
+      so the same backdoor credential is denied. Production builds must never
+      ship debug or master backdoors.
+  - id: cross_app_otp_credential_leak
+    title: Cross-App OTP / Credential Leak
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-2
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0366
+    - MASTG-TEST-0364
+    - MASTG-TEST-0374
+    mastg_demo:
+    - MASTG-DEMO-0130
+    - MASTG-DEMO-0128
+    - MASTG-DEMO-0138
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M3
+    cwe:
+    - CWE-926
+    - CWE-200
+    - CWE-927
+    display_tags:
+    - CWE-926
+    - CWE-200
+    - MASVS-PLATFORM-1
+    tools: []
+    tools_android:
+    - jadx
+    - adb
+    - drozer
+    tools_ios:
+    - idevicesyslog
+    - idb
+    attack_inputs:
+    - malicious companion app
+    summary: A co-resident malicious app can read OTP codes / auth deep links from this app via an unprotected exported component, broadcast, or shared clipboard (Authenticator CVE-2026-26123 class).
+    manual_test: >-
+      from a second (unprivileged) app, read the OTP / `myauth://` auth deep
+      link this app publishes on an unprotected exported
+      component/broadcast/clipboard (Authenticator CVE-2026-26123 class);
+      confirm an allowlisted/signature-checked channel yields nothing.
+    detail: >-
+      A 2FA authenticator publishes the current OTP and an auth deep link
+      (myauth://login?otp=...&token=...) to an unprotected cross-app surface.
+      Because that surface has no access control, any co-resident app can harvest
+      the second factor, the Authenticator CVE-2026-26123 class. On Android this
+      is an unprotected broadcast the companion com.dvma.attacker app receives;
+      the iOS peer is a shared pasteboard, custom URL scheme, or App Group. A
+      secure design gates delivery behind a signature-level permission (or a
+      private, per-recipient channel) so an arbitrary app gets nothing.
+    real_demo:
+      summary: On Android this fires an unprotected broadcast from DVMA's native MethodChannel, and a separate, unprivileged app (`com.dvma.attacker` - its own package/UID/signing key) harvests the OTP + auth deep link across the process boundary. The permission-scoped button gates delivery behind a signature-level permission, so the differently-signed attacker gets nothing.
+      command: |
+        automation/scripts/demo.sh otp
+      observe: "Watch the attacker harvest it: `adb logcat -s DVMA-ATTACKER:*` (or the pulled file `attacker_captures.txt`). CI-grade regression: `DvmaCrossAppOtpLeakTest`. See companion/dvma-attacker/README.md."
+  - id: deeplink_authentication_bypass
+    title: Deep Link Authentication Bypass
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0371
+    - MASTG-TEST-0370
+    mastg_demo:
+    - MASTG-DEMO-0134
+    - MASTG-DEMO-0135
+    maswe:
+    - MASWE-0018
+    - MASWE-0029
+    owasp_mobile: M3
+    cwe:
+    - CWE-288
+    - CWE-306
+    - CWE-939
+    display_tags:
+    - CWE-288
+    - CWE-306
+    - MASVS-AUTH-1
+    tools: []
+    tools_android:
+    - adb
+    - drozer
+    - jadx
+    tools_ios:
+    - xcrun simctl openurl
+    - idb
+    summary: A deep link routes directly to an authenticated screen/function, skipping the app-lock / login gate the normal navigation path enforces (Groww CVE-2026-12065 class).
+    manual_test: >-
+      fire a deep link (e.g. `dvma://wallet`) via adb while logged out and
+      confirm it reaches the authenticated screen without the app-lock/login
+      gate (Groww CVE-2026-12065 class).
+    detail: >-
+      A deep link routes directly to an authenticated screen (dvma://wallet,
+      dvma://transfer), skipping the app-lock / login gate the normal in-app
+      navigation enforces. The vulnerable router honors the requested target
+      without checking whether the user is authenticated, so an attacker-
+      triggered link opens the wallet and returns its balance while the user is
+      logged out (the Groww CVE-2026-12065 class). The secure router enforces the
+      auth gate and redirects protected routes to login.
+  - id: biometric_authorization_not_bound
+    platform_note: Android BiometricPrompt CryptoObject; iOS LAContext / Secure Enclave.
+    title: Biometric Result Not Bound to Operation
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-2
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0327
+    - MASTG-TEST-0266
+    - MASTG-TEST-0267
+    mastg_demo:
+    - MASTG-DEMO-0090
+    maswe:
+    - MASWE-0020
+    owasp_mobile: M3
+    cwe:
+    - CWE-287
+    - CWE-1021
+    - CWE-306
+    display_tags:
+    - CWE-287
+    - CWE-1021
+    - MASVS-AUTH-2
+    tools:
+    - frida
+    - objection
+    - r2frida
+    - frida-trace
+    summary: The biometric prompt returns a boolean success that is NOT cryptographically bound to the specific operation being authorized (no CryptoObject / no signed server challenge), and the prompt UI can be overlaid, so a success is replayed or spoofed onto a different sensitive operation - authorization is decoupled from the biometric event (Android BiometricPrompt overlay CVE-2025-48528 class). Distinct from a trivially-bypassed prompt.
+    manual_test: >-
+      capture a biometric success for operation A and replay it to authorize
+      operation B (the boolean isn't tied to the operation), and overlay the
+      prompt; verify the secure build binds the result to a per-operation
+      signed challenge (CryptoObject) so it only authorizes the exact op
+      (Android biometric-overlay CVE-2025-48528 class).
+    detail: >-
+      The biometric prompt returns a bare boolean success that is not
+      cryptographically bound to the operation being authorized (no CryptoObject,
+      no signed server challenge). A success the user gave for a low-value
+      operation (view balance) is therefore replayed to authorize a different
+      sensitive operation (a wire transfer), and an overlaid prompt lets an
+      attacker capture or redirect the result (Android BiometricPrompt
+      CVE-2025-48528 class). The secure path binds the biometric result to a
+      per-operation signed challenge, so the token only authorizes the exact
+      operation it was minted for.
+    references:
+    - CVE-2025-48528 (Android biometric UI overlay)|https://nvd.nist.gov/vuln/detail/CVE-2025-48528
+  - id: credential_provider_release_authorization
+    platform_note: Android CredentialManager provider; iOS ASCredentialProviderExtension.
+    title: Credential Provider Release Authorization Failure
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-2
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M3
+    cwe:
+    - CWE-863
+    - CWE-284
+    - CWE-346
+    display_tags:
+    - CWE-863
+    - CWE-346
+    - MASVS-AUTH-2
+    tools:
+    - frida
+    - objection
+    - r2frida
+    tools_android:
+    - adb
+    - drozer
+    - jadx
+    tools_ios:
+    - ipsw
+    - class-dump
+    - Hopper
+    summary: A credential-provider / password-manager extension releases a stored credential or passkey assertion without validating the calling app / relying-party identity or the user-verification state, so a spoofed calling app or a relying-party mismatch obtains a credential (or enumerates entries) - the credential-release boundary, broader than WebAuthn itself (Apple/Android credential-provider extension authorization class).
+    manual_test: >-
+      from a spoofed calling app / with an rpId mismatch (and no
+      user-verification) extract a stored credential/passkey and enumerate
+      entries; verify the secure build binds the calling app to the rpId,
+      requires UV, and refuses enumeration (credential- provider
+      release-boundary class).
+    detail: >-
+      A credential-provider / password-manager extension releases a stored
+      credential or passkey assertion without validating the calling app
+      identity, the relying-party (rpId) binding, or the user-verification state.
+      A spoofed calling app therefore extracts the bank credential (rpId or
+      calling-app mismatch, no user verification), and the API even lets any
+      caller enumerate the stored relying parties. The secure path validates that
+      the calling app is bound to the rpId (asset-links / associated-domains
+      style), requires user verification, and refuses enumeration.
+    references:
+    - 'Apple: Passkey use in web browsers (credential provider release boundary)|https://developer.apple.com/documentation/authenticationservices/passkey-use-in-web-browsers'
+  - id: multi_account_isolation_failure
+    platforms:
+    - android
+    - ios
+    title: Multi-Account Isolation Failure
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-STORAGE-1
+    maswe:
+    - MASWE-0024
+    owasp_mobile: M3
+    cwe:
+    - CWE-459
+    - CWE-200
+    - CWE-613
+    display_tags:
+    - CWE-459
+    - CWE-200
+    - MASVS-AUTH-1
+    tools:
+    - mitmproxy
+    - sqlite3
+    - frida
+    tools_android:
+    - adb
+    - run-as
+    tools_ios:
+    - objection
+    - plutil
+    attack_inputs:
+    - account switch sequence
+    summary: Switching accounts (or logging out and into account B) does not fully clear account A's cached credentials, tokens, keys, or on-disk/in-memory data, so account B can read or act with account A's data - and old sessions survive logout. The isolation boundary between accounts on one device fails. The secure path scopes all per-account state to the active principal and wipes/rotates it on switch and logout.
+    manual_test: >-
+      log into account A, switch to / log into account B, and confirm A's
+      cached token/data is still readable (and A's session survives logout);
+      verify the secure build scopes per-account state to the active principal
+      and wipes/rotates it on switch and logout.
+    detail: >-
+      Account A signs in on the device, then the user switches to account B.
+      Because the app caches credentials in process-wide slots and never tears
+      them down, switching (or logging out and back in) does not clear account
+      A's token, private note, or live session, so account B reads and acts with
+      account A's data, and A's old session survives. Each account's token is
+      also persisted to the SharedPreferences XML and not purged on switch, so
+      account A's token lingers on disk and is pullable with adb. The secure path
+      scopes all per-account state to the active principal and wipes or rotates
+      it, including the on-disk token, on every switch and logout.
+    references:
+    - 'OWASP MASVS-AUTH-1 / MASTG: session termination and per-account data isolation|https://mas.owasp.org/MASTG/tests/'
+  - id: identity_credential_presentation_binding
+    platforms:
+    - android
+    - ios
+    platform_note: Android Identity Credential / Credentials API (mDL/mDoc) and iOS Wallet identity / ISO 18013-5 proximity presentation.
+    title: Identity Credential / mDL Presentation Not Bound
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-2
+    - MASVS-AUTH-3
+    maswe:
+    - MASWE-0020
+    owasp_mobile: M3
+    cwe:
+    - CWE-345
+    - CWE-384
+    - CWE-290
+    display_tags:
+    - CWE-345
+    - CWE-290
+    - MASVS-AUTH-2
+    tools:
+    - mitmproxy
+    tools_ios:
+    - ipsw
+    - Hopper
+    attack_inputs:
+    - replayed mDL presentation
+    - spoofed holder metadata
+    summary: 'A verifier accepts a digital-identity presentation (mDL/mDoc via Identity Credential / ISO 18013-5, or a Wallet identity assertion) without binding it to THIS session: it trusts caller-supplied holder metadata, skips the session-transcript / origin check, does not enforce user-presence, and confuses issuer identity with holder identity - so a replayed or relayed presentation from another session is accepted. Distinct from passkey/WebAuthn: this is the digital-ID / proximity-credential stack. The secure path verifies the issuer signature, binds the device-signed response to the session transcript + reader nonce, and requires fresh user presence.'
+    manual_test: >-
+      replay a captured mDL/mDoc (Identity Credential / ISO 18013-5) or Wallet
+      identity presentation from a different session and confirm the verifier
+      accepts it on issuer signature alone; verify the secure build binds the
+      device signature to this session's transcript + reader nonce and
+      requires fresh user presence.
+    detail: >-
+      A verifier accepts a digital-identity presentation (mDL/mDoc via Identity
+      Credential / ISO 18013-5) without binding it to this session: it checks
+      only the issuer signature and trusts holder claims, skipping the
+      session-transcript / reader-nonce check and user-presence. So a
+      presentation captured from another session is replayed and accepted. This
+      is the digital-ID / proximity-credential stack, distinct from
+      passkey/WebAuthn. The secure path additionally requires the device
+      signature to be over the current session transcript plus reader nonce and
+      requires fresh user presence, so the replay is rejected while a genuine
+      in-session presentation is accepted.
+    references:
+    - 'ISO/IEC 18013-5 mDL + Android Identity Credential: session-transcript binding|https://developer.android.com/privacy-and-security/security-identity-credential'
+    tools_android:
+    - jadx

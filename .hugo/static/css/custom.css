@@ -1,0 +1,430 @@
+/* DVMA docs custom styling.
+   Mirrors the in-app design system: dark-first, hazard-amber accent, an
+   information-carrying severity scale, and monospace for technical metadata.
+
+   The theme-variable overrides below force the Relearn theme's accent/link
+   colors to DVMA hazard-amber for BOTH the dark and light variants, so the
+   site never shows the theme's stock green/blue chrome. */
+
+:root,
+:root[data-r-theme-variant="relearn-dark"],
+:root[data-r-theme-variant="relearn-light"] {
+  --PRIMARY-color: #E8A33D !important;
+  --PRIMARY-HOVER-color: #F4B85A !important;
+  --SECONDARY-color: #E8A33D !important;
+  --SECONDARY-HOVER-color: #F4B85A !important;
+  --ACCENT-color: #E8A33D !important;
+  --ACCENT-HOVER-color: #F4B85A !important;
+  --CODE-INLINE-color: #E8A33D !important;
+
+  /* DVMA palette (also used by the badges/chips below). */
+  --dvma-accent: #E8A33D;
+  --dvma-critical: #D64545;
+  --dvma-high: #E8843D;
+  --dvma-medium: #D9B23D;
+  --dvma-low: #4A90A4;
+  --dvma-info: #6B7280;
+  --dvma-pass: #4FA97E;
+}
+
+/* Sidebar branding: white title + white menu, amber active state. */
+.logo-title,
+.logo-title a {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px;
+}
+
+.R-sidebarmenu,
+.R-sidebarmenu a,
+.R-sidebarmenu li {
+  color: #e6ece8 !important;
+}
+
+.R-sidebarmenu li.active > a {
+  color: #E8A33D !important;
+}
+
+.R-shortcutmenu-homelinks li.active > a,
+.R-shortcutmenu li.active > a,
+.R-shortcutmenu-homelinks a:hover,
+.R-shortcutmenu a:hover {
+  color: #ffffff !important;
+  background: transparent !important;
+  text-decoration: underline !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 3px !important;
+}
+
+#R-sidebar .collapsible-menu label i.fa-chevron-right,
+#R-sidebar .collapsible-menu label i.fa-chevron-down {
+  color: #e6ece8 !important;
+}
+#R-sidebar input[type="checkbox"]:checked + label i.fa-chevron-right,
+#R-sidebar input[type="checkbox"]:checked + label i.fa-chevron-down,
+#R-sidebar .collapsible-menu label:hover i {
+  color: #E8A33D !important;
+}
+
+/* Center the page H1 and allow inline heading icons. */
+#R-body-inner > .flex-block-wrapper article h1 {
+  justify-content: center;
+  text-align: center;
+  text-transform: none;
+  font-size: 2.25rem;
+}
+#R-body-inner > .flex-block-wrapper article h1 .heading-icon img {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Home hero image (README logo) - center it. */
+.dvma-hero {
+  display: block;
+  margin: 0.5rem auto 1.5rem auto;
+  max-width: 480px;
+  width: 100%;
+  height: auto;
+}
+
+/* --- Severity + difficulty badges rendered by build_docs.py --------------- */
+.dvma-badge {
+  display: inline-block;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  vertical-align: middle;
+}
+.dvma-easy   { color: var(--dvma-low); }
+.dvma-medium { color: var(--dvma-medium); }
+.dvma-hard   { color: var(--dvma-high); }
+.dvma-cat-tag { color: var(--dvma-info); }
+
+/* Vuln ids render as raw technical data. */
+.vuln-id,
+code.vuln-id {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.82em;
+}
+
+/* --- Framework chips: clickable CWE / MASVS / MASTG / OWASP links ---------- */
+.framework-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.framework-chip {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.75em;
+  font-family: var(--CODE-font, monospace);
+  text-decoration: none !important;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.framework-chip:hover {
+  text-decoration: none !important;
+  filter: brightness(1.15);
+}
+.framework-chip-cwe {
+  background: rgba(74, 144, 164, 0.12);
+  color: #4A90A4 !important;
+  border-color: rgba(74, 144, 164, 0.35);
+}
+.framework-chip-owasp {
+  background: rgba(232, 163, 61, 0.12);
+  color: #E8A33D !important;
+  border-color: rgba(232, 163, 61, 0.35);
+}
+.framework-chip-masvs {
+  background: rgba(45, 212, 191, 0.12);
+  color: #2dd4bf !important;
+  border-color: rgba(45, 212, 191, 0.35);
+}
+.framework-chip-mastg {
+  background: rgba(168, 85, 247, 0.12);
+  color: #a855f7 !important;
+  border-color: rgba(168, 85, 247, 0.35);
+}
+.framework-chip-maswe {
+  background: rgba(225, 100, 120, 0.12);
+  color: #e16478 !important;
+  border-color: rgba(225, 100, 120, 0.35);
+}
+.framework-chip-empty {
+  color: var(--MAIN-TEXT-color, #6b7280);
+  opacity: 0.4;
+  font-size: 0.85em;
+}
+
+/* MASTG tests/demos grouped by platform on the detail page: a weakness has a
+   separate iOS and Android test at different URLs, so each platform gets its
+   own labeled line of chips. */
+.framework-plat-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.framework-plat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+/* The platform label reuses the .platform-chip pill (so it shares the chip
+   font + color); a fixed min-width keeps the iOS / Android pills aligned and
+   text-align centers the shorter "iOS" within that width. */
+.framework-plat-label {
+  flex: 0 0 auto;
+  min-width: 4.75em;
+  text-align: center;
+}
+/* Neutral styling for the rare "Generic" (platform-less) group. */
+.platform-chip-generic {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8 !important;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+.framework-chip-none {
+  font-size: 0.75em;
+  font-style: italic;
+  opacity: 0.45;
+}
+
+/* Platform chips: Android / iOS (a shared module shows both). */
+.platform-chip {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.75em;
+  font-family: var(--CODE-font, monospace);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.platform-chip-android {
+  background: rgba(61, 220, 132, 0.12);
+  color: #3ddc84 !important;
+  border-color: rgba(61, 220, 132, 0.35);
+}
+.platform-chip-ios {
+  background: rgba(120, 170, 255, 0.12);
+  color: #78aaff !important;
+  border-color: rgba(120, 170, 255, 0.35);
+}
+
+/* --- Detail-page navigation ---------------------------------------------- */
+/* Top crumb: one-click return to the category the finding belongs to. */
+.detail-crumb {
+  margin: 0 0 0.75rem;
+  font-size: 0.85em;
+}
+.detail-crumb a {
+  color: #E8A33D !important;
+  text-decoration: none !important;
+}
+.detail-crumb a:hover {
+  text-decoration: underline !important;
+}
+/* Footer: previous | back-to-category | next, paging through the category.
+   Grid with three equal columns so the center (back-to-category) button is
+   always dead-center even when prev or next is absent. */
+.detail-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(232, 163, 61, 0.25);
+}
+.detail-nav > a {
+  padding: 8px 12px;
+  border: 1px solid rgba(232, 163, 61, 0.25);
+  border-radius: 6px;
+  font-size: 0.85em;
+  text-decoration: none !important;
+  background: rgba(232, 163, 61, 0.06);
+  color: var(--MAIN-TEXT-color) !important;
+}
+.detail-nav a:hover {
+  border-color: rgba(232, 163, 61, 0.6);
+  background: rgba(232, 163, 61, 0.12);
+}
+.detail-nav-prev {
+  text-align: left;
+}
+.detail-nav-up {
+  text-align: center;
+  font-weight: 600;
+  color: #E8A33D !important;
+}
+.detail-nav-next {
+  text-align: right;
+}
+/* Empty prev/next placeholders just hold their grid column (no box). */
+.detail-nav > span:empty {
+  border: none;
+  background: none;
+}
+
+/* Dashboard category table: center numeric columns. */
+.dvma-table td:not(:first-child),
+.dvma-table th:not(:first-child) {
+  text-align: center;
+}
+
+table td code,
+table th code {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+/* --- Wider content + non-wrapping ID column ------------------------------- */
+/* The vuln ids are long snake_case slugs; without this the theme's default
+   content width squeezes the ID column so it wraps one character per line.
+   Widen the main article area and keep ids/chips on one line. */
+#R-body .flex-block-wrapper {
+  max-width: calc(var(--INTERNAL-MAIN-MAX-width) - var(--INTERNAL-MENU-L-width) + 30rem) !important;
+  width: 96% !important;
+}
+
+/* Category vulnerability tables: keep the ID (and its <code>) on one line and
+   give the standards columns room. */
+.pattern-table table td:nth-child(2),
+.pattern-table table th:nth-child(2) {
+  white-space: nowrap;
+  text-align: center;
+}
+/* Vertically center every cell so short columns (ID, chips) line up with the
+   middle of tall rows instead of sinking to the bottom. */
+.pattern-table table td,
+.pattern-table table th {
+  vertical-align: middle;
+}
+.pattern-table table td:nth-child(2) code,
+.pattern-table table th:nth-child(2) code {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+/* Framework chips never fragment mid-token. */
+.framework-chip {
+  word-break: normal;
+  overflow-wrap: normal;
+}
+/* Center the standards/metadata columns (everything after Vulnerability + ID)
+   in the category tables; keep the name and id columns left-aligned. */
+.pattern-table table td:nth-child(n + 3),
+.pattern-table table th:nth-child(n + 3) {
+  text-align: center;
+  vertical-align: middle;
+}
+/* The chip groups are flex containers, so also center the pills within. */
+.pattern-table table td:nth-child(n + 3) .framework-chips {
+  justify-content: center;
+}
+
+/* Collapsible <details> (e.g. the per-OS install blocks on Getting Started).
+   The relearn theme hides the native disclosure triangle, so we draw our own
+   caret and make the summary read clearly as a clickable control. */
+#R-body details {
+  border: 1px solid var(--MENU-SECTION-SEPARATOR-color, rgba(232, 163, 61, 0.25));
+  border-radius: 6px;
+  margin: 0.6rem 0;
+  background: rgba(232, 163, 61, 0.04);
+}
+#R-body details > summary {
+  cursor: pointer;
+  padding: 0.55rem 0.8rem;
+  list-style: none;            /* hide default marker (Firefox/Safari) */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  user-select: none;
+}
+#R-body details > summary::-webkit-details-marker {
+  display: none;               /* hide default marker (Chrome/WebKit) */
+}
+/* Our caret: right-pointing when closed, rotates down when open. */
+#R-body details > summary::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0.32em 0 0.32em 0.5em;
+  border-color: transparent transparent transparent var(--PRIMARY-color, #E8A33D);
+  transition: transform 0.15s ease;
+}
+#R-body details[open] > summary::before {
+  transform: rotate(90deg);
+}
+#R-body details[open] > summary {
+  border-bottom: 1px solid var(--MENU-SECTION-SEPARATOR-color, rgba(232, 163, 61, 0.25));
+}
+#R-body details > summary:hover {
+  color: var(--PRIMARY-color, #E8A33D);
+}
+/* Give the revealed content a little breathing room from the border. */
+#R-body details > *:not(summary) {
+  margin-left: 0.8rem;
+  margin-right: 0.8rem;
+}
+
+/* Manual Testing: interactive checklist (see static/js/custom.js). */
+.dvma-checklist-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0 1.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--MENU-SECTION-SEPARATOR-color, rgba(232, 163, 61, 0.25));
+  border-radius: 6px;
+  background: rgba(232, 163, 61, 0.06);
+}
+.dvma-checklist-progress {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.dvma-checklist-reset {
+  margin-left: auto;
+  cursor: pointer;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--PRIMARY-color, #E8A33D);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--PRIMARY-color, #E8A33D);
+  font: inherit;
+  font-size: 0.85em;
+}
+.dvma-checklist-reset:hover {
+  background: var(--PRIMARY-color, #E8A33D);
+  color: var(--MAIN-BG-color, #0D1210);
+}
+/* Enabled checklist boxes read as clickable; checked items are de-emphasized. */
+#R-body li > input[type="checkbox"]:not([disabled]) {
+  cursor: pointer;
+}
+#R-body li > input[type="checkbox"]:checked {
+  opacity: 0.85;
+}
+/* Space out checklist rows so the long Manual Testing list isn't squished.
+   Primary hook is the .dvma-check-item class added by custom.js; the :has()
+   selector is a progressive-enhancement fallback for no-JS/older engines. */
+#R-body li.dvma-check-item,
+#R-body li:has(> input[type="checkbox"]) {
+  margin-top: 0.55rem;
+  margin-bottom: 0.55rem;
+  line-height: 1.5;
+}
+#R-body li.dvma-check-item > input[type="checkbox"],
+#R-body li:has(> input[type="checkbox"]) > input[type="checkbox"] {
+  margin-right: 0.5rem;
+}

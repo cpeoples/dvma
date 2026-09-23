@@ -1,0 +1,16 @@
+# Template for local/CI Android release signing.
+#
+# Copy to android/key.properties (gitignored) to build a *signed* release APK/AAB.
+# Absent by default: the release build then falls back to the debug key so
+# `flutter run --release` still works. Tagged-release CI writes this file from
+# repo secrets before building (see .github/workflows/release.yml).
+#
+# Create a keystore once (never commit the .jks):
+#   keytool -genkey -v -keystore dvma-release.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias dvma
+#
+# storeFile is resolved relative to the android/ project dir.
+storeFile=dvma-release.jks
+storePassword=CHANGE_ME
+keyAlias=dvma
+keyPassword=CHANGE_ME

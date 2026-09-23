@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>NSCameraUsageDescription</key>
+		<string>DVMA uses the camera only for the optional QR-scanning training demos.</string>
+		<key>NSUserTrackingUsageDescription</key>
+		<string>DVMA declares tracking usage only for the App Tracking Transparency training demo.</string>
+		<!-- NSFaceIDUsageDescription: declares Face ID use for the biometric demos
+	     (insecure_biometric_prompt / biometric_authorization_not_bound). Its
+	     presence is what a static plist scan keys on. -->
+		<key>NSFaceIDUsageDescription</key>
+		<string>DVMA uses Face ID only for the biometric-authentication training demos.</string>
+		<!-- cleartext_traffic_allowed / weak_tls_config (CWE-319, MASTG ATS):
+	     INTENTIONALLY VULNERABLE. NSAllowsArbitraryLoads=true disables App
+	     Transport Security app-wide, so cleartext HTTP and weak TLS are
+	     permitted. A hardened app omits this and keeps ATS on. -->
+		<key>NSAppTransportSecurity</key>
+		<dict>
+			<key>NSAllowsArbitraryLoads</key>
+			<true/>
+		</dict>
+		<!-- custom_url_scheme_authorization / deeplink_url_scheme_hijack
+	     (CWE-939): a claimable custom URL scheme with no verification. Any
+	     sibling app can register "dvma://" too and race the OS routing. A
+	     static plist scan enumerates CFBundleURLSchemes. -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>com.dvma.deeplink</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>dvma</string>
+				</array>
+			</dict>
+		</array>
+		<!-- insecure_backups / insecure_sdcard_external_storage (CWE-538):
+	     UIFileSharingEnabled + LSSupportsOpeningDocumentsInPlace expose the
+	     app's Documents container over iTunes/Finder file sharing, so on-device
+	     artifacts are extractable without a jailbreak. INTENTIONALLY VULNERABLE. -->
+		<key>UIFileSharingEnabled</key>
+		<true/>
+		<key>LSSupportsOpeningDocumentsInPlace</key>
+		<true/>
+		<key>CADisableMinimumFrameDurationOnPhone</key>
+		<true/>
+		<key>CFBundleDevelopmentRegion</key>
+		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<key>CFBundleDisplayName</key>
+		<string>Dvma</string>
+		<key>CFBundleExecutable</key>
+		<string>$(EXECUTABLE_NAME)</string>
+		<key>CFBundleIdentifier</key>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<key>CFBundleInfoDictionaryVersion</key>
+		<string>6.0</string>
+		<key>CFBundleName</key>
+		<string>dvma</string>
+		<key>CFBundlePackageType</key>
+		<string>APPL</string>
+		<key>CFBundleShortVersionString</key>
+		<string>$(FLUTTER_BUILD_NAME)</string>
+		<key>CFBundleSignature</key>
+		<string>????</string>
+		<key>CFBundleVersion</key>
+		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>LSRequiresIPhoneOS</key>
+		<true/>
+		<key>UIApplicationSceneManifest</key>
+		<dict>
+			<key>UIApplicationSupportsMultipleScenes</key>
+			<false/>
+			<key>UISceneConfigurations</key>
+			<dict>
+				<key>UIWindowSceneSessionRoleApplication</key>
+				<array>
+					<dict>
+						<key>UISceneClassName</key>
+						<string>UIWindowScene</string>
+						<key>UISceneConfigurationName</key>
+						<string>flutter</string>
+						<key>UISceneDelegateClassName</key>
+						<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+						<key>UISceneStoryboardFile</key>
+						<string>Main</string>
+					</dict>
+				</array>
+			</dict>
+		</dict>
+		<key>UIApplicationSupportsIndirectInputEvents</key>
+		<true/>
+		<key>UILaunchStoryboardName</key>
+		<string>LaunchScreen</string>
+		<key>UIMainStoryboardFile</key>
+		<string>Main</string>
+		<key>UISupportedInterfaceOrientations</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>UISupportedInterfaceOrientations~ipad</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationPortraitUpsideDown</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>UIStatusBarHidden</key>
+		<true/>
+		<key>UIViewControllerBasedStatusBarAppearance</key>
+		<false/>
+	</dict>
+</plist>

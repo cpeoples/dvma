@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  TEMPLATE ONLY - the real ios/ExportOptions.plist is NOT committed.
+
+  The team id is a secret, not a committed literal (same rule as
+  ios/Flutter/Signing.xcconfig). At release time .github/workflows/release.yml
+  generates ios/ExportOptions.plist from the `IOS_TEAM_ID` secret (and the
+  optional `IOS_EXPORT_METHOD` repo variable), then scrubs it. To build a signed
+  IPA locally, copy this file to ios/ExportOptions.plist and fill in your team:
+
+    cp ios/ExportOptions.plist.example ios/ExportOptions.plist
+    # then set <teamID> to your 10-char Apple Team ID and pick a method:
+    #   development -> free/paid; installs on registered UDIDs only
+    #   ad-hoc      -> PAID; the usual distributable Releases IPA
+    #   app-store   -> PAID; App Store upload only
+
+  See docs/getting-started/ci-and-releases.md.
+-->
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>development</string>
+    <key>teamID</key>
+    <string>YOUR_TEAM_ID</string>
+    <key>signingStyle</key>
+    <string>manual</string>
+    <key>stripSwiftSymbols</key>
+    <true/>
+    <key>uploadBitcode</key>
+    <false/>
+    <key>uploadSymbols</key>
+    <false/>
+</dict>
+</plist>

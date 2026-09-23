@@ -1,0 +1,4 @@
+{
+  "_comment": "SINGLE SOURCE OF TRUTH for the DVMA app package / bundle id. Change app_id HERE ONLY, then run `dart run tool/sync_app_id.dart` to propagate it everywhere (Android applicationId/namespace, iOS bundle id, config/flavors/*.json DVMA_APP_ID, and the companion attacker's Dvma.PKG). Android Gradle also reads this file directly at configure time.",
+  "app_id": "com.dvma"
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  DVMA network security configuration - INTENTIONALLY VULNERABLE.
+  FOR AUTHORIZED SECURITY-TRAINING USE ONLY.
+
+  Static analysers (MobSF, jadx, aapt) flag this file directly:
+    * cleartextTrafficPermitted="true"  -> cleartext_traffic_allowed (CWE-319)
+    * <certificates src="user"/>        -> weak_tls_config: trusts user-added
+      CAs, so any proxy/attacker CA the user installs MITMs the app
+      (ssl_pinning_bypass is trivial with no pinning declared).
+  A hardened config would omit cleartext and trust only "system".
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

@@ -1,0 +1,8 @@
+{
+  "_comment": "Android emulator profile used by CI (reactivecircus/android-emulator-runner). Kept here so the emulator target is centralized under config/ and referenced from .github/workflows/ci.yml.",
+  "api_level": 34,
+  "target": "google_apis",
+  "arch": "x86_64",
+  "profile": "pixel_6",
+  "emulator_options": "-no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none"
+}

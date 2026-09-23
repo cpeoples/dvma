@@ -1,0 +1,164 @@
+# DVMA registry category: network
+# Append new modules here, then run: dart run tool/generate.dart
+
+network:
+  title: Insecure Communication
+  owasp_mobile: M5
+  description: Cleartext traffic, weak TLS, bypassable pinning, accept-all trust managers, and WebViews that ignore network security config.
+  vulnerabilities:
+  - id: cleartext_traffic_allowed
+    title: Cleartext Traffic Allowed
+    difficulty: easy
+    masvs:
+    - MASVS-NETWORK-1
+    mastg_v2:
+    - MASTG-TEST-0235
+    - MASTG-TEST-0237
+    - MASTG-TEST-0238
+    - MASTG-TEST-0322
+    - MASTG-TEST-0233
+    mastg_demo:
+    - MASTG-DEMO-0083
+    maswe:
+    - MASWE-0026
+    owasp_mobile: M5
+    cwe:
+    - CWE-319
+    tools:
+    - mitmproxy
+    - Wireshark
+    - Burp Suite
+    summary: App sends requests over plain HTTP; cleartext permitted in manifest/plist.
+    manual_test: >-
+      confirm plain HTTP under mitmproxy.
+    detail: >-
+      The app posts credentials to an http:// endpoint, and the platform config
+      permits cleartext (usesCleartextTraffic=true on Android,
+      NSAllowsArbitraryLoads on iOS). It fires a real request; point it at your
+      mitmproxy or listener and the credentials appear verbatim on the wire.
+    references:
+    - 'Plain Text, Plain Risks: HTTP Inclusion in Android WebViews at Scale (USENIX Security 2026)|https://www.usenix.org/conference/usenixsecurity26/presentation/beer'
+  - id: weak_tls_config
+    title: Weak / Outdated TLS Config
+    difficulty: medium
+    masvs:
+    - MASVS-NETWORK-1
+    mastg_v2:
+    - MASTG-TEST-0217
+    - MASTG-TEST-0218
+    - MASTG-TEST-0348
+    mastg_demo:
+    - MASTG-DEMO-0110
+    maswe:
+    - MASWE-0026
+    owasp_mobile: M5
+    cwe:
+    - CWE-326
+    - CWE-327
+    tools:
+    - testssl.sh
+    - mitmproxy
+    - Wireshark
+    summary: Negotiates deprecated TLS versions / weak cipher suites.
+    manual_test: >-
+      run `testssl.sh` against the endpoint.
+    detail: >-
+      The TLS client permits deprecated protocol versions (SSLv3, TLS 1.0) and
+      weak cipher suites (RC4, 3DES, export grade), with no forward secrecy or
+      downgrade protection, and skips certificate validation. It makes a real TLS
+      connection to your capture host and reports the actual negotiated protocol
+      and certificate; run testssl.sh against the endpoint to confirm the weak
+      options a downgrade attacker would force.
+  - id: ssl_pinning_bypass
+    title: SSL Pinning (Trivially Bypassable)
+    difficulty: hard
+    masvs:
+    - MASVS-NETWORK-2
+    mastg_v2:
+    - MASTG-TEST-0244
+    - MASTG-TEST-0242
+    maswe:
+    - MASWE-0028
+    owasp_mobile: M5
+    cwe:
+    - CWE-295
+    tools:
+    - frida
+    - objection
+    - r2frida
+    - mitmproxy
+    - Burp Suite
+    summary: Pinning is implemented but disabled by a client-side flag / easy hook.
+    manual_test: >-
+      bypass pinning with objection/Frida and MITM.
+    detail: >-
+      Certificate pinning is implemented but gated behind a mutable client-side
+      flag and a single checkPin() function. An attacker flips the flag or hooks
+      the function to return true (frida or objection), and a Burp/mitmproxy
+      certificate sails through. It makes a real TLS connection: toggle pinning
+      off via the hook and the MITM certificate is accepted; leave it on and the
+      handshake is rejected.
+  - id: accept_all_trust_manager
+    title: Accept-All TrustManager
+    difficulty: medium
+    masvs:
+    - MASVS-NETWORK-1
+    - MASVS-NETWORK-2
+    mastg_v2:
+    - MASTG-TEST-0282
+    - MASTG-TEST-0283
+    mastg_demo:
+    - MASTG-DEMO-0054
+    - MASTG-DEMO-0055
+    maswe:
+    - MASWE-0027
+    owasp_mobile: M5
+    cwe:
+    - CWE-295
+    display_tags:
+    - CWE-295
+    - MASVS-NETWORK-2
+    tools:
+    - mitmproxy
+    - Burp Suite
+    - testssl.sh
+    summary: Custom certificate callback accepts any certificate.
+    manual_test: >-
+      confirm any cert is accepted under MITM.
+    detail: >-
+      The app installs an HttpClient.badCertificateCallback that returns true for
+      every certificate and host, the Dart equivalent of an empty
+      X509TrustManager. It makes an HTTPS request with validation off, so a
+      Burp/mitmproxy self-signed certificate is accepted and the "TLS" traffic is
+      intercepted.
+  - id: insecure_webview_networking
+    title: Insecure WebView Networking
+    difficulty: medium
+    masvs:
+    - MASVS-NETWORK-1
+    - MASVS-PLATFORM-2
+    mastg_v2:
+    - MASTG-TEST-0237
+    - MASTG-TEST-0238
+    - MASTG-TEST-0235
+    maswe:
+    - MASWE-0026
+    owasp_mobile: M5
+    cwe:
+    - CWE-319
+    - CWE-295
+    display_tags:
+    - CWE-319
+    - CWE-295
+    - MASVS-NETWORK-1
+    tools:
+    - mitmproxy
+    - Burp Suite
+    summary: WebView ignores network security config and loads mixed/cleartext content.
+    manual_test: >-
+      confirm mixed/cleartext content loads.
+    detail: >-
+      The embedded WebView enables mixed content and loads a real http:// page.
+      An on-path attacker (or your proxy) sees the cleartext request and can
+      inject JavaScript into the response. The load below is a webview_flutter
+      request against your capture host.

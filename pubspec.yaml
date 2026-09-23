@@ -1,0 +1,100 @@
+name: dvma
+description: "DVMA - Damn Vulnerable Mobile App. A single-codebase, intentionally vulnerable Flutter app for mobile security training and pentest practice. FOR AUTHORIZED TRAINING USE ONLY."
+# Prevent accidental publication to pub.dev - this is intentionally insecure software.
+publish_to: 'none'
+
+# App version. Bump build number (+N) on every training release.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.0
+
+# Runtime dependencies. State management is deliberately kept simple (provider)
+# so the vulnerable code paths stay easy to read and audit during training.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Simple state management - intentionally lightweight (no Riverpod/Bloc).
+  provider: ^6.1.2
+
+  # Theming: DVMA ships a deliberately-designed Material 3 theme (dark-first,
+  # hazard-amber accent, severity color scale, Inter + JetBrains Mono type).
+  # google_fonts pulls Inter (UI/body) and JetBrains Mono (technical data)
+  # without bundling binaries. See lib/core/theme/.
+  google_fonts: ^6.2.1
+
+  # Insecure-by-demo storage. shared_preferences backs the plaintext storage
+  # vulns; path_provider exposes app dirs for temp-file / backup leakage demos.
+  shared_preferences: ^2.3.2
+  path_provider: ^2.1.4
+
+  # Crypto module: crypto provides MD5/SHA1 (weak hashing demos); encrypt +
+  # pointycastle back the DES/RC4/AES-ECB and hardcoded-key/IV demos.
+  crypto: ^3.0.5
+  encrypt: ^5.0.3
+  pointycastle: ^3.9.1
+
+  # Auth module: JWT alg:none / weak-secret demos.
+  dart_jsonwebtoken: ^2.14.0
+  local_auth: ^2.3.0
+
+  # Network module: cleartext HTTP, weak TLS, bypassable pinning demos.
+  http: ^1.2.2
+
+  # Platform module: WebView JS bridge, deep links, QR scanning demos.
+  webview_flutter: ^4.10.0
+  # Android WebView platform impl: needed to set MixedContentMode (real
+  # cleartext/mixed-content load in the insecure_webview_networking demo).
+  webview_flutter_android: ^4.13.0
+  app_links: ^6.3.2
+  mobile_scanner: ^7.4.0
+
+  # Storage/platform: clipboard leakage + archive (zip-slip / path traversal).
+  archive: ^4.0.0
+
+  sqflite: ^2.3.3+2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Automated end-to-end regression suite (one flow per module).
+  integration_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+  # Used by tool/generate.dart to parse config/registry/ (meta.yaml +
+  # categories/<id>.yaml) into lib/vulnerability_registry.dart.
+  yaml: ^3.1.2
+
+  # Generates native launcher icons from assets/branding/dvma_icon.png.
+  # Config lives in config/flutter_launcher_icons.yaml. Regenerate with:
+  #   dart run flutter_launcher_icons -f config/flutter_launcher_icons.yaml
+  flutter_launcher_icons: ^0.14.1
+
+  # Generates the native (Android + iOS) branded splash / launch screen.
+  # Config lives in config/flutter_native_splash.yaml. Regenerate with:
+  #   dart run flutter_native_splash:create --path config/flutter_native_splash.yaml
+  # 2.4.7+ compiles its Android module against a modern SDK (API 35), which is
+  # required for AGP 9 (older 2.4.x hardcoded compileSdk 31 and failed the AAR
+  # metadata check). It depends on image/archive 4.x, which matches our archive
+  # ^4.0.0 pin above.
+  flutter_native_splash: ^2.4.7
+
+flutter:
+  uses-material-design: true
+
+  # Bundled assets used by intentionally-vulnerable demos (tampered on-device
+  # model file, malicious update package, seeded QR payloads, etc.).
+  assets:
+    - config/flavors/
+    - assets/ai_ml/
+    - assets/platform/
+    - assets/branding/
+    # Real Apple App-Site-Association file loaded + parsed at runtime by the
+    # universal_link_aasa_confusion and app_clip_invocation_injection demos.
+    - assets/aasa/

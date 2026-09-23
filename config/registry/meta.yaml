@@ -1,0 +1,116 @@
+# DVMA registry METADATA + category order.
+# Vulnerabilities live in config/registry/categories/<id>.yaml, OR, when a
+# category grows large, in config/registry/categories/<id>/*.yaml shards that
+# merge in sorted filename order (see the `platform/` directory).
+# Assembled at build time by tool/generate.dart and .hugo/scripts/build_docs.py.
+
+meta:
+  standards:
+  - OWASP Mobile Top 10 (2024)
+  - OWASP MASVS v2 / MASTG
+  - OWASP Top 10 for LLM/GenAI Applications (2025)
+  - OWASP Top 10 for Agentic AI Applications (2025)
+  disclaimer: Every entry below is an INTENTIONAL vulnerability for authorized training and pentest practice only. Do not deploy DVMA to production infrastructure or app stores.
+  tool_links:
+    # Disassemblers / decompilers (cross-platform + native)
+    Ghidra: https://ghidra-sre.org/
+    Hopper: https://www.hopperapp.com/
+    IDA: https://hex-rays.com/ida-pro
+    r2: https://rada.re/n/
+    r2frida: https://github.com/nowsecure/r2frida
+    r2ghidra: https://github.com/radareorg/r2ghidra
+    jadx: https://github.com/skylot/jadx
+    JEB: https://www.pnfsoftware.com/jeb/
+    apktool: https://apktool.org/
+    class-dump: https://github.com/nygard/class-dump
+    dsdump: https://github.com/DerekSelander/dsdump
+    otool: https://developer.apple.com/library/archive/documentation/Performance/Conceptual/CodeFootprint/Articles/MachOOverview.html
+    nm: https://sourceware.org/binutils/docs/binutils/nm.html
+    ipsw: https://blacktop.github.io/ipsw/
+    jtool2: https://newosxbook.com/tools/jtool.html
+    strings: https://sourceware.org/binutils/docs/binutils/strings.html
+    # Dynamic instrumentation
+    frida: https://frida.re/
+    frida-trace: https://frida.re/docs/frida-trace/
+    objection: https://github.com/sensepost/objection
+    # Android device / platform tooling
+    adb: https://developer.android.com/tools/adb
+    adb logcat: https://developer.android.com/tools/logcat
+    adb backup: https://developer.android.com/tools/adb#backup
+    adb shell screencap: https://developer.android.com/tools/adb#screencap
+    adb shell screenrecord: https://developer.android.com/tools/adb#screenrecord
+    run-as: https://developer.android.com/tools/adb#pm
+    dumpsys: https://developer.android.com/tools/dumpsys
+    drozer: https://github.com/ReversecLabs/drozer
+    apksigner: https://developer.android.com/tools/apksigner
+    aapt: https://developer.android.com/tools/aapt2
+    scrcpy: https://github.com/Genymobile/scrcpy
+    chrome://inspect: https://developer.chrome.com/docs/devtools/remote-debugging/
+    apkleaks: https://github.com/dwisiswant0/apkleaks
+    Quick Share: https://www.android.com/quick-share/
+    gradle/Maven inspection: https://docs.gradle.org/current/userguide/dependency_management.html
+    # iOS / Apple device tooling
+    idb: https://fbidb.io/
+    ifuse: https://libimobiledevice.org/
+    afcclient: https://libimobiledevice.org/
+    idevicesyslog: https://libimobiledevice.org/
+    idevicescreenshot: https://libimobiledevice.org/
+    idevicebackup2: https://libimobiledevice.org/
+    ideviceinstaller: https://github.com/libimobiledevice/ideviceinstaller
+    keychain-dumper: https://github.com/ptoomey3/Keychain-Dumper
+    plutil: https://keith.github.io/xcode-man-pages/plutil.1.html
+    codesign: https://developer.apple.com/library/archive/technotes/tn2206/_index.html
+    xcrun simctl openurl: https://developer.apple.com/documentation/xcode/simulator
+    QuickTime screen recording: https://support.apple.com/guide/quicktime-player/record-your-screen-qtp97b08e666/mac
+    Console.app: https://support.apple.com/guide/console/welcome/mac
+    Siri: https://developer.apple.com/documentation/sirikit
+    AirDrop: https://support.apple.com/en-us/104970
+    CocoaPods/SPM: https://www.swift.org/documentation/package-manager/
+    # Debuggers
+    lldb: https://lldb.llvm.org/
+    gdb: https://www.sourceware.org/gdb/
+    # Network / TLS interception
+    Burp Suite: https://portswigger.net/burp
+    mitmproxy: https://mitmproxy.org/
+    Wireshark: https://www.wireshark.org/
+    testssl.sh: https://testssl.sh/
+    # All-in-one / data stores
+    MobSF: https://mobsf.github.io/docs/
+    sqlite3: https://www.sqlite.org/cli.html
+    # LLM / agentic red-teaming (test the model/endpoint, not the app binary)
+    garak: https://github.com/NVIDIA/garak
+    promptfoo: https://promptfoo.dev
+    MCP scanner: https://github.com/peter-hendy/mcp-server-scanner-extension
+    # Credentials / crypto
+    hashcat: https://hashcat.net/hashcat/
+    jwt_tool: https://github.com/ticarpi/jwt_tool
+    webauthn test harness: https://github.com/duo-labs/py_webauthn
+    # Supply chain / SBOM
+    osv-scanner: https://google.github.io/osv-scanner/
+    dependency-check: https://owasp.org/www-project-dependency-check/
+    cyclonedx: https://cyclonedx.org/tool-center/
+    pubspec review: https://dart.dev/tools/pub/pubspec
+    # Fuzzing / media / misc
+    radamsa: https://gitlab.com/akihe/radamsa
+    ImageMagick: https://imagemagick.org/
+    accessibility inspector: https://developer.android.com/guide/topics/ui/accessibility/testing
+    # On-device / CLI utilities (often pushed to a device via adb)
+    xxd: https://linux.die.net/man/1/xxd
+    nc: https://nc110.sourceforge.io/
+    tcpdump: https://www.tcpdump.org/
+category_order:
+- storage
+- crypto
+- auth
+- network
+- platform
+- code_quality
+- resilience
+- supply_chain
+- privacy
+- input_validation
+- ai_ml
+- agentic
+- ai_mobile
+- native_bridge
+- system_provider

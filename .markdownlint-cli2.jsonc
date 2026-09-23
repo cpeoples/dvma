@@ -1,0 +1,26 @@
+// markdownlint-cli2 config for DVMA's hand-authored Markdown (README, CONTRIBUTING,
+// docs/**). Generated per-module pages under docs/vulnerabilities/ and the Hugo
+// build output are excluded in .pre-commit-config.yaml. Prose docs use long lines,
+// inline HTML, and duplicate headings across sibling pages, so the noisy rules are
+// relaxed; what remains catches genuinely broken Markdown.
+{
+  "config": {
+    "default": true,
+    "MD013": false,
+    "MD033": false,
+    "MD024": { "siblings_only": true },
+    "MD041": false,
+    "MD029": false,
+    "MD036": false,
+    "MD012": false,
+    "MD046": false,
+    "MD028": false
+  },
+  "globs": ["README.md", "CONTRIBUTING.md", "docs/**/*.md"],
+  "ignores": [
+    "docs/vulnerabilities/**",
+    "**/node_modules/**",
+    ".hugo/**",
+    "build/**"
+  ]
+}

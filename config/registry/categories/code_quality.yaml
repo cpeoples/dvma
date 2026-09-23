@@ -1,0 +1,186 @@
+# DVMA registry category: code_quality
+# Append new modules here, then run: dart run tool/generate.dart
+
+code_quality:
+  title: Code Quality & Build Config
+  owasp_mobile: M7
+  description: Debuggable release builds, no obfuscation, verbose error handling that leaks stack traces, a bundled dependency with a known CVE, and an optional native buffer-overflow demo.
+  vulnerabilities:
+  - id: debuggable_release_build
+    title: Debuggable Release Build
+    difficulty: easy
+    masvs:
+    - MASVS-RESILIENCE-4
+    - MASVS-CODE-2
+    mastg_v2:
+    - MASTG-TEST-0226
+    - MASTG-TEST-0261
+    mastg_demo:
+    - MASTG-DEMO-0040
+    - MASTG-DEMO-0036
+    maswe:
+    - MASWE-0063
+    owasp_mobile: M7
+    cwe:
+    - CWE-489
+    display_tags:
+    - CWE-489
+    - MASVS-RESILIENCE-4
+    tools:
+    - MobSF
+    tools_android:
+    - aapt
+    - jadx
+    - adb
+    - apktool
+    tools_ios:
+    - ideviceinstaller
+    - codesign
+    - ipsw
+    summary: Release build ships with debuggable=true / debug flags left on.
+    manual_test: >-
+      confirm `debuggable=true` in the release APK.
+    detail: >-
+      A build that ships debuggable (Android android:debuggable="true" / iOS
+      get-task-allow entitlement) lets anyone attach a debugger to inspect
+      memory, set breakpoints, and dump secrets at runtime. This screen reports
+      the real build mode (from kReleaseMode) rather than a hardcoded claim: a
+      debug or profile build is debuggable, so attaching a debugger works.
+  - id: no_obfuscation
+    title: No Obfuscation / Symbol Stripping
+    difficulty: easy
+    masvs:
+    - MASVS-RESILIENCE-3
+    mastg_v2:
+    - MASTG-TEST-0051
+    - MASTG-TEST-0093
+    maswe:
+    - MASWE-0059
+    owasp_mobile: M7
+    cwe:
+    - CWE-656
+    tools:
+    - strings
+    - r2
+    - Ghidra
+    - JEB
+    tools_android:
+    - jadx
+    - apktool
+    tools_ios:
+    - ipsw
+    - nm
+    - class-dump
+    - Hopper
+    - otool
+    summary: Ships with readable symbols; no ProGuard/R8/Dart obfuscation.
+    manual_test: >-
+      confirm readable symbols with jadx/`nm`.
+    detail: >-
+      The build applies no obfuscation (no R8/ProGuard on Android or symbol
+      stripping on iOS, no Flutter --obfuscate), so class and method names, URLs,
+      and even key material are readable with standard reverse-engineering tools
+      (jadx/strings on Android, class-dump/nm/strings on iOS), making reverse
+      engineering trivial. This is a build-config property; the sample shows
+      recoverable symbols.
+  - id: verbose_error_handling
+    title: Verbose Error Handling (leaked stack traces)
+    difficulty: easy
+    masvs:
+    - MASVS-CODE-2
+    mastg_v2:
+    - MASTG-TEST-0041
+    - MASTG-TEST-0084
+    maswe:
+    - MASWE-0061
+    owasp_mobile: M7
+    cwe:
+    - CWE-209
+    - CWE-497
+    tools:
+    - adb logcat
+    - jadx
+    summary: Error screens render full stack traces and internal details.
+    manual_test: >-
+      trigger an error path (bad input, forced failure) and confirm the
+      response/UI/log leaks a stack trace, SQL, or internal path instead of a
+      generic message.
+    detail: >-
+      When something fails, the app dumps the full exception, stack trace, and
+      internal context (DB DSN, config paths, API key) straight to the screen,
+      mapping out the internals for an attacker. Users should see a generic
+      message; details belong in server-side logs only.
+  - id: vulnerable_dependencies
+    title: Vulnerable Dependencies (known CVE)
+    difficulty: medium
+    masvs:
+    - MASVS-CODE-3
+    mastg_v2:
+    - MASTG-TEST-0272
+    - MASTG-TEST-0273
+    - MASTG-TEST-0274
+    - MASTG-TEST-0275
+    mastg_demo:
+    - MASTG-DEMO-0050
+    - MASTG-DEMO-0051
+    maswe:
+    - MASWE-0044
+    owasp_mobile: M7
+    cwe:
+    - CWE-1104
+    - CWE-937
+    tools:
+    - osv-scanner
+    - dependency-check
+    - cyclonedx
+    - MobSF
+    summary: Bundles a library version with a documented known CVE.
+    manual_test: >-
+      run osv-scanner / dependency-check.
+    detail: >-
+      The project pins a JWT verification library a full major version behind the
+      latest release in pubspec.yaml and never updates it. Running
+      security-relevant dependencies behind current releases is a real
+      supply-chain risk. Run `dart pub outdated` (it lists the pin as outdated) or
+      OSV-Scanner on pubspec.lock to flag it. The entries below mirror the real
+      tree.
+  - id: native_code_memory_bugs
+    title: Native Code Memory Bugs (JNI buffer overflow)
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0043
+    - MASTG-TEST-0086
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M7
+    cwe:
+    - CWE-120
+    - CWE-787
+    tools:
+    - r2
+    - r2ghidra
+    - Ghidra
+    - JEB
+    - frida
+    - r2frida
+    - IDA
+    tools_android:
+    - gdb
+    - jadx
+    tools_ios:
+    - lldb
+    - Hopper
+    - class-dump
+    summary: A small JNI/FFI routine with a classic unbounded copy (optional/high-effort).
+    manual_test: >-
+      analyze the native lib in Ghidra; trigger the overflow.
+    detail: >-
+      A JNI routine does strcpy into a fixed 16-byte stack buffer with no bounds
+      check, so oversized input overwrites the adjacent canary (a classic stack
+      smash). A second routine frees a heap record and keeps using it through the
+      dangling pointer before freeing it again (use-after-free plus double free).
+      On a device both run real compiled C in libdvma_native.so, inspectable with
+      Ghidra/gdb/frida, and report what was clobbered; off-device the strcpy falls
+      back to an offline model so the demo stays testable.

@@ -1,0 +1,298 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.47.2"
+
+jobs:
+  # Fastest feedback: formatting, lint, schema, secret scan, shellcheck,
+  # actionlint - the whole pre-commit suite. If this fails, run the same locally
+  # with `pre-commit run --all-files` (or `make check-all`).
+  lint-and-validate:
+    name: Lint & validate (pre-commit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run pre-commit
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+
+  analyze-and-test:
+    name: Analyze & unit/widget tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Regenerate registry & router (must be in sync with the YAML)
+        run: |
+          dart run tool/generate.dart
+          if ! git diff --quiet -- lib/vulnerability_registry.dart lib/core/module_router.dart automation/vuln_manifest.json; then
+            echo "::error::Generated files are out of date. Run 'dart run tool/generate.dart' (or 'make generate') and commit the result."
+            git --no-pager diff -- lib/vulnerability_registry.dart lib/core/module_router.dart automation/vuln_manifest.json
+            exit 1
+          fi
+
+      - name: Verify app-id sync (config/app.json is the source of truth)
+        run: dart run tool/sync_app_id.dart --check
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Unit & widget tests
+        run: flutter test
+
+  integration-android:
+    name: Integration tests (Android emulator)
+    runs-on: ubuntu-latest
+    # The reactivecircus action needs KVM; enable hardware acceleration.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Emulator profile is centralized in config/ci/android_emulator.json.
+      # The values below must match that file.
+      - name: Run integration tests on emulator
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          cores: 2
+          emulator-boot-timeout: 900
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            flutter build apk --debug
+            flutter test integration_test
+
+  # Compile smoke: builds a debug APK so a compile/tree-shake/resource
+  # regression is caught even though signed release artifacts are still
+  # produced only on tagged releases (see .github/workflows/release.yml).
+  build-smoke-android:
+    name: Build smoke (debug APK)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build debug APK (compile smoke, unsigned)
+        run: flutter build apk --debug
+
+  # Compiles the standalone companion attacker app. Proves a contributor has not
+  # broken the cross-app demo harness. Reproduce locally with `make companion`.
+  build-companion:
+    name: Build companion attacker (APK)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cache Gradle
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+
+      - name: Assemble companion debug APK
+        working-directory: companion/dvma-attacker
+        run: ./gradlew :app:assembleDebug --console=plain
+
+  # Compiles the Android instrumented (UiAutomator) walk without a device, so a
+  # contributor cannot break the androidTest harness undetected. Full execution
+  # needs an emulator + the built app and runs on demand / in the capture
+  # scripts. Reproduce locally with `make androidtest`.
+  compile-androidtest:
+    name: Compile Android instrumentation harness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Cache Gradle
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+
+      - name: Compile androidTest sources (no device)
+        working-directory: android
+        run: ./gradlew :app:assembleDebugAndroidTest -PdvmaAndroidTest=true --console=plain
+
+  # Compiles the iOS XCUITest harness (Runner + RunnerUITests) without signing
+  # or a device, so a break in the XCUITest harness is caught. macOS runners are
+  # slower/costlier, so this runs on push to main and manual dispatch (not on
+  # every PR); the Android instrumentation compile above is the per-PR native gate.
+  # Reproduce locally with:
+  #   flutter build ios --simulator --debug
+  #   xcodebuild build-for-testing -workspace ios/Runner.xcworkspace \
+  #     -scheme Runner -destination 'generic/platform=iOS Simulator' \
+  #     CODE_SIGNING_ALLOWED=NO
+  compile-xcuitest-ios:
+    name: Compile iOS XCUITest harness (no codesign)
+    runs-on: macos-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Prepare iOS build (pods + Flutter artifacts)
+        run: flutter build ios --simulator --debug
+
+      - name: Compile Runner + RunnerUITests (build-for-testing, no codesign)
+        working-directory: ios
+        run: |
+          xcodebuild build-for-testing \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO | tail -40
+
+  # Optional deeper iOS coverage; macOS runners are slower/costlier so these are
+  # on-demand (workflow_dispatch), not required PR gates.
+  integration-ios:
+    name: Integration tests (iOS simulator)
+    runs-on: macos-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Boot simulator
+        run: xcrun simctl boot "iPhone 15" || true
+
+      - name: Run integration tests on simulator
+        run: flutter test integration_test -d "iPhone 15"
+
+  build-smoke-ios:
+    name: Build smoke (iOS, no codesign)
+    runs-on: macos-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS (compile smoke, no code signing)
+        run: flutter build ios --debug --no-codesign

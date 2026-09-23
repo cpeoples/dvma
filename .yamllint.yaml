@@ -1,0 +1,16 @@
+# yamllint config for the DVMA registry (config/registry/**). Registry entries
+# carry long prose (summaries, details, references), so line-length is a warning
+# rather than an error, and document-start markers are not required.
+extends: default
+
+rules:
+  line-length: disable
+  document-start: disable
+  truthy:
+    check-keys: false
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: disable
+  indentation:
+    spaces: 2
+    indent-sequences: false

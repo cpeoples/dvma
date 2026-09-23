@@ -1,0 +1,16 @@
+<svg width="256" height="256" viewBox="66 26 124 194" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DVMA header mark (dark)">
+  <title>DVMA header mark (dark)</title>
+  <defs>
+    <linearGradient id="amber" x1="128" y1="70" x2="128" y2="210" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F4B85A"/><stop offset="1" stop-color="#D98A24"/>
+    </linearGradient>
+  </defs>
+  <!-- Tight crop of the mark only (no glow/padding) so it fills the header box.
+       Dark-theme variant: brightened phone body/outline so it reads on a dark bar. -->
+  <rect x="82" y="36" width="92" height="150" rx="18" fill="#33413A" stroke="#9FB6AA" stroke-width="3.5"/>
+  <rect x="118" y="46" width="20" height="4" rx="2" fill="#9FB6AA"/>
+  <path d="M128 92 L188 200 Q193 210 182 210 L74 210 Q63 210 68 200 Z"
+        fill="url(#amber)" stroke="#FFCE86" stroke-width="2.5" stroke-opacity="0.7" stroke-linejoin="round"/>
+  <rect x="121.5" y="132" width="13" height="38" rx="6.5" fill="#0C110F"/>
+  <circle cx="128" cy="188" r="7" fill="#0C110F"/>
+</svg>

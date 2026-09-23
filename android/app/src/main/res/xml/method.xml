@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    custom_keyboard_input_interception (CWE-522 / CWE-359): input-method metadata
+    for DvmaKeyboardService. Declaring this makes DVMA a REAL, user-enablable
+    custom keyboard (Settings > Languages & input > On-screen keyboards). Once
+    enabled + selected, the IME sees every keystroke typed in other apps,
+    including secure/password fields. FOR AUTHORIZED SECURITY-TRAINING USE ONLY.
+-->
+<input-method xmlns:android="http://schemas.android.com/apk/res/android"
+    android:supportsSwitchingToNextInputMethod="true">
+    <subtype
+        android:label="@string/dvma_ime_label"
+        android:imeSubtypeMode="keyboard" />
+</input-method>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- custom_keyboard_input_interception: label shown for DVMA's training
+         custom keyboard / InputMethodService in the system IME picker. -->
+    <string name="dvma_ime_label">DVMA Training Keyboard</string>
+    <!-- accessibility_service_privilege_abuse: description shown for DVMA's
+         training AccessibilityService in Settings > Accessibility. -->
+    <string name="dvma_a11y_description">DVMA training accessibility service (intentionally over-privileged for security research).</string>
+    <!-- remoteviews_widget_action_injection: label for DVMA's training widget. -->
+    <string name="dvma_widget_label">DVMA Training Widget</string>
+</resources>

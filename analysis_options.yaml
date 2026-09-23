@@ -1,0 +1,5 @@
+# Root analyzer config. All real configuration is centralized under config/;
+# this file just points the Dart analyzer at config/analysis_options.yaml so
+# that the "everything lives in config/" rule holds without breaking the
+# tooling's expectation of a root-level analysis_options.yaml.
+include: config/analysis_options.yaml

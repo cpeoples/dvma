@@ -1,0 +1,29 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID.com.dvma.app"],
+        "components": [
+          {
+            "/": "/promo/summer2026",
+            "comment": "exact benign promo path - safe entry"
+          },
+          {
+            "/": "/account/*",
+            "comment": "OVERLY BROAD: matches /account/resetPassword and every other account path"
+          },
+          {
+            "/": "/*",
+            "comment": "OVERLY BROAD catch-all: any path on the domain opens the app"
+          }
+        ]
+      }
+    ]
+  },
+  "appclips": {
+    "apps": ["TEAMID.com.dvma.Clip"]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.com.dvma.app"]
+  }
+}

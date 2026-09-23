@@ -1,0 +1,27 @@
+# Normalize text line endings to LF in the repo, with explicit exceptions.
+* text=auto eol=lf
+
+# Windows batch files must keep CRLF (the Gradle wrapper's gradlew.bat).
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# The Gradle wrapper: gradlew is an LF shell script; the jar is binary.
+gradlew text eol=lf
+**/gradlew text eol=lf
+gradle-wrapper.jar binary
+**/gradle-wrapper.jar binary
+
+# Binary assets (avoid any EOL/whitespace normalization).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.keystore binary
+*.jks binary
+*.p12 binary

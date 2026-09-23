@@ -1,0 +1,29 @@
+# DVMA analyzer configuration. Canonical copy lives here under config/ (all
+# configuration is centralized). The repo-root analysis_options.yaml simply
+# includes this file so `flutter analyze` picks it up.
+#
+# NOTE: DVMA is intentionally vulnerable software. Several lints that would
+# normally flag the insecure patterns we ship on purpose (avoid_print for the
+# "sensitive data in logs" module, etc.) are relaxed here so that `flutter
+# analyze` stays green in CI without hiding the vulnerabilities themselves.
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - "**/*.g.dart"
+  errors:
+    # Intentional insecure logging (sensitive_data_in_logs module) uses print().
+    avoid_print: ignore
+    # Demos frequently keep TODO-style markers describing the exploit.
+    todo: ignore
+    # Some vuln demos deliberately use deprecated / weak APIs.
+    deprecated_member_use: ignore
+
+linter:
+  rules:
+    # We ship deliberately-weak crypto and insecure defaults; don't fight it.
+    avoid_print: false

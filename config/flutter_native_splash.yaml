@@ -1,0 +1,43 @@
+# flutter_native_splash configuration for DVMA.
+#
+# Centralized here under config/ (all configuration lives under config/). This
+# generates the native Android + iOS launch/splash screens so the brand mark
+# fills the frame instead of the tiny stock Flutter placeholder.
+#
+# Regenerate after changing this file or the source art:
+#   dart run flutter_native_splash:create --path config/flutter_native_splash.yaml
+#
+# Source art is pre-processed (tightly cropped + upscaled + brand background)
+# by tool/build_splash_assets.py so the mark reads large instead of the tiny
+# stock-centered placeholder. The processed images live in
+# assets/branding/splash/. See docs/branding.md.
+flutter_native_splash:
+  # Legacy splash (Android < 12, all iOS): full-bleed brand-background art.
+  # Colors mirror lib/core/theme/dvma_colors.dart (DvmaPalette base tokens).
+  color: "#0D1210"          # DVMA dark green-black base
+  color_dark: "#0D1210"     # keep the brand base in dark mode too
+  image: assets/branding/splash/dvma_splash_dark.png
+  image_dark: assets/branding/splash/dvma_splash_dark.png
+
+  # Light-mode variant (warm off-white paper base from DvmaPalette.light).
+  # Android/iOS light appearance uses these instead of the dark pair above.
+  # (color/image are the default/dark; *_dark keys drive the dark appearance.)
+  # NOTE: DVMA is a dark-first "technical instrument", so the splash is dark in
+  # both modes by design; the light asset is provided for completeness.
+
+  android: true
+  ios: true
+  web: false
+
+  # Fill the whole window on Android so the glow reaches the edges.
+  fullscreen: true
+
+  # Android 12+ uses the platform SplashScreen API: a centered icon on a solid
+  # window background. We hand it a transparent, tightly-cropped mark so the
+  # system draws it large on the brand background.
+  android_12:
+    color: "#0D1210"
+    color_dark: "#0D1210"
+    image: assets/branding/splash/dvma_splash_android12_dark.png
+    image_dark: assets/branding/splash/dvma_splash_android12_dark.png
+    # Branding image (small, bottom-centered) intentionally omitted.

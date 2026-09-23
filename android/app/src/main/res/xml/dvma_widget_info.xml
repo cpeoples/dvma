@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    remoteviews_widget_action_injection (CWE-926 / CWE-862): AppWidget metadata
+    for DvmaWidgetProvider. Declaring this makes DVMA a REAL, placeable
+    home-screen widget whose RemoteViews click action is driven by a mutable
+    PendingIntent carrying attacker-influenceable transfer parameters.
+    FOR AUTHORIZED SECURITY-TRAINING USE ONLY.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="40dp"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/dvma_widget"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen" />

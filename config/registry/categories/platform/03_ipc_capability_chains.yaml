@@ -1,0 +1,856 @@
+# DVMA registry category: platform (shard 03_ipc_capability_chains)
+# MASTG IPC surfaces, Android 17 / iOS 26 capability boundaries, and composition chains.
+# Shards merge in sorted filename order; append within the right shard,
+# then run: dart run tool/generate.dart
+
+platform:
+  title: Improper Platform Usage
+  owasp_mobile: M4
+  description: WebView JS-bridge RCE and file:// access, deep-link/URL-scheme hijack, exported components, content-provider SQLi, pending-intent hijack, tapjacking, over-privilege, push leakage, QR injection, zip-slip, and missing FLAG_SECURE.
+  vulnerabilities:
+  - id: dynamic_broadcast_receiver_exposure
+    platforms:
+    - android
+    title: Dynamic BroadcastReceiver Exposure
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0366
+    mastg_demo:
+    - MASTG-DEMO-0130
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-925
+    - CWE-926
+    - CWE-200
+    display_tags:
+    - CWE-925
+    - CWE-200
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - crafted broadcast
+    summary: 'A runtime-registered receiver (`registerReceiver()` without `RECEIVER_NOT_EXPORTED` / a signature permission) is implicitly exported, so any co-resident app can send it a crafted broadcast to trigger sensitive functionality, or the app receives an untrusted broadcast and leaks data. Distinct from manifest-declared exported receivers: the dynamic registration flags are the boundary (Android MASTG-TEST-0366 class).'
+    manual_test: >-
+      from a co-resident app, send a crafted broadcast to a receiver
+      registered at runtime without `RECEIVER_NOT_EXPORTED` / a signature
+      permission and confirm the sensitive action fires; verify the secure
+      build registers not-exported and drops it.
+    detail: >-
+      A receiver registered at runtime with registerReceiver() but without
+      RECEIVER_NOT_EXPORTED (API 33+) and without a signature permission is
+      implicitly exported. Any co-resident app can then forge a crafted broadcast
+      to drive sensitive functionality, here a promo-apply broadcast that grants
+      store credit. The registration flags are the boundary, distinct from
+      manifest exported receivers (Android MASTG-TEST-0366). On Android, DVMA
+      registers such a runtime receiver and the companion attacker forges the
+      broadcast; this screen reads back what was applied. The secure path
+      registers RECEIVER_NOT_EXPORTED and requires a signature permission the
+      attacker package does not hold, so the forged broadcast is dropped.
+    references:
+    - 'OWASP MASTG-TEST-0366: exported and unprotected broadcast receivers|https://mas.owasp.org/MASTG/tests/android/MASVS-PLATFORM/MASTG-TEST-0366/'
+  - id: privileged_service_binding_exposure
+    platforms:
+    - android
+    title: Privileged Service Binding / Binder Interface Exposure
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0365
+    mastg_demo:
+    - MASTG-DEMO-0129
+    maswe:
+    - MASWE-0018
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-284
+    - CWE-749
+    - CWE-862
+    display_tags:
+    - CWE-284
+    - CWE-862
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    - frida
+    attack_inputs:
+    - malicious companion app
+    summary: An exported/bindable Service exposes a privileged Binder interface (AIDL/Messenger) that any app can `bindService()` to and call without a caller-identity / permission check, so an untrusted client invokes privileged operations or reads state established by another client. The binding model - not just 'service exported' - is the boundary (Android service IPC MASTG-KNOW-0133 class).
+    manual_test: >-
+      `bindService()` from an untrusted package and call a privileged Binder
+      method with no caller check; verify the secure build validates caller
+      identity / a signature permission before returning a usable binder.
+    detail: >-
+      An exported, bindable Service exposes a privileged Binder interface (AIDL or
+      Messenger) that any app can bindService() to and invoke with no
+      caller-identity or permission check. An untrusted client reads a protected
+      secret, elevates its role, and can observe state another client
+      established; the binding model is the boundary (Android service IPC
+      MASTG-KNOW-0133). This is an offline, deterministic simulation. The secure
+      path verifies the caller against a signature-level allowlist before
+      returning a usable binder, refusing the untrusted client.
+    references:
+    - 'OWASP MASTG-KNOW-0133: Android Services (binding as an IPC entry point)|https://mas.owasp.org/MASTG/knowledge/android/MASVS-PLATFORM/MASTG-KNOW-0133/'
+  - id: activity_task_stack_hijacking
+    platforms:
+    - android
+    title: Activity Task-Stack / Affinity Hijacking
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-PLATFORM-3
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-1021
+    - CWE-451
+    - CWE-346
+    display_tags:
+    - CWE-1021
+    - CWE-451
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious activity with matching taskAffinity
+    summary: Loose task affinity / launch modes (`singleTask` + shared `taskAffinity`, allowTaskReparenting) let a malicious Activity insert itself into a trusted app's task/back-stack (StrandHogg-style), so the attacker screen appears inside the victim's flow for phishing / UI-trust confusion. Distinct from tapjacking (this is task-stack placement, not an overlay) (Android task-hijacking class).
+    manual_test: >-
+      launch a malicious Activity that spoofs the victim's `taskAffinity`
+      (StrandHogg-style) and confirm it appears atop the trusted task; verify
+      the secure build uses a unique affinity and disallows reparenting so it
+      lands in its own task.
+    detail: >-
+      Loose task affinity and launch modes (a malicious Activity declaring the
+      victim app's taskAffinity with singleTask or allowTaskReparenting) let the
+      attacker insert itself into a trusted app's task and back-stack. When the
+      user returns to the victim app they are shown the attacker's phishing screen
+      inside the victim flow (StrandHogg). This is task-stack placement, distinct
+      from a drawn tapjacking overlay, simulated offline and deterministically.
+      The secure path enforces a unique per-app affinity and disallows
+      reparenting, forcing the malicious activity into its own task so it can
+      never appear in the victim flow.
+    references:
+    - 'OWASP MASTG: Android task hijacking (taskAffinity / launch-mode abuse)|https://mas.owasp.org/MASTG/tests/'
+  - id: activity_alias_exposure
+    platforms:
+    - android
+    title: Activity-Alias Exposure
+    difficulty: easy
+    masvs:
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0364
+    mastg_demo:
+    - MASTG-DEMO-0128
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-926
+    - CWE-200
+    - CWE-284
+    display_tags:
+    - CWE-926
+    - CWE-284
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    - apktool
+    attack_inputs:
+    - crafted intent to the alias
+    summary: 'A protected/internal Activity is left reachable through an `<activity-alias>` that is `exported=true` (or lacks the target''s permission), so an attacker launches the sensitive Activity via the alias even though the real component appears protected. A manifest-level, deterministic mistake: the alias is a second, unguarded entry point (Android activity-alias exposure class).'
+    manual_test: >-
+      launch a protected Activity through an `<activity-alias>` that is
+      `exported=true` / lacks the target permission; verify the secure alias
+      echoes the target's protection and refuses the external caller.
+    detail: >-
+      A protected internal Activity (not exported, permission-guarded) is left
+      reachable through an activity-alias that is itself exported with no
+      permission. Alias export and permission attributes stand on their own and
+      do not inherit the target's, so an attacker launches the sensitive target
+      through the alias even though the real component looks protected. This is a
+      manifest-level, deterministic misconfiguration simulated offline. The secure
+      path makes the alias echo the target's protection (not exported, same
+      permission), so the external launch is refused.
+    references:
+    - 'OWASP MASTG: exported components and activity-alias entry points|https://mas.owasp.org/MASTG/tests/'
+  - id: platform_version_security_fallback
+    platforms:
+    - android
+    - ios
+    platform_note: An `if (SDK_INT >= X)` / `@available` guard that silently drops to an insecure path on older OS versions.
+    title: Platform-Version Security Fallback
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0245
+    mastg_demo:
+    - MASTG-DEMO-0025
+    maswe:
+    - MASWE-0041
+    owasp_mobile: M8
+    cwe:
+    - CWE-636
+    - CWE-1188
+    - CWE-693
+    display_tags:
+    - CWE-636
+    - CWE-693
+    - MASVS-CODE-4
+    tools:
+    - jadx
+    tools_ios:
+    - ipsw
+    - Hopper
+    attack_inputs:
+    - older-OS runtime
+    summary: A security decision is gated on the OS version (`if (SDK_INT >= X)` / `@available`) and silently falls back to an INSECURE path on older versions - e.g. skipping StrongBox/hardware-key backing, biometric class checks, or a network-security-config protection - so devices below the threshold run without the protection the code appears to provide. The secure path fails closed (refuses the sensitive op) when the platform can't provide the guarantee (Android/iOS version-fallback class, MASTG-TEST-0245).
+    manual_test: >-
+      run on an OS below the feature threshold and confirm the `if (SDK_INT >=
+      X)` guard silently drops to an insecure path (no hardware key backing);
+      verify the secure gate fails closed on the unsupported OS.
+    detail: >-
+      A security decision is gated on the OS version (an SDK_INT or @available
+      check) and silently falls back to an insecure path on older versions. Here,
+      storing a key with hardware backing (StrongBox or the Secure Enclave)
+      requires a newer API level; on an older OS the code quietly stores the key
+      in software or plaintext and proceeds as if it were protected, so devices
+      below the threshold run without the guarantee (MASTG-TEST-0245 class). This
+      is an offline, deterministic simulation. The secure path fails closed, it
+      refuses the sensitive op when the platform cannot provide the hardware
+      guarantee, and stores hardware-backed only on a supported OS.
+    references:
+    - 'OWASP MASTG-TEST-0245: references to platform version APIs (security fallback)|https://mas.owasp.org/MASTG/techniques/android/MASTG-TECH-0013/'
+  - id: default_role_holder_confusion
+    platforms:
+    - android
+    title: Default-Role / Role-Holder Confusion
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-346
+    - CWE-940
+    - CWE-284
+    display_tags:
+    - CWE-346
+    - CWE-940
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious app claiming the role intent-filter
+    summary: The app resolves a system role (default browser / dialer / SMS / wallet / credential provider / NFC handler) with `resolveActivity()` / an implicit intent and TRUSTS whichever app the OS returns, then hands it a sensitive URI / credential / IPC - without verifying the current RoleManager role holder or the target's signature. A co-resident app that registers the matching intent-filter becomes the 'default' and receives the secret. The secure path checks the actual role holder (RoleManager) / pins the package + signature before delegating (Android dynamic-role class).
+    manual_test: >-
+      register a co-resident app for the role intent-filter
+      (browser/dialer/SMS/wallet), confirm the app delegates a secret to
+      whatever `resolveActivity()` returns; verify the secure build checks the
+      actual RoleManager holder and pins package + signature.
+    detail: >-
+      The app resolves a system role (default browser, dialer, SMS, wallet,
+      credential provider, or NFC) with resolveActivity() or an implicit intent
+      and trusts whichever app the OS returns, handing it a sensitive URI or
+      credential, without checking the authoritative RoleManager role holder or
+      pinning the target package and signature. A co-resident app that registers
+      the matching intent-filter with a higher priority becomes the resolved
+      default and receives the secret. On Android, DVMA broadcasts the secret to
+      the resolved default holder and the companion attacker receives it. The
+      secure path consults RoleManager for the real holder and pins package and
+      signature, refusing an unexpected holder.
+    references:
+    - 'Android RoleManager: verifying the current role holder before delegating|https://developer.android.com/reference/android/app/role/RoleManager'
+  - id: persistable_uri_grant_abuse
+    platforms:
+    - android
+    title: Persistent URI-Grant Capability Abuse
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0357
+    mastg_demo:
+    - MASTG-DEMO-0123
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-284
+    - CWE-266
+    - CWE-668
+    display_tags:
+    - CWE-284
+    - CWE-266
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - attacker-controlled content:// URI
+    summary: 'An exported component receives an attacker-controlled `content://` URI carrying `FLAG_GRANT_PERSISTABLE_URI_PERMISSION` and calls `takePersistableUriPermission()`, converting a one-shot, ephemeral grant into a LONG-LIVED capability the attacker''s provider can later swap behind - so a transient read becomes durable, revocation-resistant access. Distinct from ordinary URI-grant abuse: the bug is the PERSISTENCE. The secure path never persists grants for untrusted URIs and re-validates the provider on each use (Android persistable-grant class).'
+    manual_test: >-
+      send an exported component a `content://` URI with
+      `FLAG_GRANT_PERSISTABLE_URI_PERMISSION`, confirm it calls
+      `takePersistableUriPermission()` and the grant survives revocation while
+      the provider swaps data; verify the secure build never persists
+      untrusted grants.
+    detail: >-
+      An exported component receives an attacker-controlled content:// URI
+      carrying FLAG_GRANT_PERSISTABLE_URI_PERMISSION and calls
+      takePersistableUriPermission(), converting a one-shot, intent-scoped grant
+      into a long-lived capability that survives revocation. Because the URI is
+      backed by the attacker's own provider, the attacker can later swap the bytes
+      it serves for the same URI, so a transient read becomes durable, mutable
+      access. The distinguishing bug is the persistence. This is an offline,
+      deterministic simulation. The secure path never persists grants for
+      untrusted authorities and re-validates the provider on each use.
+    references:
+    - 'Android: takePersistableUriPermission and persistable URI grants|https://developer.android.com/reference/android/content/ContentResolver#takePersistableUriPermission(android.net.Uri,%20int)'
+  - id: clipdata_uri_grant_leakage
+    platforms:
+    - android
+    title: ClipData URI-Grant Leakage
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0357
+    mastg_demo:
+    - MASTG-DEMO-0123
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-200
+    - CWE-668
+    - CWE-927
+    display_tags:
+    - CWE-200
+    - CWE-927
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - crafted intent with ClipData content:// URI
+    summary: 'The app attaches a private `content://` URI to an Intent''s `ClipData` (or copies it) together with `FLAG_GRANT_READ_URI_PERMISSION` and fires it to an implicit / untrusted target, unintentionally FORWARDING a read capability for its own provider data to another app. The grant rides silently on the ClipData rather than the data URI. Distinct from clipboard text theft: this leaks a capability, not a value. The secure path sends explicit intents to a pinned package and never grants on ClipData bound for untrusted resolvers (Android ClipData-grant class).'
+    manual_test: >-
+      fire an implicit Intent whose `ClipData` carries a private `content://`
+      URI + `FLAG_GRANT_READ_URI_PERMISSION` and confirm a co-resident
+      resolver can read the private data; verify the secure build sends
+      explicit intents and never grants on untrusted-resolver ClipData.
+    detail: >-
+      The app attaches a private content:// URI (backed by its own provider) to
+      an Intent's ClipData together with FLAG_GRANT_READ_URI_PERMISSION and fires
+      it to an implicit or untrusted target. Android propagates the read grant to
+      every URI in the ClipData, not just the visible data URI, so whichever app
+      catches the intent silently inherits read access to the private provider.
+      The grant rides on the ClipData, which makes it easy to miss, and it leaks
+      a capability, not just a copied value. This is an offline, deterministic
+      simulation. The secure path sends an explicit intent to a pinned package
+      and never grants on ClipData bound for an untrusted resolver.
+    references:
+    - 'Android: ClipData URI grants and FLAG_GRANT_READ_URI_PERMISSION|https://developer.android.com/reference/android/content/Intent#FLAG_GRANT_READ_URI_PERMISSION'
+  - id: file_descriptor_capability_leakage
+    platforms:
+    - android
+    title: File-Descriptor Capability Leakage
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-STORAGE-2
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-402
+    - CWE-668
+    - CWE-200
+    display_tags:
+    - CWE-402
+    - CWE-668
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - frida
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: 'The app passes an open `ParcelFileDescriptor` (via Binder, `openFile()`, or `detachFd()`) to an untrusted caller for a file/socket the caller could not otherwise open, handing over a live capability that bypasses path-based permission checks - the recipient inherits access to whatever the FD points at, including a sensitive DB or a privileged socket. Conceptually different from path traversal: an already-open capability is transferred. The secure path opens FDs read-only to a narrowly-scoped, non-sensitive resource and validates the caller before returning any descriptor (Android FD-passing class).'
+    manual_test: >-
+      bind the service and receive a `ParcelFileDescriptor` for a sensitive DB
+      the caller couldn't open by path; verify the secure build validates the
+      caller and only returns a read-only FD to a narrowly-scoped
+      non-sensitive resource.
+    detail: >-
+      The app opens a resource and passes the live ParcelFileDescriptor (via a
+      Binder transaction, openFile(), or detachFd()) to an untrusted caller for a
+      file or socket the caller could not otherwise open. An open FD is a
+      capability: once handed over it bypasses path-based permission checks and
+      the recipient inherits access to whatever it points at, here a sensitive
+      database. This is conceptually different from path traversal, an
+      already-open capability is transferred wholesale. This is an offline,
+      deterministic simulation. The secure path verifies the caller, refuses
+      sensitive resources, and returns only a read-only FD to a narrowly-scoped
+      non-sensitive resource.
+    references:
+    - 'Android: ParcelFileDescriptor passing and detachFd capability transfer|https://developer.android.com/reference/android/os/ParcelFileDescriptor'
+  - id: ordered_broadcast_result_injection
+    platforms:
+    - android
+    title: Ordered-Broadcast Result Injection
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0366
+    mastg_demo:
+    - MASTG-DEMO-0130
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-925
+    - CWE-349
+    - CWE-348
+    display_tags:
+    - CWE-925
+    - CWE-349
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - high-priority malicious receiver
+    summary: The app sends an ordered broadcast and then TRUSTS the aggregated `getResultData()` / result-extras, but a co-resident receiver registered at a higher priority runs first and calls `setResultData()` / `setResultExtras()` (or `abortBroadcast()`) to poison or suppress the result the app consumes for a security decision. The attacker sits in the middle of the app's own broadcast pipeline. The secure path never trusts ordered-broadcast results for security decisions and protects the broadcast with a signature permission (Android ordered-broadcast class).
+    manual_test: >-
+      register a higher-priority receiver that rewrites the result via
+      `setResultData()` / `abortBroadcast()` and confirm the app trusts the
+      poisoned result; verify the secure build guards the broadcast with a
+      signature permission and never trusts ordered-broadcast results for
+      security decisions.
+    detail: >-
+      The app sends an ordered broadcast and then trusts the aggregated
+      getResultData() and result-extras for a security decision. Ordered
+      broadcasts are delivered in priority order, so a co-resident receiver
+      registered at a higher priority runs first and calls setResultData() or
+      setResultExtras() to poison the result before the app aggregates it. The
+      attacker sits in the middle of the app's own broadcast pipeline, so the
+      "authoritative" result is attacker-controlled. The secure path guards the
+      broadcast with a signature permission (so the attacker receiver never runs)
+      and never uses an ordered-broadcast result as the source of a security
+      decision.
+    references:
+    - 'Android: ordered broadcasts, setResultData / abortBroadcast|https://developer.android.com/reference/android/content/Context#sendOrderedBroadcast(android.content.Intent,%20java.lang.String)'
+  - id: remoteviews_widget_action_injection
+    platforms:
+    - android
+    title: App-Widget / RemoteViews Action Injection
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0381
+    mastg_demo:
+    - MASTG-DEMO-0147
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-926
+    - CWE-862
+    - CWE-863
+    display_tags:
+    - CWE-926
+    - CWE-862
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - crafted widget-config extras
+    summary: An app-widget builds `RemoteViews` whose click/action `PendingIntent` is derived from attacker-influenceable widget-configuration state (config-activity extras, collection-item data), so tapping the widget invokes a privileged in-app action (transfer, unlock, delete) with parameters the attacker chose - external widget state flows into a privileged operation with no re-authorization. The secure path binds only immutable, explicit PendingIntents to fixed actions and re-authenticates destructive operations (Android RemoteViews-action class).
+    manual_test: >-
+      supply attacker widget-config extras that populate a RemoteViews action
+      `PendingIntent` and confirm tapping the widget runs a privileged
+      transfer with attacker params; verify the secure build binds only
+      immutable explicit intents and re-auths destructive ops.
+    detail: >-
+      An app-widget builds RemoteViews whose click PendingIntent is derived from
+      attacker-influenceable widget-config state (config activity extras,
+      collection-item data). Because that external state flows straight into the
+      action and its parameters, tapping the widget invokes a privileged in-app
+      operation (transfer) with an attacker-chosen amount and account and no
+      re-authentication. A mutable or implicit PendingIntent lets the payload be
+      filled in later, turning untrusted widget state into a privileged
+      unauthenticated action. The secure path binds only an immutable, explicit
+      PendingIntent to a fixed safe action and re-authenticates destructive
+      operations, so the attacker extras are ignored.
+    references:
+    - Android App Widgets / RemoteViews and PendingIntent actions|https://developer.android.com/develop/ui/views/appwidgets
+  - id: notification_action_authorization_bypass
+    platforms:
+    - android
+    - ios
+    platform_note: Android Notification action PendingIntent (incl. trampoline via receiver->activity); iOS UNNotificationAction handled without re-auth.
+    title: Notification-Action / Trampoline Authorization Bypass
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0381
+    mastg_demo:
+    - MASTG-DEMO-0147
+    maswe:
+    - MASWE-0018
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-862
+    - CWE-306
+    - CWE-863
+    display_tags:
+    - CWE-862
+    - CWE-306
+    - MASVS-AUTH-1
+    tools:
+    - adb
+    - jadx
+    tools_ios:
+    - ipsw
+    - Hopper
+    attack_inputs:
+    - crafted notification action
+    summary: A notification action fires a `PendingIntent` (or, on Android, trampolines through an exported receiver -> activity) that performs a privileged operation - approve transaction, unlock, delete, change account - WITHOUT a fresh authentication decision, because the intermediate component has weaker authorization semantics than the equivalent in-app UI flow. The action surface becomes an unauthenticated entry point into a sensitive operation. The secure path re-authenticates destructive actions and routes them through an authorization check regardless of entry surface (Android/iOS notification-action class).
+    manual_test: >-
+      trigger a notification action (Android trampoline receiver→activity /
+      iOS UNNotificationAction) that approves a transfer with no fresh auth;
+      verify the secure build routes every surface through the same
+      authorization check and re-auths destructive actions.
+    detail: >-
+      A notification action fires a PendingIntent (on Android trampolining an
+      exported receiver to an activity; on iOS a UNNotificationAction) that
+      performs a privileged operation, approve transfer, unlock, or delete,
+      without a fresh authentication decision. The intermediate component has
+      weaker authorization than the equivalent in-app UI: it simply trusts that
+      the notification originated the request, so the notification action becomes
+      an unauthenticated entry point. The secure path routes every entry surface
+      through the same authorization check and re-authenticates destructive
+      actions, so the transfer is refused until the user authenticates.
+    references:
+    - Android notification trampolines + iOS UNNotificationAction authorization|https://developer.android.com/develop/ui/views/notifications/notification-permission
+  - id: custom_signature_permission_squatting
+    platforms:
+    - android
+    title: Custom / Signature Permission Squatting
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    maswe:
+    - MASWE-0018
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-732
+    - CWE-280
+    - CWE-284
+    display_tags:
+    - CWE-732
+    - CWE-284
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - apktool
+    - jadx
+    attack_inputs:
+    - co-resident app that defines/holds the custom permission
+    summary: An IPC component is 'protected' by a custom permission whose `protectionLevel` is `normal`/`dangerous` (not `signature`), or by a permission name a malicious app can DEFINE FIRST (install-order squatting), so the guard is trivially obtained or owned by the attacker - the interface the developer believes is protected is externally reachable. Manifest-level and deterministic. The secure path uses a `signature` protection level and verifies the caller's signing identity, not merely permission possession (Android permission-squatting class).
+    manual_test: >-
+      protect an IPC component with a `normal`-level custom permission (or
+      define the permission name first from a malicious app) and confirm the
+      guard is trivially held; verify the secure build uses `signature`
+      protection and checks the caller's signing identity.
+    detail: >-
+      An IPC component is "protected" by a custom permission whose protectionLevel
+      is normal or dangerous (not signature), or by a permission name a malicious
+      app can define first (install-order squatting). A normal permission is
+      auto-granted to any app that requests it, and a squatted permission is
+      attacker-owned, so the guard is trivially obtained or attacker-controlled
+      and the interface the developer believes is protected is externally
+      reachable. The secure path requires a signature protection level and
+      verifies the caller's signing identity matches the app's, refusing the
+      squatter.
+    references:
+    - 'OWASP MASTG: custom permission protectionLevel and permission squatting|https://mas.owasp.org/MASTG/tests/'
+  - id: handoff_useractivity_injection
+    platforms:
+    - ios
+    platform_note: iOS/macOS Handoff via NSUserActivity + Continuity between paired devices.
+    title: Handoff / NSUserActivity Injection
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-3
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-20
+    - CWE-345
+    - CWE-501
+    display_tags:
+    - CWE-20
+    - CWE-345
+    - MASVS-PLATFORM-3
+    tools:
+    - ipsw
+    - Hopper
+    - frida
+    attack_inputs:
+    - crafted NSUserActivity payload
+    summary: The receiving app restores state from a Handoff `NSUserActivity` (`userInfo` / `webpageURL`) and TRUSTS it - navigating, mutating state, or acting on an account/resource - without validating the source device, activity type, or account binding, so a crafted continuation payload drives the app to a privileged/attacker-chosen state. Handoff data is treated as trusted merely because it arrived over Continuity. The secure path validates activityType, binds the activity to the authenticated account, and treats userInfo/webpageURL as untrusted input (iOS Handoff class).
+    manual_test: >-
+      hand off a crafted `NSUserActivity` whose `userInfo` targets another
+      account's resource and confirm the receiving app applies it; verify the
+      secure build validates activityType, binds the activity to the
+      authenticated account, and treats userInfo as untrusted.
+    detail: >-
+      The receiving app restores state from a Handoff NSUserActivity (userInfo or
+      webpageURL) and trusts it merely because it arrived over Continuity. Without
+      validating the source device, the activityType, or the account binding, a
+      crafted continuation payload drives the app to operate on another account's
+      resource. The attacker-controlled webpageURL is parsed with a real URL
+      parser and its query merged over userInfo. The secure path validates the
+      parsed host against an associated-domain allowlist and the activityType
+      against a known set, requires the activity to be bound to the current
+      authenticated account, and treats userInfo and webpageURL as untrusted
+      input.
+    references:
+    - 'Apple: NSUserActivity / Handoff and validating continuation payloads|https://developer.apple.com/documentation/foundation/nsuseractivity'
+  - id: universal_link_aasa_confusion
+    platforms:
+    - ios
+    platform_note: iOS Universal Links resolved via the apple-app-site-association (AASA) associated-domains file.
+    title: Universal Link / AASA Associated-Domain Confusion
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-3
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0395
+    - MASTG-TEST-0070
+    mastg_demo:
+    - MASTG-DEMO-0153
+    maswe:
+    - MASWE-0029
+    owasp_mobile: M4
+    cwe:
+    - CWE-939
+    - CWE-20
+    - CWE-601
+    display_tags:
+    - CWE-939
+    - CWE-601
+    - MASVS-PLATFORM-3
+    tools:
+    - ipsw
+    - Hopper
+    attack_inputs:
+    - crafted universal-link URL
+    summary: The app trusts an incoming Universal Link because it matched an associated domain, but weak AASA deployment (overly broad path patterns / wildcards, open redirects on the domain, environment confusion between staging and prod, or a compromised/parked subdomain) lets an attacker craft a URL that routes to a sensitive in-app handler with attacker-controlled parameters. The whole app->associated-domain->AASA->web-server chain is the boundary, not just link parsing. The secure path uses tight AASA path matching, re-validates every parameter, and never treats a matched link as an authorization decision (iOS Universal-Link/AASA class).
+    manual_test: >-
+      craft a Universal Link that exploits a broad AASA path/wildcard or an
+      open redirect to reach a sensitive handler; verify the secure build uses
+      tight exact-path matching and re-validates params.
+    detail: >-
+      The app trusts an incoming Universal Link because it matched an associated
+      domain, but the AASA deployment is weak: an over-broad /account/* and /*
+      wildcard. The incoming URL is parsed and matched against the real bundled
+      apple-app-site-association.json components, so a crafted URL routes to a
+      sensitive in-app handler (resetPassword) with attacker-controlled
+      parameters. The whole app to associated-domain to AASA to web-server chain
+      is the boundary, not just link parsing. The secure path uses tight
+      exact-path matching, refuses redirects, re-validates parameters, and never
+      treats a matched link as an authorization decision, while the genuine link
+      still works.
+    references:
+    - 'Apple: Supporting associated domains and AASA path matching|https://developer.apple.com/documentation/xcode/supporting-associated-domains'
+  - id: app_clip_invocation_injection
+    platforms:
+    - ios
+    platform_note: iOS App Clip invoked via invocation URL, associated domain, NFC, QR, or Smart App Banner.
+    title: App Clip Invocation Injection
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-3
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0029
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-20
+    - CWE-862
+    - CWE-501
+    display_tags:
+    - CWE-20
+    - CWE-862
+    - MASVS-PLATFORM-3
+    tools:
+    - ipsw
+    - Hopper
+    attack_inputs:
+    - crafted App Clip invocation URL
+    - spoofed QR/NFC invocation
+    summary: An App Clip acts on its invocation parameters (invocation URL / NFC / QR / associated-domain payload) - performing a purchase, order, or account action - while TRUSTING that the invocation came from a legitimate physical trigger and INHERITING authentication state as if it were the full app, so a crafted invocation URL drives a privileged action without the auth the full app would require. The invocation payload is attacker-controllable and must be treated as untrusted. The secure path validates the invocation against the associated domain, re-authenticates sensitive actions, and never inherits full-app trust (iOS App Clip class).
+    manual_test: >-
+      craft an App Clip invocation URL (or spoof the QR/NFC trigger) that
+      performs a purchase/account action and confirm it inherits full-app
+      auth; verify the secure build validates the invocation against the
+      associated domain and re-authenticates sensitive actions.
+    detail: >-
+      An App Clip acts on its invocation parameters (invocation URL, NFC, QR, or
+      banner) and performs a purchase while trusting that the invocation came from
+      a legitimate physical trigger and inheriting authentication state as if it
+      were the full app. A crafted invocation URL from a look-alike domain drives
+      a high-value payment with no re-auth. The invocation URL is parsed and
+      validated against the same real bundled apple-app-site-association.json as
+      the Universal Link module. The secure path requires the invocation host to
+      equal the associated domain and the path to match a real AASA component,
+      re-authenticates sensitive actions, and never inherits full-app trust.
+    references:
+    - 'Apple: Responding to App Clip invocations|https://developer.apple.com/documentation/appclip/responding-to-invocations'
+  - id: android_capability_composition_chain
+    platforms:
+    - android
+    title: Android Capability-Composition Chain
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-441
+    - CWE-862
+    - CWE-668
+    display_tags:
+    - CWE-441
+    - CWE-862
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    - frida
+    attack_inputs:
+    - crafted notification-action broadcast
+    summary: No single hop is the bug - the COMPOSITION is. A notification action carries a mutable `PendingIntent` -> it fires an exported BroadcastReceiver -> the receiver binds an exported Binder service -> the service performs a privileged transfer, and each hop trusts its predecessor instead of re-checking the original caller. An attacker who can trigger the notification action (or send the broadcast directly) laundered an untrusted request through four individually-benign links into a privileged operation. The secure path re-authorizes the ORIGINAL caller at the privileged sink and uses immutable/explicit intents + per-method authorization so the chain breaks at the first untrusted hop (capability-composition / confused-deputy chain).
+    manual_test: >-
+      trigger the notification action (or send the broadcast directly) as an
+      untrusted caller and confirm the mutable PendingIntent → exported
+      receiver → bound Binder service → transfer chain runs the transfer
+      without ever re-checking the original caller; verify the secure build
+      propagates + re-authorizes the original caller at the sink and uses
+      immutable/explicit intents + per-method authorization.
+    detail: >-
+      No single hop is the bug, the composition is. A notification action carries
+      a mutable PendingIntent, which fires an exported BroadcastReceiver, which
+      binds an exported Binder service, which performs a privileged transfer.
+      Each hop trusts its immediate predecessor instead of re-checking the
+      original caller, so an attacker who triggers the first hop launders an
+      unauthenticated request through four individually-benign links into a
+      privileged operation (a confused deputy). This is an offline, deterministic
+      simulation. The secure path propagates and re-authorizes the original caller
+      at the sink and uses immutable and explicit intents plus per-method
+      authorization, breaking the chain at the first untrusted hop.
+    references:
+    - 'OWASP MASTG: chained IPC (PendingIntent -> receiver -> service) confused-deputy composition|https://mas.owasp.org/MASTG/tests/'
+  - id: ios_capability_composition_chain
+    platforms:
+    - ios
+    platform_note: 'iOS: Universal Link -> App Intent perform() -> security-scoped bookmark -> Contacts export, each hop individually legitimate.'
+    title: iOS Capability-Composition Chain
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-3
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0029
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-441
+    - CWE-862
+    - CWE-668
+    display_tags:
+    - CWE-441
+    - CWE-862
+    - MASVS-PLATFORM-3
+    tools:
+    - ipsw
+    - Hopper
+    - frida
+    attack_inputs:
+    - crafted universal-link URL
+    summary: The vulnerability is the CHAIN, not any one API. A Universal Link resolves to an App Intent -> `perform()` reads its parameter as a security-scoped file reference -> resolves a persisted bookmark -> reads Contacts and exports them, with each hop inheriting trust from the last rather than re-authorizing the untrusted link. A crafted link therefore drives a full contacts export with no user authorization, even though matching a link, running an App Intent, resolving a bookmark, and reading Contacts are each individually legitimate. The secure path treats the link as untrusted, requires fresh user authorization at the App Intent for destructive/protected-data actions, and re-validates the bookmark scope before the sink (capability-composition / confused-deputy chain).
+    manual_test: >-
+      open the crafted Universal Link and confirm it drives App Intent
+      perform() → security-scoped bookmark → Contacts export with no user
+      authorization; verify the secure build treats the link as untrusted,
+      requires fresh authorization at the App Intent for the protected-data
+      action, and re-validates the bookmark scope before the sink.
+    detail: >-
+      The vulnerability is the chain, not any one API. A Universal Link resolves
+      to an App Intent whose perform() reads its parameter as a security-scoped
+      file reference, resolves a persisted bookmark, and reads and exports
+      Contacts, each hop inheriting trust from the last rather than re-authorizing
+      the untrusted link (a confused deputy). A crafted link therefore drives a
+      full contacts export with no user authorization, even though matching a
+      link, running an App Intent, resolving a bookmark, and reading Contacts are
+      each individually legitimate. This is an offline, deterministic simulation.
+      The secure path treats the link as untrusted, requires fresh user
+      authorization at the App Intent for the protected-data action, and
+      re-validates the bookmark scope before the sink.
+    references:
+    - 'Apple App Intents + associated domains: authorization must be re-checked per hop|https://developer.apple.com/documentation/appintents'

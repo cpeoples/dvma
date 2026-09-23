@@ -1,0 +1,5426 @@
+{
+  "generatedBy": "tool/generate.dart",
+  "note": "Automation manifest for DVMA. IDs mirror lib/core/test_ids.dart.",
+  "ids": {
+    "searchField": "dvma_search_field",
+    "flavorBadge": "dvma_flavor_badge",
+    "disclaimerBanner": "dvma_disclaimer_banner"
+  },
+  "categories": [
+    {
+      "id": "storage",
+      "title": "Insecure Data Storage"
+    },
+    {
+      "id": "crypto",
+      "title": "Insufficient Cryptography"
+    },
+    {
+      "id": "auth",
+      "title": "Insecure Authentication / Authorization"
+    },
+    {
+      "id": "network",
+      "title": "Insecure Communication"
+    },
+    {
+      "id": "platform",
+      "title": "Improper Platform Usage"
+    },
+    {
+      "id": "code_quality",
+      "title": "Code Quality & Build Config"
+    },
+    {
+      "id": "resilience",
+      "title": "Insufficient Resilience"
+    },
+    {
+      "id": "supply_chain",
+      "title": "Supply Chain (OWASP Mobile M2)"
+    },
+    {
+      "id": "privacy",
+      "title": "Privacy (OWASP Mobile M6)"
+    },
+    {
+      "id": "input_validation",
+      "title": "Input Validation (OWASP Mobile M4)"
+    },
+    {
+      "id": "ai_ml",
+      "title": "AI/ML (OWASP LLM/GenAI Top 10)"
+    },
+    {
+      "id": "agentic",
+      "title": "Agentic AI (OWASP Agentic Top 10)"
+    },
+    {
+      "id": "ai_mobile",
+      "title": "AI + Mobile (LLM x IPC / WebView)"
+    },
+    {
+      "id": "native_bridge",
+      "title": "Native / WebView Bridge (JS <-> Native)"
+    },
+    {
+      "id": "system_provider",
+      "title": "Privileged System-Provider Activation"
+    }
+  ],
+  "count": 218,
+  "modules": [
+    {
+      "id": "clipboard_leakage",
+      "category": "storage",
+      "title": "Clipboard Leakage of Sensitive Fields",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0030"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0276",
+        "MASTG-TEST-0277",
+        "MASTG-TEST-0278",
+        "MASTG-TEST-0279",
+        "MASTG-TEST-0280"
+      ],
+      "manualTest": "copy a sensitive field, then read the clipboard from a second app / `adb shell` and confirm the secret is present.",
+      "rowId": "vuln_row_clipboard_leakage",
+      "screenId": "demo_screen_clipboard_leakage"
+    },
+    {
+      "id": "insecure_backups",
+      "category": "storage",
+      "title": "Insecure Backups (allowBackup / unencrypted iOS backups)",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0006"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0216",
+        "MASTG-TEST-0215",
+        "MASTG-TEST-0262",
+        "MASTG-TEST-0298"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0020",
+        "MASTG-DEMO-0035"
+      ],
+      "manualTest": "run `adb backup` (or a Finder/iMazing backup) and confirm app data is recoverable from the backup.",
+      "rowId": "vuln_row_insecure_backups",
+      "screenId": "demo_screen_insecure_backups"
+    },
+    {
+      "id": "insecure_local_storage",
+      "category": "storage",
+      "title": "Insecure Local Storage (Plaintext SharedPreferences/UserDefaults)",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1"
+      ],
+      "maswe": [
+        "MASWE-0001"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0287",
+        "MASTG-TEST-0300",
+        "MASTG-TEST-0301",
+        "MASTG-TEST-0302"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0059"
+      ],
+      "manualTest": "pull `shared_prefs/*.xml` (Android) or the app's `NSUserDefaults` plist (iOS) via `adb`/objection and confirm the token/SSN/card are cleartext.",
+      "rowId": "vuln_row_insecure_local_storage",
+      "screenId": "demo_screen_insecure_local_storage"
+    },
+    {
+      "id": "insecure_sdcard_external_storage",
+      "category": "storage",
+      "title": "Insecure SD-Card / External Storage",
+      "difficulty": "easy",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0002"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0200",
+        "MASTG-TEST-0201",
+        "MASTG-TEST-0202"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0003",
+        "MASTG-DEMO-0001"
+      ],
+      "manualTest": "read the app's file from shared / external storage with a second app or `adb`.",
+      "rowId": "vuln_row_insecure_sdcard_external_storage",
+      "screenId": "demo_screen_insecure_sdcard_external_storage"
+    },
+    {
+      "id": "screenshot_taskswitcher_leakage",
+      "category": "storage",
+      "title": "Screenshot / Task-Switcher Leakage",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2",
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0038"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0289",
+        "MASTG-TEST-0291",
+        "MASTG-TEST-0292",
+        "MASTG-TEST-0290"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0061",
+        "MASTG-DEMO-0062"
+      ],
+      "manualTest": "background the app on a sensitive screen and inspect the task-switcher snapshot.",
+      "rowId": "vuln_row_screenshot_taskswitcher_leakage",
+      "screenId": "demo_screen_screenshot_taskswitcher_leakage"
+    },
+    {
+      "id": "sensitive_data_in_crash_reports",
+      "category": "storage",
+      "title": "Sensitive Data in Crash Reports",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "triggered crash"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0005"
+      ],
+      "manualTest": "trigger a crash and confirm the crash payload shipped to the crash service contains secrets/PII/request bodies; verify the secure build scrubs/allowlists the crash payload before sending.",
+      "rowId": "vuln_row_sensitive_data_in_crash_reports",
+      "screenId": "demo_screen_sensitive_data_in_crash_reports"
+    },
+    {
+      "id": "sensitive_data_in_logs",
+      "category": "storage",
+      "title": "Sensitive Data in Logs",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0005"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0203",
+        "MASTG-TEST-0231",
+        "MASTG-TEST-0296",
+        "MASTG-TEST-0297"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0006",
+        "MASTG-DEMO-0065"
+      ],
+      "manualTest": "`adb logcat` / `idevicesyslog` while using the app; confirm PII/tokens are logged.",
+      "rowId": "vuln_row_sensitive_data_in_logs",
+      "screenId": "demo_screen_sensitive_data_in_logs"
+    },
+    {
+      "id": "auth_state_rollback_restore",
+      "category": "storage",
+      "title": "Authentication-State Rollback / Restore",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "stale session blob"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0006"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0338",
+        "MASTG-TEST-0387"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0101",
+        "MASTG-DEMO-0150"
+      ],
+      "manualTest": "restore a stale session/token blob (old backup/snapshot) and confirm the app revives the ended/revoked session; verify the secure build validates freshness/revocation server-side and rejects the rolled-back state.",
+      "rowId": "vuln_row_auth_state_rollback_restore",
+      "screenId": "demo_screen_auth_state_rollback_restore"
+    },
+    {
+      "id": "keyboard_cache_autofill_leakage",
+      "category": "storage",
+      "title": "Keyboard Cache & Autofill Leakage",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0036"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0258",
+        "MASTG-TEST-0313",
+        "MASTG-TEST-0314"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0064",
+        "MASTG-DEMO-0076",
+        "MASTG-DEMO-0077"
+      ],
+      "manualTest": "type into a sensitive field, then inspect the IME's personalized-dictionary / autofill cache and confirm the secret was retained (field not marked no-suggestions / no-autofill).",
+      "rowId": "vuln_row_keyboard_cache_autofill_leakage",
+      "screenId": "demo_screen_keyboard_cache_autofill_leakage"
+    },
+    {
+      "id": "keychain_keystore_misuse",
+      "category": "storage",
+      "title": "Keychain/Keystore Misuse",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1",
+        "MASVS-CRYPTO-2"
+      ],
+      "maswe": [
+        "MASWE-0003"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0287",
+        "MASTG-TEST-0300",
+        "MASTG-TEST-0301"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0059"
+      ],
+      "manualTest": "dump the Keychain with objection / `keychain-dumper` and confirm weak accessibility / no hardware backing.",
+      "rowId": "vuln_row_keychain_keystore_misuse",
+      "screenId": "demo_screen_keychain_keystore_misuse"
+    },
+    {
+      "id": "local_security_state_integrity_tampering",
+      "category": "storage",
+      "title": "Local Security-State Integrity Tampering",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "edited preference/db value"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0006"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0338",
+        "MASTG-TEST-0387"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0101",
+        "MASTG-DEMO-0150"
+      ],
+      "manualTest": "edit a UserDefaults / SharedPreferences / SQLite value that gates a security decision (role / entitlement) and confirm the app trusts it; verify the secure build binds the value to a keyed MAC / server authority and rejects the edit.",
+      "rowId": "vuln_row_local_security_state_integrity_tampering",
+      "screenId": "demo_screen_local_security_state_integrity_tampering"
+    },
+    {
+      "id": "temp_file_leftovers",
+      "category": "storage",
+      "title": "Temp / Cache File Leftovers",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1"
+      ],
+      "maswe": [
+        "MASWE-0001"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0207",
+        "MASTG-TEST-0299",
+        "MASTG-TEST-0302"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0010"
+      ],
+      "manualTest": "browse the app cache/temp dirs and confirm sensitive leftovers.",
+      "rowId": "vuln_row_temp_file_leftovers",
+      "screenId": "demo_screen_temp_file_leftovers"
+    },
+    {
+      "id": "third_party_sdk_data_leakage",
+      "category": "storage",
+      "title": "Third-Party SDK Data Leakage",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0069"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0318",
+        "MASTG-TEST-0319"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0081"
+      ],
+      "manualTest": "proxy traffic with mitmproxy and confirm the SDK exfiltrates more than its stated purpose.",
+      "rowId": "vuln_row_third_party_sdk_data_leakage",
+      "screenId": "demo_screen_third_party_sdk_data_leakage"
+    },
+    {
+      "id": "backup_archive_integrity_tampering",
+      "category": "storage",
+      "title": "Backup Archive Integrity Tampering",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "tampered backup archive"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2",
+        "MASVS-RESILIENCE-3"
+      ],
+      "maswe": [
+        "MASWE-0006"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0338",
+        "MASTG-TEST-0387"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0101",
+        "MASTG-DEMO-0150"
+      ],
+      "manualTest": "pull a backup, flip a persisted flag (e.g. `is_premium`/`is_admin`) or a balance, re-pack, restore, and confirm the app trusts the tampered state; verify the secure build verifies a keyed MAC over the archive and rejects it (CVE-2025-49199, MASTG-BEST-0065).",
+      "rowId": "vuln_row_backup_archive_integrity_tampering",
+      "screenId": "demo_screen_backup_archive_integrity_tampering"
+    },
+    {
+      "id": "keychain_access_group_authorization_confusion",
+      "category": "storage",
+      "title": "Keychain Access-Group Authorization Confusion",
+      "difficulty": "hard",
+      "platforms": [
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0001"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0388"
+      ],
+      "manualTest": "from a different access group / extension read items stored under an over-broad or wildcard `kSecAttrAccessGroup` and confirm cross-group access; verify the secure build scopes items to an exact app-private group and refuses the read (iOS Keychain authorization CVE-2026-28864 class).",
+      "rowId": "vuln_row_keychain_access_group_authorization_confusion",
+      "screenId": "demo_screen_keychain_access_group_authorization_confusion"
+    },
+    {
+      "id": "keychain_state_integrity_manipulation",
+      "category": "storage",
+      "title": "Keychain State Integrity Manipulation",
+      "difficulty": "hard",
+      "platforms": [
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1",
+        "MASVS-CRYPTO-2"
+      ],
+      "maswe": [
+        "MASWE-0001"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0387",
+        "MASTG-TEST-0338"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0150",
+        "MASTG-DEMO-0101"
+      ],
+      "manualTest": "modify a Keychain/Keystore item the app treats as authoritative (e.g. a trust flag/signing key) and confirm the app acts on the tampered value; verify the secure build verifies an integrity tag/attestation and rejects it (iOS Keychain state-modification CVE-2026-28860 class).",
+      "rowId": "vuln_row_keychain_state_integrity_manipulation",
+      "screenId": "demo_screen_keychain_state_integrity_manipulation"
+    },
+    {
+      "id": "sensitive_data_in_memory",
+      "category": "storage",
+      "title": "Sensitive Data in Memory",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1"
+      ],
+      "maswe": [
+        "MASWE-0001"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0011",
+        "MASTG-TEST-0060"
+      ],
+      "manualTest": "dump the process memory (fridump / objection / gdb) and recover the retained password/key.",
+      "rowId": "vuln_row_sensitive_data_in_memory",
+      "screenId": "demo_screen_sensitive_data_in_memory"
+    },
+    {
+      "id": "hardcoded_keys_ivs",
+      "category": "crypto",
+      "title": "Hardcoded Keys & Static IVs",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CRYPTO-1",
+        "MASVS-CRYPTO-2"
+      ],
+      "maswe": [
+        "MASWE-0004",
+        "MASWE-0007"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0212",
+        "MASTG-TEST-0214",
+        "MASTG-TEST-0309",
+        "MASTG-TEST-0310"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0017"
+      ],
+      "manualTest": "`strings`/jadx the binary and recover the key/IV.",
+      "rowId": "vuln_row_hardcoded_keys_ivs",
+      "screenId": "demo_screen_hardcoded_keys_ivs"
+    },
+    {
+      "id": "weak_algorithms",
+      "category": "crypto",
+      "title": "Weak Cryptographic Algorithms (MD5/SHA1/DES/RC4/ECB)",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CRYPTO-1"
+      ],
+      "maswe": [
+        "MASWE-0007",
+        "MASWE-0008"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0210",
+        "MASTG-TEST-0221",
+        "MASTG-TEST-0232",
+        "MASTG-TEST-0317",
+        "MASTG-TEST-0211"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0022",
+        "MASTG-DEMO-0023",
+        "MASTG-DEMO-0015"
+      ],
+      "manualTest": "`strings`/jadx the binary and confirm a broken primitive (DES/RC4/MD5/SHA-1/ECB) is used; capture ciphertext and show the structural weakness (e.g. ECB pattern leakage).",
+      "rowId": "vuln_row_weak_algorithms",
+      "screenId": "demo_screen_weak_algorithms"
+    },
+    {
+      "id": "custom_crypto_implementation",
+      "category": "crypto",
+      "title": "Custom / Homegrown Crypto",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CRYPTO-1"
+      ],
+      "maswe": [
+        "MASWE-0007"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0210",
+        "MASTG-TEST-0221"
+      ],
+      "manualTest": "reverse the hand-rolled cipher with jadx/Ghidra and confirm it is trivially reversible (XOR / rolled AES) vs a platform primitive.",
+      "rowId": "vuln_row_custom_crypto_implementation",
+      "screenId": "demo_screen_custom_crypto_implementation"
+    },
+    {
+      "id": "device_secure_lock_not_enforced",
+      "category": "crypto",
+      "title": "Device Secure Lock Not Enforced for Sensitive Storage",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "unlocked device"
+      ],
+      "masvs": [
+        "MASVS-CRYPTO-2",
+        "MASVS-STORAGE-1"
+      ],
+      "maswe": [
+        "MASWE-0017"
+      ],
+      "manualTest": "run the app on a device with no screen lock and confirm sensitive features/keys are still available (no `setUserAuthenticationRequired` / secure-lock gate).",
+      "rowId": "vuln_row_device_secure_lock_not_enforced",
+      "screenId": "demo_screen_device_secure_lock_not_enforced"
+    },
+    {
+      "id": "improper_mac_verification",
+      "category": "crypto",
+      "title": "Improper MAC Verification (non-constant-time / unauthenticated)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "forged tag"
+      ],
+      "masvs": [
+        "MASVS-CRYPTO-1"
+      ],
+      "maswe": [
+        "MASWE-0009"
+      ],
+      "manualTest": "flip a byte in an authenticated payload and confirm it is accepted (no constant-time MAC compare / MAC not checked).",
+      "rowId": "vuln_row_improper_mac_verification",
+      "screenId": "demo_screen_improper_mac_verification"
+    },
+    {
+      "id": "insecure_random",
+      "category": "crypto",
+      "title": "Insecure Randomness (predictable tokens/session IDs)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CRYPTO-1"
+      ],
+      "maswe": [
+        "MASWE-0012"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0204",
+        "MASTG-TEST-0205",
+        "MASTG-TEST-0311",
+        "MASTG-TEST-0349"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0007",
+        "MASTG-DEMO-0008"
+      ],
+      "manualTest": "sample the \"random\" token/nonce/OTP repeatedly and confirm it is predictable (java.util.Random / non-CSPRNG seed).",
+      "rowId": "vuln_row_insecure_random",
+      "screenId": "demo_screen_insecure_random"
+    },
+    {
+      "id": "rsa_no_oaep_padding",
+      "category": "crypto",
+      "title": "RSA Without OAEP Padding",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CRYPTO-1"
+      ],
+      "maswe": [
+        "MASWE-0022"
+      ],
+      "manualTest": "confirm RSA uses PKCS#1 v1.5 (not OAEP) and demonstrate the padding-oracle distinguisher against the decrypt endpoint.",
+      "rowId": "vuln_row_rsa_no_oaep_padding",
+      "screenId": "demo_screen_rsa_no_oaep_padding"
+    },
+    {
+      "id": "unauthenticated_encryption_malleable_ciphertext",
+      "category": "crypto",
+      "title": "Unauthenticated Encryption (malleable ciphertext / bit-flipping)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "flipped ciphertext byte"
+      ],
+      "masvs": [
+        "MASVS-CRYPTO-1",
+        "MASVS-CRYPTO-2"
+      ],
+      "maswe": [
+        "MASWE-0021"
+      ],
+      "manualTest": "bit-flip AES-CBC ciphertext (no MAC) and confirm the corresponding plaintext bit flips on decrypt (malleable / no integrity).",
+      "rowId": "vuln_row_unauthenticated_encryption_malleable_ciphertext",
+      "screenId": "demo_screen_unauthenticated_encryption_malleable_ciphertext"
+    },
+    {
+      "id": "weak_key_derivation",
+      "category": "crypto",
+      "title": "Weak Key Derivation (no/low PBKDF2 iterations)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CRYPTO-1"
+      ],
+      "maswe": [
+        "MASWE-0014"
+      ],
+      "manualTest": "capture the derived material and crack with hashcat given the low/absent iteration count.",
+      "rowId": "vuln_row_weak_key_derivation",
+      "screenId": "demo_screen_weak_key_derivation"
+    },
+    {
+      "id": "improper_signature_verification",
+      "category": "crypto",
+      "title": "Improper Signature Verification (payload not bound)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "tampered payload"
+      ],
+      "masvs": [
+        "MASVS-CRYPTO-1"
+      ],
+      "maswe": [
+        "MASWE-0011"
+      ],
+      "manualTest": "tamper a signed blob/update and confirm it is accepted (signature skipped or wrong key/no chain check).",
+      "rowId": "vuln_row_improper_signature_verification",
+      "screenId": "demo_screen_improper_signature_verification"
+    },
+    {
+      "id": "developer_backdoor",
+      "category": "auth",
+      "title": "Developer Backdoor",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-CODE-2"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "decompile with jadx / `strings` and recover the hardcoded backdoor credential or debug route.",
+      "rowId": "vuln_row_developer_backdoor",
+      "screenId": "demo_screen_developer_backdoor"
+    },
+    {
+      "id": "username_enumeration",
+      "category": "auth",
+      "title": "Username Enumeration",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "compare login responses for valid vs invalid usernames and confirm they differ.",
+      "rowId": "vuln_row_username_enumeration",
+      "screenId": "demo_screen_username_enumeration"
+    },
+    {
+      "id": "weak_password_policy",
+      "category": "auth",
+      "title": "Weak / No Password Policy",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "register/change password to a trivial value (`123456`, `password`) and confirm it is accepted (no length/complexity/breach check).",
+      "rowId": "vuln_row_weak_password_policy",
+      "screenId": "demo_screen_weak_password_policy"
+    },
+    {
+      "id": "client_side_only_authorization",
+      "category": "auth",
+      "title": "Client-Side-Only Authorization",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-3"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "flip the client-side admin flag with Frida/objection and confirm privileged actions unlock.",
+      "rowId": "vuln_row_client_side_only_authorization",
+      "screenId": "demo_screen_client_side_only_authorization"
+    },
+    {
+      "id": "cross_app_otp_credential_leak",
+      "category": "auth",
+      "title": "Cross-App OTP / Credential Leak",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-2",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0366",
+        "MASTG-TEST-0364",
+        "MASTG-TEST-0374"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0130",
+        "MASTG-DEMO-0128",
+        "MASTG-DEMO-0138"
+      ],
+      "manualTest": "from a second (unprivileged) app, read the OTP / `myauth://` auth deep link this app publishes on an unprotected exported component/broadcast/clipboard (Authenticator CVE-2026-26123 class); confirm an allowlisted/signature-checked channel yields nothing.",
+      "rowId": "vuln_row_cross_app_otp_credential_leak",
+      "screenId": "demo_screen_cross_app_otp_credential_leak"
+    },
+    {
+      "id": "deeplink_authentication_bypass",
+      "category": "auth",
+      "title": "Deep Link Authentication Bypass",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0018",
+        "MASWE-0029"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0371",
+        "MASTG-TEST-0370"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0134",
+        "MASTG-DEMO-0135"
+      ],
+      "manualTest": "fire a deep link (e.g. `dvma://wallet`) via adb while logged out and confirm it reaches the authenticated screen without the app-lock/login gate (Groww CVE-2026-12065 class).",
+      "rowId": "vuln_row_deeplink_authentication_bypass",
+      "screenId": "demo_screen_deeplink_authentication_bypass"
+    },
+    {
+      "id": "insecure_biometric_prompt",
+      "category": "auth",
+      "title": "Insecure / Bypassable Biometric Prompt",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2"
+      ],
+      "maswe": [
+        "MASWE-0020"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0327",
+        "MASTG-TEST-0266",
+        "MASTG-TEST-0267",
+        "MASTG-TEST-0329"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0090",
+        "MASTG-DEMO-0092"
+      ],
+      "manualTest": "hook the auth callback with Frida and force the success path.",
+      "rowId": "vuln_row_insecure_biometric_prompt",
+      "screenId": "demo_screen_insecure_biometric_prompt"
+    },
+    {
+      "id": "insecure_credential_manager",
+      "category": "auth",
+      "title": "Insecure Credential Manager / Autofill Integration",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2",
+        "MASVS-STORAGE-2",
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0019"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0393",
+        "MASTG-TEST-0313",
+        "MASTG-TEST-0316"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0151"
+      ],
+      "manualTest": "confirm a credential is associated with an unverified domain (no Digital Asset Links / AASA) and autofills into an insecure field.",
+      "rowId": "vuln_row_insecure_credential_manager",
+      "screenId": "demo_screen_insecure_credential_manager"
+    },
+    {
+      "id": "insecure_password_reset_token",
+      "category": "auth",
+      "title": "Insecure Password Reset Token / Magic Link",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-CRYPTO-1"
+      ],
+      "maswe": [
+        "MASWE-0012"
+      ],
+      "manualTest": "request multiple reset tokens/magic links and confirm they are short, related/predictable, and never expire.",
+      "rowId": "vuln_row_insecure_password_reset_token",
+      "screenId": "demo_screen_insecure_password_reset_token"
+    },
+    {
+      "id": "jwt_vulnerabilities",
+      "category": "auth",
+      "title": "JWT Vulnerabilities (alg:none, weak secret)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2"
+      ],
+      "maswe": [
+        "MASWE-0020"
+      ],
+      "manualTest": "forge an `alg:none` token / crack the weak secret with `jwt_tool` and confirm acceptance.",
+      "rowId": "vuln_row_jwt_vulnerabilities",
+      "screenId": "demo_screen_jwt_vulnerabilities"
+    },
+    {
+      "id": "multi_account_isolation_failure",
+      "category": "auth",
+      "title": "Multi-Account Isolation Failure",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "account switch sequence"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-STORAGE-1"
+      ],
+      "maswe": [
+        "MASWE-0024"
+      ],
+      "manualTest": "log into account A, switch to / log into account B, and confirm A's cached token/data is still readable (and A's session survives logout); verify the secure build scopes per-account state to the active principal and wipes/rotates it on switch and logout.",
+      "rowId": "vuln_row_multi_account_isolation_failure",
+      "screenId": "demo_screen_multi_account_isolation_failure"
+    },
+    {
+      "id": "passkey_credential_exfiltration",
+      "category": "auth",
+      "title": "Passkey Credential Exfiltration",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2",
+        "MASVS-STORAGE-1",
+        "MASVS-CRYPTO-2"
+      ],
+      "maswe": [
+        "MASWE-0003"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0287",
+        "MASTG-TEST-0301",
+        "MASTG-TEST-0302"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0059",
+        "MASTG-DEMO-0068"
+      ],
+      "manualTest": "pull the credential store off-device and confirm private-key material is present.",
+      "rowId": "vuln_row_passkey_credential_exfiltration",
+      "screenId": "demo_screen_passkey_credential_exfiltration"
+    },
+    {
+      "id": "passkey_credential_management_authz",
+      "category": "auth",
+      "title": "Passkey Registration/Deletion Authorization Missing",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-AUTH-2"
+      ],
+      "maswe": [
+        "MASWE-0020"
+      ],
+      "manualTest": "call the register/delete passkey endpoint as a different user and confirm you can add your own passkey or delete the victim's (account takeover / lockout; USENIX 2026 class).",
+      "rowId": "vuln_row_passkey_credential_management_authz",
+      "screenId": "demo_screen_passkey_credential_management_authz"
+    },
+    {
+      "id": "passkey_fallback_downgrade",
+      "category": "auth",
+      "title": "Passkey Fallback / Downgrade Attack",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-AUTH-2"
+      ],
+      "maswe": [
+        "MASWE-0021"
+      ],
+      "manualTest": "force \"passkey unavailable\" and confirm the weak fallback path is accepted.",
+      "rowId": "vuln_row_passkey_fallback_downgrade",
+      "screenId": "demo_screen_passkey_fallback_downgrade"
+    },
+    {
+      "id": "passkey_session_fixation",
+      "category": "auth",
+      "title": "Session Fixation After WebAuthn Assertion",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-3",
+        "MASVS-AUTH-2"
+      ],
+      "maswe": [
+        "MASWE-0024"
+      ],
+      "manualTest": "set a known pre-auth session id, complete a passkey assertion, and confirm the id is not rotated afterwards.",
+      "rowId": "vuln_row_passkey_session_fixation",
+      "screenId": "demo_screen_passkey_session_fixation"
+    },
+    {
+      "id": "passkey_weak_attestation",
+      "category": "auth",
+      "title": "Passkey Weak / No Attestation Verification",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2"
+      ],
+      "maswe": [
+        "MASWE-0020"
+      ],
+      "manualTest": "register with `none` attestation via a WebAuthn test harness and confirm acceptance.",
+      "rowId": "vuln_row_passkey_weak_attestation",
+      "screenId": "demo_screen_passkey_weak_attestation"
+    },
+    {
+      "id": "weak_session_management",
+      "category": "auth",
+      "title": "Weak Session Management",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-AUTH-2"
+      ],
+      "maswe": [
+        "MASWE-0024"
+      ],
+      "manualTest": "capture the session token and confirm it is predictable / never rotated on privilege change / never expires (replay it after logout).",
+      "rowId": "vuln_row_weak_session_management",
+      "screenId": "demo_screen_weak_session_management"
+    },
+    {
+      "id": "biometric_authorization_not_bound",
+      "category": "auth",
+      "title": "Biometric Result Not Bound to Operation",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0020"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0327",
+        "MASTG-TEST-0266",
+        "MASTG-TEST-0267"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0090"
+      ],
+      "manualTest": "capture a biometric success for operation A and replay it to authorize operation B (the boolean isn't tied to the operation), and overlay the prompt; verify the secure build binds the result to a per-operation signed challenge (CryptoObject) so it only authorizes the exact op (Android biometric-overlay CVE-2025-48528 class).",
+      "rowId": "vuln_row_biometric_authorization_not_bound",
+      "screenId": "demo_screen_biometric_authorization_not_bound"
+    },
+    {
+      "id": "credential_provider_release_authorization",
+      "category": "auth",
+      "title": "Credential Provider Release Authorization Failure",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "from a spoofed calling app / with an rpId mismatch (and no user-verification) extract a stored credential/passkey and enumerate entries; verify the secure build binds the calling app to the rpId, requires UV, and refuses enumeration (credential- provider release-boundary class).",
+      "rowId": "vuln_row_credential_provider_release_authorization",
+      "screenId": "demo_screen_credential_provider_release_authorization"
+    },
+    {
+      "id": "identity_credential_presentation_binding",
+      "category": "auth",
+      "title": "Identity Credential / mDL Presentation Not Bound",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "replayed mDL presentation",
+        "spoofed holder metadata"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2",
+        "MASVS-AUTH-3"
+      ],
+      "maswe": [
+        "MASWE-0020"
+      ],
+      "manualTest": "replay a captured mDL/mDoc (Identity Credential / ISO 18013-5) or Wallet identity presentation from a different session and confirm the verifier accepts it on issuer signature alone; verify the secure build binds the device signature to this session's transcript + reader nonce and requires fresh user presence.",
+      "rowId": "vuln_row_identity_credential_presentation_binding",
+      "screenId": "demo_screen_identity_credential_presentation_binding"
+    },
+    {
+      "id": "oauth_misconfiguration",
+      "category": "auth",
+      "title": "OAuth Misconfiguration (implicit flow token leakage)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "capture the implicit-flow token from the redirect/logs under mitmproxy.",
+      "rowId": "vuln_row_oauth_misconfiguration",
+      "screenId": "demo_screen_oauth_misconfiguration"
+    },
+    {
+      "id": "passkey_assertion_replay_signcount",
+      "category": "auth",
+      "title": "Passkey Assertion Replay (Sign-Count Not Enforced)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2"
+      ],
+      "maswe": [
+        "MASWE-0020"
+      ],
+      "manualTest": "capture a WebAuthn assertion and replay it; confirm it is accepted again because the sign-count/credential counter is never compared (Craft CMS CVE-2026-72780 class).",
+      "rowId": "vuln_row_passkey_assertion_replay_signcount",
+      "screenId": "demo_screen_passkey_assertion_replay_signcount"
+    },
+    {
+      "id": "passkey_challenge_reuse",
+      "category": "auth",
+      "title": "Passkey Challenge Reuse / Not Bound",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2"
+      ],
+      "maswe": [
+        "MASWE-0020"
+      ],
+      "manualTest": "record an assertion for the server's challenge and replay it; confirm the static/reused challenge accepts it.",
+      "rowId": "vuln_row_passkey_challenge_reuse",
+      "screenId": "demo_screen_passkey_challenge_reuse"
+    },
+    {
+      "id": "passkey_origin_binding_bypass",
+      "category": "auth",
+      "title": "Passkey Origin / RP-ID Binding Bypass",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2",
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0020"
+      ],
+      "manualTest": "assert from an origin that merely contains the rpId and confirm acceptance.",
+      "rowId": "vuln_row_passkey_origin_binding_bypass",
+      "screenId": "demo_screen_passkey_origin_binding_bypass"
+    },
+    {
+      "id": "passkey_stepup_auth_bypass",
+      "category": "auth",
+      "title": "Passkey Step-Up Authentication Bypass",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-AUTH-2"
+      ],
+      "maswe": [
+        "MASWE-0023"
+      ],
+      "manualTest": "trigger a sensitive action and confirm step-up is marked \"verified\" from a registered passkey without completing an assertion (New-API AI gateway CVE-2026-32879 class).",
+      "rowId": "vuln_row_passkey_stepup_auth_bypass",
+      "screenId": "demo_screen_passkey_stepup_auth_bypass"
+    },
+    {
+      "id": "passkey_thirdparty_pairing_authz",
+      "category": "auth",
+      "title": "Third-Party Authenticator / Cross-Device Pairing Authorization Missing",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2",
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0020"
+      ],
+      "manualTest": "approve a third-party authenticator / cross-device pairing and confirm no permission check gates it (Android CVE-2025-48640 / BLE CVE-2026-65935 class).",
+      "rowId": "vuln_row_passkey_thirdparty_pairing_authz",
+      "screenId": "demo_screen_passkey_thirdparty_pairing_authz"
+    },
+    {
+      "id": "passkey_user_verification_bypass",
+      "category": "auth",
+      "title": "Passkey User-Verification (UV) Enforcement Bypass",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-2"
+      ],
+      "maswe": [
+        "MASWE-0020"
+      ],
+      "manualTest": "submit an assertion with the UV flag unset under a `userVerification=REQUIRED` policy and confirm it is accepted (Spring Security CVE-2026-47841 class).",
+      "rowId": "vuln_row_passkey_user_verification_bypass",
+      "screenId": "demo_screen_passkey_user_verification_bypass"
+    },
+    {
+      "id": "cleartext_traffic_allowed",
+      "category": "network",
+      "title": "Cleartext Traffic Allowed",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-NETWORK-1"
+      ],
+      "maswe": [
+        "MASWE-0026"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0235",
+        "MASTG-TEST-0237",
+        "MASTG-TEST-0238",
+        "MASTG-TEST-0322",
+        "MASTG-TEST-0233"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0083"
+      ],
+      "manualTest": "confirm plain HTTP under mitmproxy.",
+      "rowId": "vuln_row_cleartext_traffic_allowed",
+      "screenId": "demo_screen_cleartext_traffic_allowed"
+    },
+    {
+      "id": "accept_all_trust_manager",
+      "category": "network",
+      "title": "Accept-All TrustManager",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-NETWORK-1",
+        "MASVS-NETWORK-2"
+      ],
+      "maswe": [
+        "MASWE-0027"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0282",
+        "MASTG-TEST-0283"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0054",
+        "MASTG-DEMO-0055"
+      ],
+      "manualTest": "confirm any cert is accepted under MITM.",
+      "rowId": "vuln_row_accept_all_trust_manager",
+      "screenId": "demo_screen_accept_all_trust_manager"
+    },
+    {
+      "id": "insecure_webview_networking",
+      "category": "network",
+      "title": "Insecure WebView Networking",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-NETWORK-1",
+        "MASVS-PLATFORM-2"
+      ],
+      "maswe": [
+        "MASWE-0026"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0237",
+        "MASTG-TEST-0238",
+        "MASTG-TEST-0235"
+      ],
+      "manualTest": "confirm mixed/cleartext content loads.",
+      "rowId": "vuln_row_insecure_webview_networking",
+      "screenId": "demo_screen_insecure_webview_networking"
+    },
+    {
+      "id": "weak_tls_config",
+      "category": "network",
+      "title": "Weak / Outdated TLS Config",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-NETWORK-1"
+      ],
+      "maswe": [
+        "MASWE-0026"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0217",
+        "MASTG-TEST-0218",
+        "MASTG-TEST-0348"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0110"
+      ],
+      "manualTest": "run `testssl.sh` against the endpoint.",
+      "rowId": "vuln_row_weak_tls_config",
+      "screenId": "demo_screen_weak_tls_config"
+    },
+    {
+      "id": "ssl_pinning_bypass",
+      "category": "network",
+      "title": "SSL Pinning (Trivially Bypassable)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-NETWORK-2"
+      ],
+      "maswe": [
+        "MASWE-0028"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0244",
+        "MASTG-TEST-0242"
+      ],
+      "manualTest": "bypass pinning with objection/Frida and MITM.",
+      "rowId": "vuln_row_ssl_pinning_bypass",
+      "screenId": "demo_screen_ssl_pinning_bypass"
+    },
+    {
+      "id": "activity_alias_exposure",
+      "category": "platform",
+      "title": "Activity-Alias Exposure",
+      "difficulty": "easy",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "crafted intent to the alias"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0364"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0128"
+      ],
+      "manualTest": "launch a protected Activity through an `<activity-alias>` that is `exported=true` / lacks the target permission; verify the secure alias echoes the target's protection and refuses the external caller.",
+      "rowId": "vuln_row_activity_alias_exposure",
+      "screenId": "demo_screen_activity_alias_exposure"
+    },
+    {
+      "id": "missing_flag_secure",
+      "category": "platform",
+      "title": "Missing FLAG_SECURE (screen recording exposure)",
+      "difficulty": "easy",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0038"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0291",
+        "MASTG-TEST-0293"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0061"
+      ],
+      "manualTest": "`adb shell screenrecord` a sensitive screen.",
+      "rowId": "vuln_row_missing_flag_secure",
+      "screenId": "demo_screen_missing_flag_secure"
+    },
+    {
+      "id": "over_privileged_permissions",
+      "category": "platform",
+      "title": "Over-Privileged Permissions",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-PRIVACY-2"
+      ],
+      "maswe": [
+        "MASWE-0066"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0254",
+        "MASTG-TEST-0255"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0033"
+      ],
+      "manualTest": "review the manifest with aapt/jadx.",
+      "rowId": "vuln_row_over_privileged_permissions",
+      "screenId": "demo_screen_over_privileged_permissions"
+    },
+    {
+      "id": "photo_picker_over_access",
+      "category": "platform",
+      "title": "Over-Broad Media Access (no scoped photo picker)",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-PRIVACY-2"
+      ],
+      "maswe": [
+        "MASWE-0066"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0254",
+        "MASTG-TEST-0255"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0033"
+      ],
+      "manualTest": "review the manifest/Info.plist and confirm full media-library access is requested instead of the scoped photo picker.",
+      "rowId": "vuln_row_photo_picker_over_access",
+      "screenId": "demo_screen_photo_picker_over_access"
+    },
+    {
+      "id": "predictive_back_leakage",
+      "category": "platform",
+      "title": "Predictive Back / Recents Snapshot Leakage",
+      "difficulty": "easy",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2",
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0038"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0289",
+        "MASTG-TEST-0292"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0062"
+      ],
+      "manualTest": "trigger the Android 14+ predictive-back / recents snapshot on a sensitive screen and confirm it is captured.",
+      "rowId": "vuln_row_predictive_back_leakage",
+      "screenId": "demo_screen_predictive_back_leakage"
+    },
+    {
+      "id": "push_notification_leakage",
+      "category": "platform",
+      "title": "Push Notification Leakage",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0037"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0315"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0078"
+      ],
+      "manualTest": "inspect notification payloads / lockscreen.",
+      "rowId": "vuln_row_push_notification_leakage",
+      "screenId": "demo_screen_push_notification_leakage"
+    },
+    {
+      "id": "qr_url_no_validation",
+      "category": "platform",
+      "title": "QR Scanner -> URL With No Validation",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted QR"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "scan a QR encoding a `javascript:` or privileged `dvma://` payload and confirm it is opened/navigated with no validation (Firefox iOS QR-scanner CVE-2025-54145 class).",
+      "rowId": "vuln_row_qr_url_no_validation",
+      "screenId": "demo_screen_qr_url_no_validation"
+    },
+    {
+      "id": "app_clip_invocation_injection",
+      "category": "platform",
+      "title": "App Clip Invocation Injection",
+      "difficulty": "medium",
+      "platforms": [
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted App Clip invocation URL",
+        "spoofed QR/NFC invocation"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0029",
+        "MASWE-0018"
+      ],
+      "manualTest": "craft an App Clip invocation URL (or spoof the QR/NFC trigger) that performs a purchase/account action and confirm it inherits full-app auth; verify the secure build validates the invocation against the associated domain and re-authenticates sensitive actions.",
+      "rowId": "vuln_row_app_clip_invocation_injection",
+      "screenId": "demo_screen_app_clip_invocation_injection"
+    },
+    {
+      "id": "background_activity_launch_abuse",
+      "category": "platform",
+      "title": "Background Activity Launch Abuse",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0039"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0364"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0128"
+      ],
+      "manualTest": "from a background caller drive a component to `startActivity()` onto a security-sensitive/consent surface and confirm the phishing/task-hijack UI appears; verify the secure build enforces BAL (foreground or valid launch token) and refuses the launch (Android CVE-2025-26462 class).",
+      "rowId": "vuln_row_background_activity_launch_abuse",
+      "screenId": "demo_screen_background_activity_launch_abuse"
+    },
+    {
+      "id": "clipboard_unauthorized_write_integrity",
+      "category": "platform",
+      "title": "Clipboard Unauthorized Write / Integrity Tampering",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0030"
+      ],
+      "manualTest": "from untrusted content (a page in the app WebView / another app) overwrite the system clipboard with no user gesture and confirm the user pastes attacker-controlled data (e.g. a swapped crypto address); verify the secure build requires a trusted origin + user gesture (Lenovo Android web-to-clipboard CVE-2026-7516 class).",
+      "rowId": "vuln_row_clipboard_unauthorized_write_integrity",
+      "screenId": "demo_screen_clipboard_unauthorized_write_integrity"
+    },
+    {
+      "id": "clipdata_uri_grant_leakage",
+      "category": "platform",
+      "title": "ClipData URI-Grant Leakage",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "crafted intent with ClipData content:// URI"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0357"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0123"
+      ],
+      "manualTest": "fire an implicit Intent whose `ClipData` carries a private `content://` URI + `FLAG_GRANT_READ_URI_PERMISSION` and confirm a co-resident resolver can read the private data; verify the secure build sends explicit intents and never grants on untrusted-resolver ClipData.",
+      "rowId": "vuln_row_clipdata_uri_grant_leakage",
+      "screenId": "demo_screen_clipdata_uri_grant_leakage"
+    },
+    {
+      "id": "contentprovider_filename_path_traversal",
+      "category": "platform",
+      "title": "ContentProvider File-Import Filename Path Traversal",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0050"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0357"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0139",
+        "MASTG-DEMO-0141"
+      ],
+      "manualTest": "import a file whose display name is `../../shared_prefs/secrets.xml` and confirm it escapes the import dir and overwrites/reads an app file; verify the secure build canonicalizes and confines the path under the import root (Android ContentProvider import traversal CVE-2025-65814 / CVE-2025-65815 class).",
+      "rowId": "vuln_row_contentprovider_filename_path_traversal",
+      "screenId": "demo_screen_contentprovider_filename_path_traversal"
+    },
+    {
+      "id": "custom_signature_permission_squatting",
+      "category": "platform",
+      "title": "Custom / Signature Permission Squatting",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "co-resident app that defines/holds the custom permission"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0018",
+        "MASWE-0032"
+      ],
+      "manualTest": "protect an IPC component with a `normal`-level custom permission (or define the permission name first from a malicious app) and confirm the guard is trivially held; verify the secure build uses `signature` protection and checks the caller's signing identity.",
+      "rowId": "vuln_row_custom_signature_permission_squatting",
+      "screenId": "demo_screen_custom_signature_permission_squatting"
+    },
+    {
+      "id": "custom_url_scheme_authorization",
+      "category": "platform",
+      "title": "Custom URL Scheme Authorization (arbitrary URL load)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0029"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0371",
+        "MASTG-TEST-0370"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0134",
+        "MASTG-DEMO-0135"
+      ],
+      "manualTest": "`adb shell am start`/`xcrun simctl openurl` a `dvma://open?url=https://attacker.example` and confirm the app loads the attacker site with no caller/allowlist check (Rakuten CVE-2024-41918 / @cosme CVE-2024-45203 / Groww CVE-2026-12065 class).",
+      "rowId": "vuln_row_custom_url_scheme_authorization",
+      "screenId": "demo_screen_custom_url_scheme_authorization"
+    },
+    {
+      "id": "deeplink_to_webview_navigation",
+      "category": "platform",
+      "title": "Deep Link -> Trusted WebView Navigation",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0035",
+        "MASWE-0029"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0332",
+        "MASTG-TEST-0027"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0095"
+      ],
+      "manualTest": "send a deep link whose `url` param points off-origin (or `javascript:`/`file://`) and confirm it loads in the trusted WebView with no origin allowlist (TikTok CVE-2024-45240 / Rakuten CVE-2024-41918 / EcoOnline CVE-2026-26897 class).",
+      "rowId": "vuln_row_deeplink_to_webview_navigation",
+      "screenId": "demo_screen_deeplink_to_webview_navigation"
+    },
+    {
+      "id": "deeplink_url_scheme_hijack",
+      "category": "platform",
+      "title": "Deep Link / URL Scheme Hijack",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0029"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0028",
+        "MASTG-TEST-0393",
+        "MASTG-TEST-0371"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0151"
+      ],
+      "manualTest": "fire crafted deep links with `adb`.",
+      "rowId": "vuln_row_deeplink_url_scheme_hijack",
+      "screenId": "demo_screen_deeplink_url_scheme_hijack"
+    },
+    {
+      "id": "default_role_holder_confusion",
+      "category": "platform",
+      "title": "Default-Role / Role-Holder Confusion",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious app claiming the role intent-filter"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "manualTest": "register a co-resident app for the role intent-filter (browser/dialer/SMS/wallet), confirm the app delegates a secret to whatever `resolveActivity()` returns; verify the secure build checks the actual RoleManager holder and pins package + signature.",
+      "rowId": "vuln_row_default_role_holder_confusion",
+      "screenId": "demo_screen_default_role_holder_confusion"
+    },
+    {
+      "id": "document_picker_trusted_file_confusion",
+      "category": "platform",
+      "title": "Document Picker -> Trusted-File Confusion",
+      "difficulty": "medium",
+      "platforms": [
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "return a document from the system picker whose declared type/path is hostile (mislabeled type, a path into a privileged location) and confirm the app trusts it into a sensitive sink; verify the secure build re-validates real content/type and confines the path (Document Picker / security-scoped-URL trust class).",
+      "rowId": "vuln_row_document_picker_trusted_file_confusion",
+      "screenId": "demo_screen_document_picker_trusted_file_confusion"
+    },
+    {
+      "id": "dynamic_broadcast_receiver_exposure",
+      "category": "platform",
+      "title": "Dynamic BroadcastReceiver Exposure",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "crafted broadcast"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0366"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0130"
+      ],
+      "manualTest": "from a co-resident app, send a crafted broadcast to a receiver registered at runtime without `RECEIVER_NOT_EXPORTED` / a signature permission and confirm the sensitive action fires; verify the secure build registers not-exported and drops it.",
+      "rowId": "vuln_row_dynamic_broadcast_receiver_exposure",
+      "screenId": "demo_screen_dynamic_broadcast_receiver_exposure"
+    },
+    {
+      "id": "exported_android_components",
+      "category": "platform",
+      "title": "Exported Android Components",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0364",
+        "MASTG-TEST-0365",
+        "MASTG-TEST-0366"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0128",
+        "MASTG-DEMO-0129",
+        "MASTG-DEMO-0130"
+      ],
+      "manualTest": "enumerate/invoke with drozer.",
+      "rowId": "vuln_row_exported_android_components",
+      "screenId": "demo_screen_exported_android_components"
+    },
+    {
+      "id": "exported_component_arbitrary_url_activity",
+      "category": "platform",
+      "title": "Exported Component -> Arbitrary URL / Activity Launch",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0364"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0128"
+      ],
+      "manualTest": "via drozer/adb, deliver an external intent naming an attacker URL / internal activity and confirm it opens with the app's identity (ABEMA CVE-2024-28745 / Samsung Members CVE-2026-20985 & CVE-2025-21079 class).",
+      "rowId": "vuln_row_exported_component_arbitrary_url_activity",
+      "screenId": "demo_screen_exported_component_arbitrary_url_activity"
+    },
+    {
+      "id": "exported_component_state_manipulation",
+      "category": "platform",
+      "title": "Exported Component -> Unauthorized State Manipulation",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0364"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0128"
+      ],
+      "manualTest": "from a `com.evil.*` app, send the exported component an intent naming the victim's notification id and confirm it is cancelled with no ownership check; verify the secure build requires owner==caller (or a signature permission) and refuses the cross-owner mutation (Datadog Android CVE-2026-47361 class).",
+      "rowId": "vuln_row_exported_component_state_manipulation",
+      "screenId": "demo_screen_exported_component_state_manipulation"
+    },
+    {
+      "id": "handoff_useractivity_injection",
+      "category": "platform",
+      "title": "Handoff / NSUserActivity Injection",
+      "difficulty": "medium",
+      "platforms": [
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted NSUserActivity payload"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "hand off a crafted `NSUserActivity` whose `userInfo` targets another account's resource and confirm the receiving app applies it; verify the secure build validates activityType, binds the activity to the authenticated account, and treats userInfo as untrusted.",
+      "rowId": "vuln_row_handoff_useractivity_injection",
+      "screenId": "demo_screen_handoff_useractivity_injection"
+    },
+    {
+      "id": "implicit_intent_sensitive_data",
+      "category": "platform",
+      "title": "Implicit Intent Leaks Sensitive Data",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0374",
+        "MASTG-TEST-0372"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0138"
+      ],
+      "manualTest": "register a receiver in a second app for the same action and confirm sensitive extras sent on an implicit intent are delivered to it (Samsung Smart View CVE-2025-21024 class); confirm an explicit (packaged) send does not leak.",
+      "rowId": "vuln_row_implicit_intent_sensitive_data",
+      "screenId": "demo_screen_implicit_intent_sensitive_data"
+    },
+    {
+      "id": "inapp_browser_ui_spoofing",
+      "category": "platform",
+      "title": "In-App Browser UI / Address-Bar Spoofing",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2"
+      ],
+      "maswe": [
+        "MASWE-0035"
+      ],
+      "manualTest": "load attacker content that sets a fake title/origin and confirm the in-app browser address bar shows a trusted origin while the real committed URL is the attacker's (Firefox Focus CVE-2025-10290 / LINE CVE-2024-5739 class).",
+      "rowId": "vuln_row_inapp_browser_ui_spoofing",
+      "screenId": "demo_screen_inapp_browser_ui_spoofing"
+    },
+    {
+      "id": "incoming_call_metadata_missing_authorization",
+      "category": "platform",
+      "title": "Incoming-Call Metadata Read (Missing Authorization class)",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "unprivileged local query"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "manualTest": "from an unprivileged app read/observe incoming-call metadata (number/state) via the exported surface with no permission check and confirm it is disclosed.",
+      "rowId": "vuln_row_incoming_call_metadata_missing_authorization",
+      "screenId": "demo_screen_incoming_call_metadata_missing_authorization"
+    },
+    {
+      "id": "notification_action_authorization_bypass",
+      "category": "platform",
+      "title": "Notification-Action / Trampoline Authorization Bypass",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted notification action"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0018",
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0381"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0147"
+      ],
+      "manualTest": "trigger a notification action (Android trampoline receiver→activity / iOS UNNotificationAction) that approves a transfer with no fresh auth; verify the secure build routes every surface through the same authorization check and re-auths destructive actions.",
+      "rowId": "vuln_row_notification_action_authorization_bypass",
+      "screenId": "demo_screen_notification_action_authorization_bypass"
+    },
+    {
+      "id": "notification_listener_authorization_bypass",
+      "category": "platform",
+      "title": "Notification Listener Authorization Bypass",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "bind a notification listener with no recorded user grant (above lock / unverified filter) and read all notification contents; verify the secure build requires a persisted grant recorded while unlocked and a verified listener component (Android CVE-2025-22427 / CVE-2025-26442 class).",
+      "rowId": "vuln_row_notification_listener_authorization_bypass",
+      "screenId": "demo_screen_notification_listener_authorization_bypass"
+    },
+    {
+      "id": "ordered_broadcast_result_injection",
+      "category": "platform",
+      "title": "Ordered-Broadcast Result Injection",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "high-priority malicious receiver"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0366"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0130"
+      ],
+      "manualTest": "register a higher-priority receiver that rewrites the result via `setResultData()` / `abortBroadcast()` and confirm the app trusts the poisoned result; verify the secure build guards the broadcast with a signature permission and never trusts ordered-broadcast results for security decisions.",
+      "rowId": "vuln_row_ordered_broadcast_result_injection",
+      "screenId": "demo_screen_ordered_broadcast_result_injection"
+    },
+    {
+      "id": "overlay_phishing",
+      "category": "platform",
+      "title": "Overlay Phishing",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "overlay PoC app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0039"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0035",
+        "MASTG-TEST-0340"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0103",
+        "MASTG-DEMO-0105"
+      ],
+      "manualTest": "draw an overlay over the credential screen with a PoC app and confirm input can be captured / the tap is obscured.",
+      "rowId": "vuln_row_overlay_phishing",
+      "screenId": "demo_screen_overlay_phishing"
+    },
+    {
+      "id": "platform_version_security_fallback",
+      "category": "platform",
+      "title": "Platform-Version Security Fallback",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "older-OS runtime"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0041"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0245"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0025"
+      ],
+      "manualTest": "run on an OS below the feature threshold and confirm the `if (SDK_INT >= X)` guard silently drops to an insecure path (no hardware key backing); verify the secure gate fails closed on the unsupported OS.",
+      "rowId": "vuln_row_platform_version_security_fallback",
+      "screenId": "demo_screen_platform_version_security_fallback"
+    },
+    {
+      "id": "qr_code_injection",
+      "category": "platform",
+      "title": "QR Code Injection",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted QR"
+      ],
+      "masvs": [
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "scan a crafted QR and confirm unvalidated action.",
+      "rowId": "vuln_row_qr_code_injection",
+      "screenId": "demo_screen_qr_code_injection"
+    },
+    {
+      "id": "ssrf_url_media_handler",
+      "category": "platform",
+      "title": "SSRF via URL / Media Handler",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-NETWORK-1",
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "pass an internal/loopback/metadata URL (`http://169.254.169.254/...`) to the media/URL loader and confirm the app fetches it; verify the secure build allowlists public hosts only (WhatsApp iOS CVE-2026-23866 class).",
+      "rowId": "vuln_row_ssrf_url_media_handler",
+      "screenId": "demo_screen_ssrf_url_media_handler"
+    },
+    {
+      "id": "tapjacking",
+      "category": "platform",
+      "title": "Tapjacking",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "overlay PoC app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0039"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0035",
+        "MASTG-TEST-0340"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0103",
+        "MASTG-DEMO-0105"
+      ],
+      "manualTest": "overlay a PoC app and confirm the tap passes through.",
+      "rowId": "vuln_row_tapjacking",
+      "screenId": "demo_screen_tapjacking"
+    },
+    {
+      "id": "accessibility_service_privilege_abuse",
+      "category": "platform",
+      "title": "AccessibilityService Privilege Abuse",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0040"
+      ],
+      "manualTest": "from the a11y service trigger a background activity launch / UI-hide / injected gesture with no valid a11y event and confirm the privileged action fires; verify the secure build requires a user-enabled service, a genuine foreground event, and an action allowlist (Android AccessibilityServiceConnection CVE-2025-26462 / CVE-2023-21109 class).",
+      "rowId": "vuln_row_accessibility_service_privilege_abuse",
+      "screenId": "demo_screen_accessibility_service_privilege_abuse"
+    },
+    {
+      "id": "activity_task_stack_hijacking",
+      "category": "platform",
+      "title": "Activity Task-Stack / Affinity Hijacking",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious activity with matching taskAffinity"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "manualTest": "launch a malicious Activity that spoofs the victim's `taskAffinity` (StrandHogg-style) and confirm it appears atop the trusted task; verify the secure build uses a unique affinity and disallows reparenting so it lands in its own task.",
+      "rowId": "vuln_row_activity_task_stack_hijacking",
+      "screenId": "demo_screen_activity_task_stack_hijacking"
+    },
+    {
+      "id": "android_capability_composition_chain",
+      "category": "platform",
+      "title": "Android Capability-Composition Chain",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "crafted notification-action broadcast"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "manualTest": "trigger the notification action (or send the broadcast directly) as an untrusted caller and confirm the mutable PendingIntent → exported receiver → bound Binder service → transfer chain runs the transfer without ever re-checking the original caller; verify the secure build propagates + re-authorizes the original caller at the sink and uses immutable/explicit intents + per-method authorization.",
+      "rowId": "vuln_row_android_capability_composition_chain",
+      "screenId": "demo_screen_android_capability_composition_chain"
+    },
+    {
+      "id": "app_intent_parameter_authorization",
+      "category": "platform",
+      "title": "App Intent / Siri Parameter -> Privileged Action (No Authz)",
+      "difficulty": "hard",
+      "platforms": [
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted shortcut"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "invoke a privileged App Intent/Shortcut (transfer/export) with an untrusted parameter targeting another user's entity and confirm it runs with no authorization; verify the secure build requires a verified auth token and an ownership check (Apple App Intents capability-confusion class).",
+      "rowId": "vuln_row_app_intent_parameter_authorization",
+      "screenId": "demo_screen_app_intent_parameter_authorization"
+    },
+    {
+      "id": "authorization_by_mutable_resource_state",
+      "category": "platform",
+      "title": "Authorization Based on Mutable Resource State",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "request access using a file-existence/state pre-check, then create/replace the resource and confirm you gain read/write to a file you shouldn't own (incl. not-yet-existing files); verify the secure build binds authorization to a stable owner captured atomically (Android MediaProvider CVE-2026-0035 class).",
+      "rowId": "vuln_row_authorization_by_mutable_resource_state",
+      "screenId": "demo_screen_authorization_by_mutable_resource_state"
+    },
+    {
+      "id": "clipboard_to_privileged_action_injection",
+      "category": "platform",
+      "title": "Clipboard -> Privileged Action Injection",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0030"
+      ],
+      "manualTest": "seed the clipboard from an untrusted origin and confirm it flows into a privileged action (auto-paste into a payment/command field / automation step) with no validation; verify the secure build validates/allowlists the value and requires explicit confirmation (webpage → clipboard → automation → privileged capability; CVE-2026-17766 class).",
+      "rowId": "vuln_row_clipboard_to_privileged_action_injection",
+      "screenId": "demo_screen_clipboard_to_privileged_action_injection"
+    },
+    {
+      "id": "confused_deputy_intent_validation",
+      "category": "platform",
+      "title": "Confused-Deputy Intent Validation Bypass",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0364"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0128"
+      ],
+      "manualTest": "from an unprivileged app, invoke the privileged component with a superficially-valid Intent and confirm the action runs with the app's privileges (Android Settings CVE-2025-32326 / CVE-2025-32321 class).",
+      "rowId": "vuln_row_confused_deputy_intent_validation",
+      "screenId": "demo_screen_confused_deputy_intent_validation"
+    },
+    {
+      "id": "contacts_provider_blind_sqli_oracle",
+      "category": "platform",
+      "title": "Blind SQLi Boolean-Oracle Extraction (Contacts-Provider class)",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "crafted selection clause"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "manualTest": "with drozer, send boolean/time-based `selection` clauses to the contacts-style provider and confirm a blind-SQLi oracle leaks rows the caller shouldn't see.",
+      "rowId": "vuln_row_contacts_provider_blind_sqli_oracle",
+      "screenId": "demo_screen_contacts_provider_blind_sqli_oracle"
+    },
+    {
+      "id": "content_provider_sql_injection",
+      "category": "platform",
+      "title": "Content Provider SQL Injection",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0018",
+        "MASWE-0050"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0339",
+        "MASTG-TEST-0355"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0102",
+        "MASTG-DEMO-0121"
+      ],
+      "manualTest": "inject via the provider with drozer.",
+      "rowId": "vuln_row_content_provider_sql_injection",
+      "screenId": "demo_screen_content_provider_sql_injection"
+    },
+    {
+      "id": "content_uri_resolver_confused_deputy",
+      "category": "platform",
+      "title": "content:// URI -> ContentResolver Confused Deputy",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0355"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0121"
+      ],
+      "manualTest": "hand the app an attacker `content://com.dvma.private/...` URI in an intent extra and confirm it reads the privileged provider through its own ContentResolver and returns the data to you (confused deputy); verify the secure build validates the caller may access that authority and refuses the privileged read (Android DownloadProvider CVE-2025-26417 class).",
+      "rowId": "vuln_row_content_uri_resolver_confused_deputy",
+      "screenId": "demo_screen_content_uri_resolver_confused_deputy"
+    },
+    {
+      "id": "cross_app_scripting",
+      "category": "platform",
+      "title": "Cross-App Scripting (Untrusted Intent -> Exported Activity -> WebView JS)",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0035",
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0332",
+        "MASTG-TEST-0031"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0095"
+      ],
+      "manualTest": "from a co-resident app, fire an Intent whose value is a `javascript:` payload (or an attacker URL) at the exported activity and confirm it executes in the WebView's trusted origin; verify the secure build validates scheme+origin first (Google Cross-App Scripting class; Element CVE-2024-26131/26132, TikTok CVE-2024-45240).",
+      "rowId": "vuln_row_cross_app_scripting",
+      "screenId": "demo_screen_cross_app_scripting"
+    },
+    {
+      "id": "cross_profile_data_capability_leakage",
+      "category": "platform",
+      "title": "Cross-Profile (Work/Personal) Data & Capability Leakage",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "cross-profile forwarding intent",
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-STORAGE-1"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "manualTest": "forward a work-profile credential to a personal surface (share sheet / clipboard / intent) and confirm it crosses; verify the secure build enforces a cross-profile policy (only allowlisted, non-sensitive items may cross, with the required user affordance) so work data is blocked (Android managed-profile leakage class).",
+      "rowId": "vuln_row_cross_profile_data_capability_leakage",
+      "screenId": "demo_screen_cross_profile_data_capability_leakage"
+    },
+    {
+      "id": "dynamic_code_loading_rce",
+      "category": "platform",
+      "title": "Dynamic Code Loading (Arbitrary Code Execution)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-CODE-4",
+        "MASVS-RESILIENCE-3"
+      ],
+      "maswe": [
+        "MASWE-0049"
+      ],
+      "manualTest": "supply a malicious module/dex from a companion app or external storage and confirm it executes unverified.",
+      "rowId": "vuln_row_dynamic_code_loading_rce",
+      "screenId": "demo_screen_dynamic_code_loading_rce"
+    },
+    {
+      "id": "file_descriptor_capability_leakage",
+      "category": "platform",
+      "title": "File-Descriptor Capability Leakage",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "manualTest": "bind the service and receive a `ParcelFileDescriptor` for a sensitive DB the caller couldn't open by path; verify the secure build validates the caller and only returns a read-only FD to a narrowly-scoped non-sensitive resource.",
+      "rowId": "vuln_row_file_descriptor_capability_leakage",
+      "screenId": "demo_screen_file_descriptor_capability_leakage"
+    },
+    {
+      "id": "fileprovider_path_traversal",
+      "category": "platform",
+      "title": "FileProvider Path Traversal / Arbitrary File Sharing",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-STORAGE-1"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0357"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0122",
+        "MASTG-DEMO-0123"
+      ],
+      "manualTest": "via drozer / a companion app, request a traversal path (`../`) through the FileProvider and read an app-private file.",
+      "rowId": "vuln_row_fileprovider_path_traversal",
+      "screenId": "demo_screen_fileprovider_path_traversal"
+    },
+    {
+      "id": "grant_uri_permission_abuse",
+      "category": "platform",
+      "title": "URI Permission / GRANT_URI_PERMISSIONS Abuse",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0357"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0123"
+      ],
+      "manualTest": "send a redirected Intent carrying `FLAG_GRANT_READ_URI_PERMISSION` to a private `content://` URI and confirm the malicious app reads a file it was never granted directly (Pixel CVE-2024-27222 class).",
+      "rowId": "vuln_row_grant_uri_permission_abuse",
+      "screenId": "demo_screen_grant_uri_permission_abuse"
+    },
+    {
+      "id": "insecure_webview",
+      "category": "platform",
+      "title": "Insecure WebView (JS Bridge RCE, file:// access)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2"
+      ],
+      "maswe": [
+        "MASWE-0033",
+        "MASWE-0034"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0334",
+        "MASTG-TEST-0333",
+        "MASTG-TEST-0250"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0097",
+        "MASTG-DEMO-0096"
+      ],
+      "manualTest": "reach the JS bridge / `file://` and demonstrate RCE-style behavior.",
+      "rowId": "vuln_row_insecure_webview",
+      "screenId": "demo_screen_insecure_webview"
+    },
+    {
+      "id": "intent_arg_injection_rce",
+      "category": "platform",
+      "title": "Intent Argument Injection -> Local Code Execution",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "manualTest": "with drozer/adb, invoke the exported component with a crafted extra (e.g. `-xrun`/`cmd`/`loadLibrary`) and confirm attacker-controlled args reach an execution path with the app's privileges (Unity CVE-2025-59489 class); confirm the allowlist handler rejects it.",
+      "rowId": "vuln_row_intent_arg_injection_rce",
+      "screenId": "demo_screen_intent_arg_injection_rce"
+    },
+    {
+      "id": "intent_redirection",
+      "category": "platform",
+      "title": "Intent Redirection / Task Hijack (StrandHogg-style)",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0375"
+      ],
+      "manualTest": "send crafted extras carrying a nested intent via drozer/adb and confirm it is forwarded to an internal component.",
+      "rowId": "vuln_row_intent_redirection",
+      "screenId": "demo_screen_intent_redirection"
+    },
+    {
+      "id": "ios_capability_composition_chain",
+      "category": "platform",
+      "title": "iOS Capability-Composition Chain",
+      "difficulty": "hard",
+      "platforms": [
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted universal-link URL"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0029",
+        "MASWE-0018"
+      ],
+      "manualTest": "open the crafted Universal Link and confirm it drives App Intent perform() → security-scoped bookmark → Contacts export with no user authorization; verify the secure build treats the link as untrusted, requires fresh authorization at the App Intent for the protected-data action, and re-validates the bookmark scope before the sink.",
+      "rowId": "vuln_row_ios_capability_composition_chain",
+      "screenId": "demo_screen_ios_capability_composition_chain"
+    },
+    {
+      "id": "pending_intent_hijacking",
+      "category": "platform",
+      "title": "Pending Intent Hijacking",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0381",
+        "MASTG-TEST-0030"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0147"
+      ],
+      "manualTest": "intercept the mutable PendingIntent.",
+      "rowId": "vuln_row_pending_intent_hijacking",
+      "screenId": "demo_screen_pending_intent_hijacking"
+    },
+    {
+      "id": "pendingintent_provenance_confusion",
+      "category": "platform",
+      "title": "PendingIntent Provenance Confusion",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0381"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0147"
+      ],
+      "manualTest": "obtain/replay a PendingIntent the app created and confirm the receiving SDK authenticates the presenter as the creator app (arXiv 2603.02539); confirm strict presenter==creator checking rejects it.",
+      "rowId": "vuln_row_pendingintent_provenance_confusion",
+      "screenId": "demo_screen_pendingintent_provenance_confusion"
+    },
+    {
+      "id": "persistable_uri_grant_abuse",
+      "category": "platform",
+      "title": "Persistent URI-Grant Capability Abuse",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "attacker-controlled content:// URI"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0357"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0123"
+      ],
+      "manualTest": "send an exported component a `content://` URI with `FLAG_GRANT_PERSISTABLE_URI_PERMISSION`, confirm it calls `takePersistableUriPermission()` and the grant survives revocation while the provider swaps data; verify the secure build never persists untrusted grants.",
+      "rowId": "vuln_row_persistable_uri_grant_abuse",
+      "screenId": "demo_screen_persistable_uri_grant_abuse"
+    },
+    {
+      "id": "privileged_service_binding_exposure",
+      "category": "platform",
+      "title": "Privileged Service Binding / Binder Interface Exposure",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018",
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0365"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0129"
+      ],
+      "manualTest": "`bindService()` from an untrusted package and call a privileged Binder method with no caller check; verify the secure build validates caller identity / a signature permission before returning a usable binder.",
+      "rowId": "vuln_row_privileged_service_binding_exposure",
+      "screenId": "demo_screen_privileged_service_binding_exposure"
+    },
+    {
+      "id": "proximity_transfer_unsafe_parsing",
+      "category": "platform",
+      "title": "Proximity Transfer Unsafe Parsing (AirDrop / Quick Share)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted plist"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "feed a malformed plist / deeply nested XML entity-expansion bomb as a proximity-transfer (AirDrop/Quick Share) payload and confirm the naive parser blows up (huge expansion / state confusion) with no pairing; verify the secure build caps depth, entity expansion, and size and rejects it (AirDrop & Quick Share proximity-protocol research class).",
+      "rowId": "vuln_row_proximity_transfer_unsafe_parsing",
+      "screenId": "demo_screen_proximity_transfer_unsafe_parsing"
+    },
+    {
+      "id": "remoteviews_widget_action_injection",
+      "category": "platform",
+      "title": "App-Widget / RemoteViews Action Injection",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "crafted widget-config extras"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0381"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0147"
+      ],
+      "manualTest": "supply attacker widget-config extras that populate a RemoteViews action `PendingIntent` and confirm tapping the widget runs a privileged transfer with attacker params; verify the secure build binds only immutable explicit intents and re-auths destructive ops.",
+      "rowId": "vuln_row_remoteviews_widget_action_injection",
+      "screenId": "demo_screen_remoteviews_widget_action_injection"
+    },
+    {
+      "id": "shortcuts_path_symlink_sandbox_escape",
+      "category": "platform",
+      "title": "Shortcuts / App Intents Path + Symlink Sandbox Escape",
+      "difficulty": "hard",
+      "platforms": [
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted shortcut"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2",
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "drive a Shortcut/App-Intents file op with a `../` or symlinked path and confirm it resolves outside the app container to a sensitive file; verify the secure build canonicalizes and confines the real path to the container (iOS Shortcuts CVE-2026-20677 / CVE-2026-20653 class).",
+      "rowId": "vuln_row_shortcuts_path_symlink_sandbox_escape",
+      "screenId": "demo_screen_shortcuts_path_symlink_sandbox_escape"
+    },
+    {
+      "id": "system_surface_privileged_appintent_exposure",
+      "category": "platform",
+      "title": "System-Surface -> Privileged App Intent Exposure",
+      "difficulty": "hard",
+      "platforms": [
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted shortcut"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0362"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0127"
+      ],
+      "manualTest": "fire a privileged App Intent from a surface that shouldn't be allowed to (Widget/Control/Action Button) with no unlock and confirm it runs; verify the secure build enforces per-surface authorization + auth for sensitive intents (Apple App Intents multi-surface exposure class).",
+      "rowId": "vuln_row_system_surface_privileged_appintent_exposure",
+      "screenId": "demo_screen_system_surface_privileged_appintent_exposure"
+    },
+    {
+      "id": "telephony_capability_abuse",
+      "category": "platform",
+      "title": "Telephony / Phone-Account Capability Abuse",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0032",
+        "MASWE-0018"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0365"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0129"
+      ],
+      "manualTest": "from an untrusted/exported caller invoke a telephony capability (place a call to a premium number / send SMS / register a phone account) with no per-invocation permission check; verify the secure build requires the matching permission + per-invocation confirmation (Android Telecom CVE-2026-28615 class).",
+      "rowId": "vuln_row_telephony_capability_abuse",
+      "screenId": "demo_screen_telephony_capability_abuse"
+    },
+    {
+      "id": "unauthenticated_local_loopback_service",
+      "category": "platform",
+      "title": "Unauthenticated Local / Loopback Service",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "localhost request",
+        "DNS-rebinding page"
+      ],
+      "masvs": [
+        "MASVS-NETWORK-1",
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "hit the app's loopback HTTP/TCP or unix-domain socket from a co-resident app or a DNS-rebinding web origin (no token) and confirm privileged data/functionality is served; verify the secure build requires a per-session token and validates the Origin/Host, rejecting rebinding + untokened callers.",
+      "rowId": "vuln_row_unauthenticated_local_loopback_service",
+      "screenId": "demo_screen_unauthenticated_local_loopback_service"
+    },
+    {
+      "id": "universal_link_aasa_confusion",
+      "category": "platform",
+      "title": "Universal Link / AASA Associated-Domain Confusion",
+      "difficulty": "hard",
+      "platforms": [
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted universal-link URL"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0029"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0395",
+        "MASTG-TEST-0070"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0153"
+      ],
+      "manualTest": "craft a Universal Link that exploits a broad AASA path/wildcard or an open redirect to reach a sensitive handler; verify the secure build uses tight exact-path matching and re-validates params.",
+      "rowId": "vuln_row_universal_link_aasa_confusion",
+      "screenId": "demo_screen_universal_link_aasa_confusion"
+    },
+    {
+      "id": "wkwebview_untrusted_url_local_file",
+      "category": "platform",
+      "title": "WebView Untrusted URL -> Local File Read (iOS WKWebView)",
+      "difficulty": "hard",
+      "platforms": [
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0034",
+        "MASWE-0035"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0333",
+        "MASTG-TEST-0332"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0096"
+      ],
+      "manualTest": "inject HTML/JS into a reflected field and confirm the WebView (with file access enabled) can read the app's local files; verify the secure build escapes output and disables file access (ZOLL ePCR iOS CVE-2025-12699 class).",
+      "rowId": "vuln_row_wkwebview_untrusted_url_local_file",
+      "screenId": "demo_screen_wkwebview_untrusted_url_local_file"
+    },
+    {
+      "id": "zero_click_call_media_parse_sink",
+      "category": "platform",
+      "title": "Zero-Click Media Parse Before User Accept (VoIP-ring class)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "malformed call-setup payload"
+      ],
+      "masvs": [
+        "MASVS-CODE-4",
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "deliver a crafted call/media payload that reaches the parser with no user interaction and confirm it is parsed unsafely (crash / state confusion) at the zero-click sink.",
+      "rowId": "vuln_row_zero_click_call_media_parse_sink",
+      "screenId": "demo_screen_zero_click_call_media_parse_sink"
+    },
+    {
+      "id": "zip_path_traversal",
+      "category": "platform",
+      "title": "Zip Path Traversal (Zip-Slip)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted zip"
+      ],
+      "masvs": [
+        "MASVS-CODE-4",
+        "MASVS-STORAGE-1"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "feed a zip-slip archive to the update unpacker.",
+      "rowId": "vuln_row_zip_path_traversal",
+      "screenId": "demo_screen_zip_path_traversal"
+    },
+    {
+      "id": "debuggable_release_build",
+      "category": "code_quality",
+      "title": "Debuggable Release Build",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-4",
+        "MASVS-CODE-2"
+      ],
+      "maswe": [
+        "MASWE-0063"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0226",
+        "MASTG-TEST-0261"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0040",
+        "MASTG-DEMO-0036"
+      ],
+      "manualTest": "confirm `debuggable=true` in the release APK.",
+      "rowId": "vuln_row_debuggable_release_build",
+      "screenId": "demo_screen_debuggable_release_build"
+    },
+    {
+      "id": "no_obfuscation",
+      "category": "code_quality",
+      "title": "No Obfuscation / Symbol Stripping",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-3"
+      ],
+      "maswe": [
+        "MASWE-0059"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0051",
+        "MASTG-TEST-0093"
+      ],
+      "manualTest": "confirm readable symbols with jadx/`nm`.",
+      "rowId": "vuln_row_no_obfuscation",
+      "screenId": "demo_screen_no_obfuscation"
+    },
+    {
+      "id": "verbose_error_handling",
+      "category": "code_quality",
+      "title": "Verbose Error Handling (leaked stack traces)",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CODE-2"
+      ],
+      "maswe": [
+        "MASWE-0061"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0041",
+        "MASTG-TEST-0084"
+      ],
+      "manualTest": "trigger an error path (bad input, forced failure) and confirm the response/UI/log leaks a stack trace, SQL, or internal path instead of a generic message.",
+      "rowId": "vuln_row_verbose_error_handling",
+      "screenId": "demo_screen_verbose_error_handling"
+    },
+    {
+      "id": "vulnerable_dependencies",
+      "category": "code_quality",
+      "title": "Vulnerable Dependencies (known CVE)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CODE-3"
+      ],
+      "maswe": [
+        "MASWE-0044"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0272",
+        "MASTG-TEST-0273",
+        "MASTG-TEST-0274",
+        "MASTG-TEST-0275"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0050",
+        "MASTG-DEMO-0051"
+      ],
+      "manualTest": "run osv-scanner / dependency-check.",
+      "rowId": "vuln_row_vulnerable_dependencies",
+      "screenId": "demo_screen_vulnerable_dependencies"
+    },
+    {
+      "id": "native_code_memory_bugs",
+      "category": "code_quality",
+      "title": "Native Code Memory Bugs (JNI buffer overflow)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0043",
+        "MASTG-TEST-0086"
+      ],
+      "manualTest": "analyze the native lib in Ghidra; trigger the overflow.",
+      "rowId": "vuln_row_native_code_memory_bugs",
+      "screenId": "demo_screen_native_code_memory_bugs"
+    },
+    {
+      "id": "app_attestation_absent",
+      "category": "resilience",
+      "title": "App Attestation Not Implemented (server never verifies client)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "repackaged client"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-2"
+      ],
+      "maswe": [
+        "MASWE-0056"
+      ],
+      "manualTest": "MITM the app's API and confirm no app attestation (Play Integrity / App Attest) token is required, so a repackaged/emulated client is served normally.",
+      "rowId": "vuln_row_app_attestation_absent",
+      "screenId": "demo_screen_app_attestation_absent"
+    },
+    {
+      "id": "device_attestation_absent",
+      "category": "resilience",
+      "title": "Device Attestation Not Implemented (Play Integrity / App Attest)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "emulator / rooted device"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-1"
+      ],
+      "maswe": [
+        "MASWE-0054"
+      ],
+      "manualTest": "confirm the server accepts requests with no hardware key-attestation / DeviceCheck evidence, so a rooted/emulated device is trusted.",
+      "rowId": "vuln_row_device_attestation_absent",
+      "screenId": "demo_screen_device_attestation_absent"
+    },
+    {
+      "id": "emulator_detection_bypass",
+      "category": "resilience",
+      "title": "Emulator Detection Bypass",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-1"
+      ],
+      "maswe": [
+        "MASWE-0053"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0367",
+        "MASTG-TEST-0351"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0131",
+        "MASTG-DEMO-0114"
+      ],
+      "manualTest": "spoof build props and bypass.",
+      "rowId": "vuln_row_emulator_detection_bypass",
+      "screenId": "demo_screen_emulator_detection_bypass"
+    },
+    {
+      "id": "malware_detection_absent",
+      "category": "resilience",
+      "title": "Malware / Overlay Co-Resident Detection Not Implemented",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "co-resident malware"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-1"
+      ],
+      "maswe": [
+        "MASWE-0055"
+      ],
+      "manualTest": "install a known-bad/sideloaded companion and confirm the app performs no on-device threat check before handling secrets.",
+      "rowId": "vuln_row_malware_detection_absent",
+      "screenId": "demo_screen_malware_detection_absent"
+    },
+    {
+      "id": "root_jailbreak_detection_bypass",
+      "category": "resilience",
+      "title": "Root/Jailbreak Detection Bypass",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-1"
+      ],
+      "maswe": [
+        "MASWE-0051"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0324",
+        "MASTG-TEST-0325",
+        "MASTG-TEST-0240",
+        "MASTG-TEST-0241"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0087",
+        "MASTG-DEMO-0088",
+        "MASTG-DEMO-0021"
+      ],
+      "manualTest": "bypass with objection/Frida.",
+      "rowId": "vuln_row_root_jailbreak_detection_bypass",
+      "screenId": "demo_screen_root_jailbreak_detection_bypass"
+    },
+    {
+      "id": "virtualization_detection_absent",
+      "category": "resilience",
+      "title": "App Virtualization / Cloning Detection Not Implemented",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "virtual container"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-1"
+      ],
+      "maswe": [
+        "MASWE-0052"
+      ],
+      "manualTest": "run inside an app-cloner / work- profile / virtual space and confirm the app runs with no detection of the virtualized container.",
+      "rowId": "vuln_row_virtualization_detection_absent",
+      "screenId": "demo_screen_virtualization_detection_absent"
+    },
+    {
+      "id": "anti_debugging_bypass",
+      "category": "resilience",
+      "title": "Anti-Debugging Bypass",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-2"
+      ],
+      "maswe": [
+        "MASWE-0064"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0352",
+        "MASTG-TEST-0353",
+        "MASTG-TEST-0401",
+        "MASTG-TEST-0402"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0115",
+        "MASTG-DEMO-0116"
+      ],
+      "manualTest": "patch out the debugger check.",
+      "rowId": "vuln_row_anti_debugging_bypass",
+      "screenId": "demo_screen_anti_debugging_bypass"
+    },
+    {
+      "id": "anti_tampering_integrity_bypass",
+      "category": "resilience",
+      "title": "Anti-Tampering / Integrity Bypass",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-3"
+      ],
+      "maswe": [
+        "MASWE-0057"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0338",
+        "MASTG-TEST-0387"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0101",
+        "MASTG-DEMO-0150"
+      ],
+      "manualTest": "modify the APK and confirm it runs.",
+      "rowId": "vuln_row_anti_tampering_integrity_bypass",
+      "screenId": "demo_screen_anti_tampering_integrity_bypass"
+    },
+    {
+      "id": "frida_detection_bypass",
+      "category": "resilience",
+      "title": "Frida Detection Bypass",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-2"
+      ],
+      "maswe": [
+        "MASWE-0065"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0341",
+        "MASTG-TEST-0354"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0107",
+        "MASTG-DEMO-0118"
+      ],
+      "manualTest": "disable the Frida string check.",
+      "rowId": "vuln_row_frida_detection_bypass",
+      "screenId": "demo_screen_frida_detection_bypass"
+    },
+    {
+      "id": "toctou_race_condition",
+      "category": "resilience",
+      "title": "TOCTOU Race Condition in Auth Check",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "win the check-to-use race.",
+      "rowId": "vuln_row_toctou_race_condition",
+      "screenId": "demo_screen_toctou_race_condition"
+    },
+    {
+      "id": "sbom_missing_or_stale",
+      "category": "supply_chain",
+      "title": "Missing / Stale SBOM (No Component Inventory)",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CODE-3",
+        "MASVS-CODE-1"
+      ],
+      "maswe": [
+        "MASWE-0044"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0274",
+        "MASTG-TEST-0275"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0051",
+        "MASTG-DEMO-0053"
+      ],
+      "manualTest": "confirm the build produces no Software Bill of Materials; generate one (e.g. CycloneDX) and cross-reference bundled SDK versions against advisories to reveal the components that were invisible.",
+      "rowId": "vuln_row_sbom_missing_or_stale",
+      "screenId": "demo_screen_sbom_missing_or_stale"
+    },
+    {
+      "id": "typosquatted_dependency",
+      "category": "supply_chain",
+      "title": "Typosquatted Dependency",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CODE-3"
+      ],
+      "maswe": [
+        "MASWE-0048"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0272",
+        "MASTG-TEST-0273"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0050",
+        "MASTG-DEMO-0052"
+      ],
+      "manualTest": "review pubspec for the lookalike name.",
+      "rowId": "vuln_row_typosquatted_dependency",
+      "screenId": "demo_screen_typosquatted_dependency"
+    },
+    {
+      "id": "insecure_firebase_cloud_config",
+      "category": "supply_chain",
+      "title": "Insecure Firebase / Cloud Backend Config",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2",
+        "MASVS-NETWORK-1",
+        "MASVS-CODE-2"
+      ],
+      "maswe": [
+        "MASWE-0002"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0212",
+        "MASTG-TEST-0214"
+      ],
+      "manualTest": "extract the Firebase/cloud URL + keys with jadx/`strings` and confirm an unauthenticated read returns other users' data (curl / mitmproxy).",
+      "rowId": "vuln_row_insecure_firebase_cloud_config",
+      "screenId": "demo_screen_insecure_firebase_cloud_config"
+    },
+    {
+      "id": "malicious_third_party_sdk",
+      "category": "supply_chain",
+      "title": "Malicious Third-Party SDK",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CODE-3",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0048"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0318",
+        "MASTG-TEST-0319"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0081"
+      ],
+      "manualTest": "confirm exfiltration under mitmproxy.",
+      "rowId": "vuln_row_malicious_third_party_sdk",
+      "screenId": "demo_screen_malicious_third_party_sdk"
+    },
+    {
+      "id": "unsigned_unverified_build_artifact",
+      "category": "supply_chain",
+      "title": "Unsigned / Unverified Build Artifact",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-3",
+        "MASVS-CODE-1"
+      ],
+      "maswe": [
+        "MASWE-0057"
+      ],
+      "manualTest": "verify with `apksigner` and confirm the update path skips signature/checksum checks.",
+      "rowId": "vuln_row_unsigned_unverified_build_artifact",
+      "screenId": "demo_screen_unsigned_unverified_build_artifact"
+    },
+    {
+      "id": "dependency_confusion",
+      "category": "supply_chain",
+      "title": "Dependency Confusion / Substitution",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CODE-3",
+        "MASVS-CODE-1"
+      ],
+      "maswe": [
+        "MASWE-0048"
+      ],
+      "manualTest": "confirm an internal/private package name can be resolved from a public registry (pubspec/CocoaPods/SPM), so a higher public version would be pulled over the trusted private one; confirm scoped/pinned resolution prevents it (iOS dependency-management research class).",
+      "rowId": "vuln_row_dependency_confusion",
+      "screenId": "demo_screen_dependency_confusion"
+    },
+    {
+      "id": "sdk_exported_component_redirection",
+      "category": "supply_chain",
+      "title": "Bundled SDK Ships a Vulnerable Exported Component",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CODE-3",
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0364",
+        "MASTG-TEST-0372"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0128",
+        "MASTG-DEMO-0136"
+      ],
+      "manualTest": "with drozer/adb, deliver a nested \"forward\" intent to a bundled SDK's exported component and confirm it redirects to a private component (leaking credentials) with the host app's privileges (EngageLab SDK class); confirm the allowlisted handler refuses.",
+      "rowId": "vuln_row_sdk_exported_component_redirection",
+      "screenId": "demo_screen_sdk_exported_component_redirection"
+    },
+    {
+      "id": "silent_sdk_auto_update",
+      "category": "supply_chain",
+      "title": "Silent SDK Auto-Update (Post-Deploy Behavior Change)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CODE-3",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0043"
+      ],
+      "manualTest": "under mitmproxy, serve a modified remote \"SDK behavior\" payload and confirm it is applied at runtime with no signature/checksum check, changing app behavior post-install (SpinOK-style).",
+      "rowId": "vuln_row_silent_sdk_auto_update",
+      "screenId": "demo_screen_silent_sdk_auto_update"
+    },
+    {
+      "id": "installed_app_enumeration",
+      "category": "privacy",
+      "title": "Installed-App Enumeration (Privacy Fingerprint)",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PRIVACY-1",
+        "MASVS-PRIVACY-3"
+      ],
+      "maswe": [
+        "MASWE-0068"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0255",
+        "MASTG-TEST-0024"
+      ],
+      "manualTest": "confirm the app probes a broad scheme/package list (iOS `canOpenURL` / Android `queryIntentActivities`) and builds an installed-app fingerprint with no functional need; verify the secure build checks only its one declared scheme (iOS CVE-2026-20641 class).",
+      "rowId": "vuln_row_installed_app_enumeration",
+      "screenId": "demo_screen_installed_app_enumeration"
+    },
+    {
+      "id": "missing_consent_before_data_access",
+      "category": "privacy",
+      "title": "Missing Consent Before Data Access",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PRIVACY-1",
+        "MASVS-PRIVACY-2"
+      ],
+      "maswe": [
+        "MASWE-0078"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0360",
+        "MASTG-TEST-0256"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0126"
+      ],
+      "manualTest": "confirm data access with no consent screen.",
+      "rowId": "vuln_row_missing_consent_before_data_access",
+      "screenId": "demo_screen_missing_consent_before_data_access"
+    },
+    {
+      "id": "no_tracking_transparency_prompt",
+      "category": "privacy",
+      "title": "No Tracking Transparency Prompt",
+      "difficulty": "easy",
+      "platforms": [
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PRIVACY-3"
+      ],
+      "maswe": [
+        "MASWE-0074"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0281"
+      ],
+      "manualTest": "confirm tracking with no ATT prompt.",
+      "rowId": "vuln_row_no_tracking_transparency_prompt",
+      "screenId": "demo_screen_no_tracking_transparency_prompt"
+    },
+    {
+      "id": "assistant_locked_device_capability_abuse",
+      "category": "privacy",
+      "title": "System Assistant -> Locked-Device Capability Abuse",
+      "difficulty": "medium",
+      "platforms": [
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "invoke a Siri/App-Intents/voice capability on a LOCKED device and confirm it exposes sensitive info or runs a privileged action without unlocking; verify the secure build re-checks authentication for sensitive capabilities (iOS Siri locked-device CVE-2026-28856 class).",
+      "rowId": "vuln_row_assistant_locked_device_capability_abuse",
+      "screenId": "demo_screen_assistant_locked_device_capability_abuse"
+    },
+    {
+      "id": "cross_app_browser_history_access",
+      "category": "privacy",
+      "title": "Cross-App Browser History Access",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PRIVACY-1",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0002"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0007"
+      ],
+      "manualTest": "read browsing history belonging to another app / the system browser with no consent; verify the secure build requires explicit consent and scoping (iOS CVE-2026-20656 Safari-history class).",
+      "rowId": "vuln_row_cross_app_browser_history_access",
+      "screenId": "demo_screen_cross_app_browser_history_access"
+    },
+    {
+      "id": "lock_state_confusion_data_exposure",
+      "category": "privacy",
+      "title": "Lock-State Confusion Data Exposure",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0036"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0246"
+      ],
+      "manualTest": "while the device is LOCKED, reach sensitive content/action through an accessibility / notification / widget / VoiceOver path that never re-checks the keyguard; verify the secure build re-checks lock state and redacts (iOS CVE-2026-20645 / CVE-2026-20661 class).",
+      "rowId": "vuln_row_lock_state_confusion_data_exposure",
+      "screenId": "demo_screen_lock_state_confusion_data_exposure"
+    },
+    {
+      "id": "notification_alternate_surface_disclosure",
+      "category": "privacy",
+      "title": "Notification Content Disclosure via Alternate Surface",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PRIVACY-1",
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0037"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0315"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0078"
+      ],
+      "manualTest": "trigger a notification redacted on the lock screen and confirm its full content renders on a secondary surface (DeX/desktop mode, widget, companion display); verify the secure build applies the same redaction policy on every unauthenticated surface (Samsung DeX CVE-2026-21006 class).",
+      "rowId": "vuln_row_notification_alternate_surface_disclosure",
+      "screenId": "demo_screen_notification_alternate_surface_disclosure"
+    },
+    {
+      "id": "pii_in_analytics_events",
+      "category": "privacy",
+      "title": "PII in Analytics Events",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0069"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0318",
+        "MASTG-TEST-0319"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0081"
+      ],
+      "manualTest": "capture analytics events under mitmproxy.",
+      "rowId": "vuln_row_pii_in_analytics_events",
+      "screenId": "demo_screen_pii_in_analytics_events"
+    },
+    {
+      "id": "privacy_control_alternate_path_bypass",
+      "category": "privacy",
+      "title": "Privacy Control Alternate-Path Bypass",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PRIVACY-2",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0071"
+      ],
+      "manualTest": "read protected data through an alternate path (a different API, a shared app-group container, a cached copy) that sidesteps the consent gate; verify the secure build funnels all reads through the single consent-checked accessor (iOS CVE-2026-20606 class).",
+      "rowId": "vuln_row_privacy_control_alternate_path_bypass",
+      "screenId": "demo_screen_privacy_control_alternate_path_bypass"
+    },
+    {
+      "id": "deeplink_regex_dos",
+      "category": "input_validation",
+      "title": "Deep Link Regex DoS (ReDoS)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted deep link"
+      ],
+      "masvs": [
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "send a crafted deep link that triggers catastrophic regex backtracking in link parsing and confirm the app freezes/hangs (Mattermost CVE-2024-3872 class); confirm the linear/anchored parser stays responsive.",
+      "rowId": "vuln_row_deeplink_regex_dos",
+      "screenId": "demo_screen_deeplink_regex_dos"
+    },
+    {
+      "id": "unsafe_media_decoding",
+      "category": "input_validation",
+      "title": "Unsafe Media / Image Decoding",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted image"
+      ],
+      "masvs": [
+        "MASVS-CODE-4",
+        "MASVS-PLATFORM-2"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "feed a crafted image (spoofed huge dimensions / decompression bomb / unexpected format) and confirm the app decodes it with no size/type/dimension validation (Samsung CVE-2025-21043 class); confirm the safe decoder rejects it on caps + format allowlist.",
+      "rowId": "vuln_row_unsafe_media_decoding",
+      "screenId": "demo_screen_unsafe_media_decoding"
+    },
+    {
+      "id": "unvalidated_intent_extras",
+      "category": "input_validation",
+      "title": "Unvalidated Intent Extras",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0375"
+      ],
+      "manualTest": "send crafted extras with drozer/adb.",
+      "rowId": "vuln_row_unvalidated_intent_extras",
+      "screenId": "demo_screen_unvalidated_intent_extras"
+    },
+    {
+      "id": "protected_data_access_via_input_validation",
+      "category": "input_validation",
+      "title": "Protected-Data Access via Input-Validation Confusion",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-CODE-4",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "send an evasive identifier (encoded / `..` / case / unicode variant such as `users/./admin/%2E%2E/admin/SSN`) that slips a protected id past a naive deny check and returns protected data; verify the secure build canonicalizes FIRST and checks the canonical form (Apple protected-data-via-input-sanitization CVE-2026-43714 class).",
+      "rowId": "vuln_row_protected_data_access_via_input_validation",
+      "screenId": "demo_screen_protected_data_access_via_input_validation"
+    },
+    {
+      "id": "unsafe_deserialization",
+      "category": "input_validation",
+      "title": "Unsafe Deserialization",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted payloads"
+      ],
+      "masvs": [
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0337",
+        "MASTG-TEST-0386"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0100"
+      ],
+      "manualTest": "craft a malicious serialized payload.",
+      "rowId": "vuln_row_unsafe_deserialization",
+      "screenId": "demo_screen_unsafe_deserialization"
+    },
+    {
+      "id": "hardcoded_llm_api_keys",
+      "category": "ai_ml",
+      "title": "Hardcoded LLM API Keys",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1",
+        "MASVS-CRYPTO-1"
+      ],
+      "maswe": [
+        "MASWE-0004"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0212",
+        "MASTG-TEST-0214"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0017"
+      ],
+      "manualTest": "`strings`/jadx the binary and recover the key.",
+      "rowId": "vuln_row_hardcoded_llm_api_keys",
+      "screenId": "demo_screen_hardcoded_llm_api_keys"
+    },
+    {
+      "id": "prompt_injection_direct",
+      "category": "ai_ml",
+      "title": "Direct Prompt Injection",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "rowId": "vuln_row_prompt_injection_direct",
+      "screenId": "demo_screen_prompt_injection_direct"
+    },
+    {
+      "id": "system_prompt_leakage",
+      "category": "ai_ml",
+      "title": "System Prompt Leakage",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0002"
+      ],
+      "rowId": "vuln_row_system_prompt_leakage",
+      "screenId": "demo_screen_system_prompt_leakage"
+    },
+    {
+      "id": "unbounded_ai_resource_consumption",
+      "category": "ai_ml",
+      "title": "Unbounded AI Resource Consumption",
+      "difficulty": "easy",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "load script"
+      ],
+      "masvs": [
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "script rapid AI calls and confirm no rate limiting.",
+      "rowId": "vuln_row_unbounded_ai_resource_consumption",
+      "screenId": "demo_screen_unbounded_ai_resource_consumption"
+    },
+    {
+      "id": "excessive_agent_agency",
+      "category": "ai_ml",
+      "title": "Excessive Agent Agency",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "confirm a tool call fires with no confirmation.",
+      "rowId": "vuln_row_excessive_agent_agency",
+      "screenId": "demo_screen_excessive_agent_agency"
+    },
+    {
+      "id": "hidden_context_exposure",
+      "category": "ai_ml",
+      "title": "Hidden Context Exposure",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0002"
+      ],
+      "manualTest": "confirm private/other-tenant context is surfaced to the model/user (no context partitioning).",
+      "rowId": "vuln_row_hidden_context_exposure",
+      "screenId": "demo_screen_hidden_context_exposure"
+    },
+    {
+      "id": "insecure_ondevice_model_storage",
+      "category": "ai_ml",
+      "title": "Insecure On-Device Model Storage",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1",
+        "MASVS-RESILIENCE-3"
+      ],
+      "maswe": [
+        "MASWE-0001"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0302",
+        "MASTG-TEST-0300"
+      ],
+      "manualTest": "locate and swap the model file.",
+      "rowId": "vuln_row_insecure_ondevice_model_storage",
+      "screenId": "demo_screen_insecure_ondevice_model_storage"
+    },
+    {
+      "id": "insecure_output_handling",
+      "category": "ai_ml",
+      "title": "Insecure Output Handling",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "confirm LLM output is rendered/executed unsanitized.",
+      "rowId": "vuln_row_insecure_output_handling",
+      "screenId": "demo_screen_insecure_output_handling"
+    },
+    {
+      "id": "ondevice_model_extraction",
+      "category": "ai_ml",
+      "title": "On-Device Model Extraction / Theft",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1",
+        "MASVS-RESILIENCE-3"
+      ],
+      "maswe": [
+        "MASWE-0001"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0302",
+        "MASTG-TEST-0300"
+      ],
+      "manualTest": "pull the on-device model file and confirm the weights are extractable (unencrypted/unsigned).",
+      "rowId": "vuln_row_ondevice_model_extraction",
+      "screenId": "demo_screen_ondevice_model_extraction"
+    },
+    {
+      "id": "prompt_injection_indirect",
+      "category": "ai_ml",
+      "title": "Indirect Prompt Injection (scanned QR/image/file)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted QR",
+        "crafted document",
+        "crafted image"
+      ],
+      "masvs": [
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "encode hidden instructions in a scanned QR/image/file and confirm the assistant obeys them.",
+      "rowId": "vuln_row_prompt_injection_indirect",
+      "screenId": "demo_screen_prompt_injection_indirect"
+    },
+    {
+      "id": "unicode_invisible_prompt_injection",
+      "category": "ai_ml",
+      "title": "Invisible / Unicode Prompt Injection",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted QR",
+        "crafted text",
+        "unicode tooling"
+      ],
+      "masvs": [
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "craft text with zero-width / RTL-override characters and confirm the assistant obeys the hidden instruction (input not sanitized).",
+      "rowId": "vuln_row_unicode_invisible_prompt_injection",
+      "screenId": "demo_screen_unicode_invisible_prompt_injection"
+    },
+    {
+      "id": "unverified_model_supply_chain",
+      "category": "ai_ml",
+      "title": "Unverified Model Supply Chain",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-NETWORK-1",
+        "MASVS-CODE-3"
+      ],
+      "maswe": [
+        "MASWE-0048"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0233",
+        "MASTG-TEST-0338"
+      ],
+      "manualTest": "MITM the model update and serve a tampered model with no checksum failure.",
+      "rowId": "vuln_row_unverified_model_supply_chain",
+      "screenId": "demo_screen_unverified_model_supply_chain"
+    },
+    {
+      "id": "rag_vector_store_poisoning",
+      "category": "ai_ml",
+      "title": "RAG Vector Store Poisoning",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted document"
+      ],
+      "masvs": [
+        "MASVS-CODE-4",
+        "MASVS-STORAGE-1"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "ingest a poisoned document, then run an unrelated query and confirm the poisoned entry is retrieved and obeyed.",
+      "rowId": "vuln_row_rag_vector_store_poisoning",
+      "screenId": "demo_screen_rag_vector_store_poisoning"
+    },
+    {
+      "id": "agent_tool_confused_deputy",
+      "category": "agentic",
+      "title": "Agent Tool Misuse / Confused Deputy",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-AUTH-3",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0023"
+      ],
+      "manualTest": "cause the agent to reuse the app's ambient permission/credential for an unauthorized action with no re-auth.",
+      "rowId": "vuln_row_agent_tool_confused_deputy",
+      "screenId": "demo_screen_agent_tool_confused_deputy"
+    },
+    {
+      "id": "agent_memory_poisoning",
+      "category": "agentic",
+      "title": "Agent Memory & Context Poisoning",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-CODE-4",
+        "MASVS-STORAGE-1"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "plant an instruction in the agent's persistent memory and confirm it re-fires in a later session after reset.",
+      "rowId": "vuln_row_agent_memory_poisoning",
+      "screenId": "demo_screen_agent_memory_poisoning"
+    },
+    {
+      "id": "agent_recovery_loop_weaponization",
+      "category": "agentic",
+      "title": "Agent Task-Recovery Loop Weaponization",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "rowId": "vuln_row_agent_recovery_loop_weaponization",
+      "screenId": "demo_screen_agent_recovery_loop_weaponization"
+    },
+    {
+      "id": "agent_state_toctou_swap",
+      "category": "agentic",
+      "title": "Agent External-State TOCTOU Swap",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "config swap",
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-CODE-4",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "rowId": "vuln_row_agent_state_toctou_swap",
+      "screenId": "demo_screen_agent_state_toctou_swap"
+    },
+    {
+      "id": "gui_agent_action_rebinding",
+      "category": "agentic",
+      "title": "GUI Agent Action Rebinding (Observation-Action Gap)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt",
+        "foreground swap"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "rowId": "vuln_row_gui_agent_action_rebinding",
+      "screenId": "demo_screen_gui_agent_action_rebinding"
+    },
+    {
+      "id": "insecure_inter_agent_comms",
+      "category": "agentic",
+      "title": "Insecure Inter-Agent Communication",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "message spoofing",
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-CODE-4",
+        "MASVS-NETWORK-1"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "spoof a message between sub-agents and confirm the receiver acts on the unauthenticated message.",
+      "rowId": "vuln_row_insecure_inter_agent_comms",
+      "screenId": "demo_screen_insecure_inter_agent_comms"
+    },
+    {
+      "id": "mcp_capability_attestation_absent",
+      "category": "agentic",
+      "title": "MCP Connector Capability Attestation Absent",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "connector declaring unattested capabilities"
+      ],
+      "masvs": [
+        "MASVS-AUTH-3",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "rowId": "vuln_row_mcp_capability_attestation_absent",
+      "screenId": "demo_screen_mcp_capability_attestation_absent"
+    },
+    {
+      "id": "mcp_open_url_arbitrary_intent",
+      "category": "agentic",
+      "title": "MCP open_url -> Arbitrary Android Intent",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0026",
+        "MASTG-TEST-0027"
+      ],
+      "manualTest": "via prompt injection, drive the agent's `mobile_open_url` MCP tool to a dangerous scheme (`tel:`, `sms:`, `content://`, `intent://`) and confirm it is dispatched to `startActivity()` with no allowlist; verify the secure build allows only http/https and requires user confirmation (Mobile MCP CVE-2026-35394 class).",
+      "rowId": "vuln_row_mcp_open_url_arbitrary_intent",
+      "screenId": "demo_screen_mcp_open_url_arbitrary_intent"
+    },
+    {
+      "id": "mcp_tool_poisoning",
+      "category": "agentic",
+      "title": "MCP / Tool Description Poisoning",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "malicious MCP server",
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-CODE-4",
+        "MASVS-CODE-3"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "connect a tool/MCP server whose description carries hidden directives and confirm the agent obeys them during planning.",
+      "rowId": "vuln_row_mcp_tool_poisoning",
+      "screenId": "demo_screen_mcp_tool_poisoning"
+    },
+    {
+      "id": "ai_output_to_intent_url",
+      "category": "ai_mobile",
+      "title": "AI Output Used as Intent / URL (navigation & redirection)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0027",
+        "MASTG-TEST-0026"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0095"
+      ],
+      "manualTest": "steer the model to emit a URL/intent and confirm it is launched with no allowlist/confirmation; verify the secure build allowlists + confirms first.",
+      "rowId": "vuln_row_ai_output_to_intent_url",
+      "screenId": "demo_screen_ai_output_to_intent_url"
+    },
+    {
+      "id": "untrusted_mobile_input_to_llm",
+      "category": "ai_mobile",
+      "title": "Untrusted Mobile Input -> LLM Prompt (deep link / clipboard / QR)",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt",
+        "crafted deep link",
+        "crafted QR"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-3",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "deliver a prompt-injection payload over a mobile trust boundary (deep-link param, clipboard, scanned QR, notification) and confirm it is concatenated into the assistant prompt and obeyed; verify the secure build treats it as quoted data (Monica CVE-2024-48142 class).",
+      "rowId": "vuln_row_untrusted_mobile_input_to_llm",
+      "screenId": "demo_screen_untrusted_mobile_input_to_llm"
+    },
+    {
+      "id": "accessibility_tree_prompt_injection",
+      "category": "ai_mobile",
+      "title": "Accessibility Tree -> Indirect Prompt Injection",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted UI"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0040"
+      ],
+      "manualTest": "plant imperative text in an on-screen/a11y node (e.g. \"IGNORE PREVIOUS INSTRUCTIONS…\") and confirm the agent, which builds its prompt from the accessibility tree, obeys it and takes an unauthorized action; verify the secure build treats UI/a11y text as quoted untrusted data and ignores it (Android Accessibility mobile-agent injection research).",
+      "rowId": "vuln_row_accessibility_tree_prompt_injection",
+      "screenId": "demo_screen_accessibility_tree_prompt_injection"
+    },
+    {
+      "id": "ai_output_command_tool_injection",
+      "category": "ai_mobile",
+      "title": "AI Output -> Tool / Command Injection",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-CODE-4",
+        "MASVS-AUTH-3"
+      ],
+      "maswe": [
+        "MASWE-0050"
+      ],
+      "manualTest": "steer the model to emit a tool/command call and confirm it executes with app privileges before any validation; verify the secure build uses an allowlisted tool registry with argument validation (Microsoft 365 Copilot iOS/Android CVE-2026-26133 class).",
+      "rowId": "vuln_row_ai_output_command_tool_injection",
+      "screenId": "demo_screen_ai_output_command_tool_injection"
+    },
+    {
+      "id": "ai_output_to_webview_xss",
+      "category": "ai_mobile",
+      "title": "AI Output Rendered in WebView (XSS / local-file read)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted prompt"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0034"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0031",
+        "MASTG-TEST-0033"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0096",
+        "MASTG-DEMO-0097"
+      ],
+      "manualTest": "steer the model to emit HTML/JS, confirm it executes when rendered into the WebView unescaped, and that the secure build escapes/sanitizes it (FAQ-Bot CVE-2025-63639 / ZOLL ePCR CVE-2025-12699 class).",
+      "rowId": "vuln_row_ai_output_to_webview_xss",
+      "screenId": "demo_screen_ai_output_to_webview_xss"
+    },
+    {
+      "id": "webview_safe_browsing_disabled",
+      "category": "native_bridge",
+      "title": "WebView Safe Browsing Disabled",
+      "difficulty": "easy",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "phishing/malware URL"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2"
+      ],
+      "maswe": [
+        "MASWE-0035"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0399"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0156"
+      ],
+      "manualTest": "disable Safe Browsing (`setSafeBrowsingEnabled(false)` / manifest `EnableSafeBrowsing=false`), navigate to a known phishing/malware URL, and confirm it loads with no interstitial; verify the secure build keeps Safe Browsing on and blocks the bad URL while allowing benign ones (MASTG-TEST-0399).",
+      "rowId": "vuln_row_webview_safe_browsing_disabled",
+      "screenId": "demo_screen_webview_safe_browsing_disabled"
+    },
+    {
+      "id": "embedded_miniapp_secret_exposure",
+      "category": "native_bridge",
+      "title": "Embedded Mini-App Secret Exposure",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1",
+        "MASVS-PLATFORM-2"
+      ],
+      "maswe": [
+        "MASWE-0001"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0320"
+      ],
+      "manualTest": "read the embedded Mini-App's WebView storage over the JS↔native bridge and confirm a plaintext, replayable auth token (and a recovery secret such as a wallet mnemonic) is exposed to any origin; verify the secure build issues an origin-bound, single-use handle and never exposes the mnemonic (Telegram Mini App / TENET research class).",
+      "rowId": "vuln_row_embedded_miniapp_secret_exposure",
+      "screenId": "demo_screen_embedded_miniapp_secret_exposure"
+    },
+    {
+      "id": "exported_broadcast_receiver_spoof",
+      "category": "native_bridge",
+      "title": "Exported BroadcastReceiver Data Spoofing",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0366"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0130"
+      ],
+      "manualTest": "send a broadcast from a `com.evil.*` package with spoofed extras (e.g. device location) and confirm the app treats it as authoritative; verify the secure build checks the sender package / signature-level permission (Home Assistant Companion GHSA location-spoof class).",
+      "rowId": "vuln_row_exported_broadcast_receiver_spoof",
+      "screenId": "demo_screen_exported_broadcast_receiver_spoof"
+    },
+    {
+      "id": "qr_nfc_to_privileged_action",
+      "category": "native_bridge",
+      "title": "QR / NFC Scan -> Privileged Action Without Confirmation",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted QR",
+        "crafted NFC tag"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-PLATFORM-3"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "manualTest": "feed a QR/NFC payload from an untrusted caller and confirm the named automation/action fires with no user confirmation; verify the secure build requires a trusted source and an explicit confirmation (Home Assistant Companion GHSA NFC/QR class).",
+      "rowId": "vuln_row_qr_nfc_to_privileged_action",
+      "screenId": "demo_screen_qr_nfc_to_privileged_action"
+    },
+    {
+      "id": "webview_cleartext_mixed_content_downgrade",
+      "category": "native_bridge",
+      "title": "WebView Cleartext / Mixed-Content Transport Downgrade",
+      "difficulty": "medium",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-NETWORK-1",
+        "MASVS-PLATFORM-2"
+      ],
+      "maswe": [
+        "MASWE-0026",
+        "MASWE-0035"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0235",
+        "MASTG-TEST-0237"
+      ],
+      "manualTest": "with cleartext allowed and mixed-content set to ALWAYS_ALLOW, load an `http://` (or mixed) page under mitmproxy, inject a script, and confirm it runs / a subresource downgrades HTTPS→HTTP; verify the secure build blocks cleartext and sets mixed-content to BLOCK so the load is refused (USENIX Security 2026 HTTP-in-WebView study).",
+      "rowId": "vuln_row_webview_cleartext_mixed_content_downgrade",
+      "screenId": "demo_screen_webview_cleartext_mixed_content_downgrade"
+    },
+    {
+      "id": "webview_remote_debugging_enabled",
+      "category": "native_bridge",
+      "title": "WebView Remote Debugging Enabled",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "chrome://inspect session"
+      ],
+      "masvs": [
+        "MASVS-RESILIENCE-1",
+        "MASVS-PLATFORM-2"
+      ],
+      "maswe": [
+        "MASWE-0063"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0227"
+      ],
+      "manualTest": "with `setWebContentsDebuggingEnabled(true)` in a release build, attach chrome://inspect and read the web-context session token; verify the secure build disables debugging in release builds (MASTG-TEST-0227).",
+      "rowId": "vuln_row_webview_remote_debugging_enabled",
+      "screenId": "demo_screen_webview_remote_debugging_enabled"
+    },
+    {
+      "id": "crossorigin_iframe_to_native_bridge",
+      "category": "native_bridge",
+      "title": "Cross-Origin Iframe -> Native Bridge (No Main-Frame/Origin Check)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0033"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0334",
+        "MASTG-TEST-0376"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0097"
+      ],
+      "manualTest": "deliver a bridge message from a cross-origin iframe and confirm the handler acts on it and returns the access/session token; verify the secure build requires `isMainFrame` and a trusted origin and blocks it (Home Assistant Companion CVE-2026-44698 class, Android `addJavascriptInterface` / iOS `WKUserContentController`).",
+      "rowId": "vuln_row_crossorigin_iframe_to_native_bridge",
+      "screenId": "demo_screen_crossorigin_iframe_to_native_bridge"
+    },
+    {
+      "id": "js_bridge_callback_id_injection",
+      "category": "native_bridge",
+      "title": "JS Bridge Callback-ID Injection",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0033"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0334"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0097"
+      ],
+      "manualTest": "from web content, post a bridge message naming another plugin's `callbackId` and confirm you receive that plugin's native result (Camera/Contacts/Files/Geolocation); verify the secure build validates the callback id (regex + plugin ownership) and rejects it (Cordova InAppBrowser iOS CVE-2026-47430 class).",
+      "rowId": "vuln_row_js_bridge_callback_id_injection",
+      "screenId": "demo_screen_js_bridge_callback_id_injection"
+    },
+    {
+      "id": "js_bridge_exposes_privileged_api",
+      "category": "native_bridge",
+      "title": "JS Bridge Exposes a Privileged Native API",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0033"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0334"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0097"
+      ],
+      "manualTest": "from an arbitrary loaded page, call a bridge method that returns an auth token / reads a file (or reaches camera/location) and confirm it succeeds with no gate; verify the secure build enforces an origin allowlist + capability check.",
+      "rowId": "vuln_row_js_bridge_exposes_privileged_api",
+      "screenId": "demo_screen_js_bridge_exposes_privileged_api"
+    },
+    {
+      "id": "provider_metadata_to_filesystem_traversal",
+      "category": "native_bridge",
+      "title": "Provider-Controlled Metadata -> Plugin Filesystem Traversal",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0032"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0139"
+      ],
+      "manualTest": "from a malicious ContentProvider return a DISPLAY_NAME of `../../shared_prefs/x` and confirm the file-picker plugin writes/reads outside its cache root while the app only called an innocent `pick()`; verify the secure build takes the basename / canonicalizes and confines under the cache root (Flutter file_picker CVE-2026-38093 plugin-boundary class).",
+      "rowId": "vuln_row_provider_metadata_to_filesystem_traversal",
+      "screenId": "demo_screen_provider_metadata_to_filesystem_traversal"
+    },
+    {
+      "id": "shared_webview_miniapp_isolation",
+      "category": "native_bridge",
+      "title": "Shared WebView Mini-App Isolation Failure (Cross-Tenant Cookies)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-STORAGE-2"
+      ],
+      "maswe": [
+        "MASWE-0034"
+      ],
+      "manualTest": "from mini-app A, read mini-app B's cookie/localStorage out of the shared WebView jar; verify the secure build partitions storage per mini-app origin so A cannot see B (WeChat/Alipay cross-mini-program cookie-sharing research class).",
+      "rowId": "vuln_row_shared_webview_miniapp_isolation",
+      "screenId": "demo_screen_shared_webview_miniapp_isolation"
+    },
+    {
+      "id": "webview_js_injection_ssl_bypass",
+      "category": "native_bridge",
+      "title": "WebView JS Injection + SSL-Validation Bypass",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-NETWORK-1",
+        "MASVS-PLATFORM-2"
+      ],
+      "maswe": [
+        "MASWE-0027",
+        "MASWE-0035"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0284"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0056"
+      ],
+      "manualTest": "with the accept-all TLS handler, MITM the WebView load, inject `<script>`, and confirm a token is exfiltrated / a privileged action fires; verify the secure build validates the certificate so the forged/MITM content never loads (PayRange CVE-2026-13461 class).",
+      "rowId": "vuln_row_webview_js_injection_ssl_bypass",
+      "screenId": "demo_screen_webview_js_injection_ssl_bypass"
+    },
+    {
+      "id": "webview_origin_confusion_ipc",
+      "category": "native_bridge",
+      "title": "WebView Origin Confusion -> Local-Only IPC",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0034"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0334"
+      ],
+      "manualTest": "invoke a local-only privileged IPC command from a remote origin (e.g. `https://tauri.localhost.evil.com`) and confirm the loose origin classifier treats it as local and executes it; verify the secure build compares the canonical origin (scheme+host+port) exactly and rejects the remote page (Tauri WebView IPC origin confusion CVE-2026-42184 class).",
+      "rowId": "vuln_row_webview_origin_confusion_ipc",
+      "screenId": "demo_screen_webview_origin_confusion_ipc"
+    },
+    {
+      "id": "webview_sop_csp_disabled",
+      "category": "native_bridge",
+      "title": "WebView SOP / CSP Disabled (Cross-Origin & Inline Script)",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0034"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0335",
+        "MASTG-TEST-0333"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0096"
+      ],
+      "manualTest": "with universal file access on and no CSP, confirm a `file://` page reads a cross-origin resource and runs inline script in the app origin (token read); verify the secure build disables universal access and enforces a restrictive CSP (WebKit SOP CVE-2026-20643 / CSP CVE-2026-20665 app-level analog).",
+      "rowId": "vuln_row_webview_sop_csp_disabled",
+      "screenId": "demo_screen_webview_sop_csp_disabled"
+    },
+    {
+      "id": "webview_url_loading_policy_confusion",
+      "category": "native_bridge",
+      "title": "WebView URL-Loading Policy Confusion",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted navigation URL"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-2",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0035"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0332",
+        "MASTG-TEST-0398"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0157"
+      ],
+      "manualTest": "feed the URL-policy handler (`shouldOverrideUrlLoading` / `decidePolicyForNavigationAction`) crafted URLs (`javascript:`, `file:`, look-alike subdomain, host-in-query) and confirm the naive `contains`-style check loads them; verify the secure handler canonicalizes + allowlists scheme AND exact host (MASTG-TEST-0332).",
+      "rowId": "vuln_row_webview_url_loading_policy_confusion",
+      "screenId": "demo_screen_webview_url_loading_policy_confusion"
+    },
+    {
+      "id": "app_group_shared_container_amplification",
+      "category": "system_provider",
+      "title": "App Group Shared-Container Privilege Amplification",
+      "difficulty": "medium",
+      "platforms": [
+        "ios"
+      ],
+      "attackInputs": [
+        "low-trust extension in the same App Group"
+      ],
+      "masvs": [
+        "MASVS-STORAGE-1",
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0002"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0388"
+      ],
+      "manualTest": "read the auth token from the App Group shared container as a low-trust extension and confirm it is returned; verify the secure build scopes sensitive items per-entitlement so a low-trust reader is denied (Apple App Group class, MASTG-BEST-0068).",
+      "rowId": "vuln_row_app_group_shared_container_amplification",
+      "screenId": "demo_screen_app_group_shared_container_amplification"
+    },
+    {
+      "id": "assist_screen_context_ai_exposure",
+      "category": "system_provider",
+      "title": "Assist / Screen-Context -> AI Action Exposure",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "crafted on-screen content"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0036"
+      ],
+      "manualTest": "share the current screen (with a visible secret + an injected instruction) to the assistant and confirm the secret is shared and the assistant acts on the instruction; verify the secure build opts sensitive views out and treats captured text as data.",
+      "rowId": "vuln_row_assist_screen_context_ai_exposure",
+      "screenId": "demo_screen_assist_screen_context_ai_exposure"
+    },
+    {
+      "id": "companion_device_pairing_confusion",
+      "category": "system_provider",
+      "title": "Companion Device Pairing / Capability Confusion",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "spoofed companion device",
+        "malicious companion app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "pair a spoofed/low-trust companion device and request a high-privilege capability (e.g. unlock door); confirm \"paired\" is treated as \"authorized\"; verify the secure build binds each capability to a per-capability trust check (CompanionDeviceManager class).",
+      "rowId": "vuln_row_companion_device_pairing_confusion",
+      "screenId": "demo_screen_companion_device_pairing_confusion"
+    },
+    {
+      "id": "custom_keyboard_input_interception",
+      "category": "system_provider",
+      "title": "Custom Keyboard / IME Input Interception",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0040"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0390"
+      ],
+      "manualTest": "type into a secure field in another app and confirm the custom keyboard / IME logs and exfiltrates the keystrokes (passwords/OTPs); verify the secure build never logs/transmits for secure fields and runs network-isolated (IME provider-privilege class).",
+      "rowId": "vuln_row_custom_keyboard_input_interception",
+      "screenId": "demo_screen_custom_keyboard_input_interception"
+    },
+    {
+      "id": "extension_activation_input_confusion",
+      "category": "system_provider",
+      "title": "App Extension Activation != Input Authorization",
+      "difficulty": "medium",
+      "platforms": [
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted NSItemProvider payload"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-CODE-4"
+      ],
+      "maswe": [
+        "MASWE-0031"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0072"
+      ],
+      "manualTest": "hand a crafted NSItemProvider payload (traversal file URL / `javascript:` URL) to a Share/Action extension and confirm it acts on activation alone; verify the secure build validates the payload type/content before acting (activation != authorization).",
+      "rowId": "vuln_row_extension_activation_input_confusion",
+      "screenId": "demo_screen_extension_activation_input_confusion"
+    },
+    {
+      "id": "lockscreen_control_action_authorization",
+      "category": "system_provider",
+      "title": "Lock-Screen Control / Widget Action Authorization",
+      "difficulty": "medium",
+      "platforms": [
+        "ios"
+      ],
+      "attackInputs": [
+        "crafted control-widget invocation"
+      ],
+      "masvs": [
+        "MASVS-AUTH-1",
+        "MASVS-PLATFORM-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "invoke a sensitive Control Widget / App Intent from the Lock Screen on a locked device and confirm it runs with no auth; verify the secure build requires unlock/biometric for sensitive intents regardless of surface (WidgetKit Controls class).",
+      "rowId": "vuln_row_lockscreen_control_action_authorization",
+      "screenId": "demo_screen_lockscreen_control_action_authorization"
+    },
+    {
+      "id": "notification_intelligence_ai_processing",
+      "category": "system_provider",
+      "title": "Sensitive Notification -> Privileged AI Processing",
+      "difficulty": "medium",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "crafted notification"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0037"
+      ],
+      "manualTest": "post a notification whose body carries an injected instruction and confirm the notification-intelligence AI obeys it (leaks the OTP / fires a smart action); verify the secure build redacts sensitive fields and treats notification text as untrusted data.",
+      "rowId": "vuln_row_notification_intelligence_ai_processing",
+      "screenId": "demo_screen_notification_intelligence_ai_processing"
+    },
+    {
+      "id": "device_policy_mdm_capability_abuse",
+      "category": "system_provider",
+      "title": "Device Policy / MDM Capability Abuse",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app",
+        "crafted policy payload"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "from an untrusted caller, apply a device-wide policy (wipe / weaken password quality) and confirm it applies; verify the secure build requires the caller to be the active admin and validates the parameter (DevicePolicyManagerService CVE-2025-48553 class).",
+      "rowId": "vuln_row_device_policy_mdm_capability_abuse",
+      "screenId": "demo_screen_device_policy_mdm_capability_abuse"
+    },
+    {
+      "id": "mediaprojection_screencapture_authorization_bypass",
+      "category": "system_provider",
+      "title": "MediaProjection / Screen-Capture Authorization Bypass",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-PRIVACY-1"
+      ],
+      "maswe": [
+        "MASWE-0038"
+      ],
+      "manualTest": "start screen capture with a reused/forwarded/forged projection token and confirm recording begins; verify the secure build requires a single-use, unexpired token bound to the package that obtained consent (Android MediaProjection CVE-2025-32322 class).",
+      "rowId": "vuln_row_mediaprojection_screencapture_authorization_bypass",
+      "screenId": "demo_screen_mediaprojection_screencapture_authorization_bypass"
+    },
+    {
+      "id": "privileged_input_provider_injection",
+      "category": "system_provider",
+      "title": "Privileged Input-Provider (IME) Event Injection",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "malicious companion app",
+        "injected key/motion events"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "from an untrusted caller, inject synthetic key/motion events into the default IME and confirm they drive a sensitive action (e.g. auto-confirm a payment) in another app; verify the secure build refuses callers lacking the injection permission (Android IME event-injection CVE-2025-26450 class).",
+      "rowId": "vuln_row_privileged_input_provider_injection",
+      "screenId": "demo_screen_privileged_input_provider_injection"
+    },
+    {
+      "id": "privileged_provider_activation_abuse",
+      "category": "system_provider",
+      "title": "Privileged Provider Activation Abuse",
+      "difficulty": "hard",
+      "platforms": [
+        "android"
+      ],
+      "attackInputs": [
+        "overlay PoC app"
+      ],
+      "masvs": [
+        "MASVS-PLATFORM-1",
+        "MASVS-AUTH-1"
+      ],
+      "maswe": [
+        "MASWE-0018"
+      ],
+      "manualTest": "enable a system provider (accessibility / notification-listener / VPN / IME / phone-account / MediaProjection / credential-provider) with the confirming tap obscured by an overlay, then invoke the granted capability on an untrusted caller's behalf; verify the secure build refuses an obscured/unconfirmed enablement and re-checks the caller on invoke (Android tapjack-to-enable CVE-2023-20913 class).",
+      "rowId": "vuln_row_privileged_provider_activation_abuse",
+      "screenId": "demo_screen_privileged_provider_activation_abuse"
+    },
+    {
+      "id": "vpn_provider_trust_anchor_abuse",
+      "category": "system_provider",
+      "title": "VPN Provider Trust-Anchor / Tunnel MITM",
+      "difficulty": "hard",
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "attackInputs": [
+        "rogue TLS endpoint / MITM CA"
+      ],
+      "masvs": [
+        "MASVS-NETWORK-1",
+        "MASVS-NETWORK-2"
+      ],
+      "maswe": [
+        "MASWE-0027"
+      ],
+      "mastgV2": [
+        "MASTG-TEST-0282"
+      ],
+      "mastgDemo": [
+        "MASTG-DEMO-0154"
+      ],
+      "manualTest": "connect the VPN tunnel to a rogue endpoint with an untrusted chain / mismatched hostname / user-installed CA and confirm it establishes (MITM possible); verify the secure build validates the tunnel trust anchor and refuses it (Prisma Access CVE-2026-0248 class).",
+      "rowId": "vuln_row_vpn_provider_trust_anchor_abuse",
+      "screenId": "demo_screen_vpn_provider_trust_anchor_abuse"
+    }
+  ]
+}

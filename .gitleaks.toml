@@ -1,0 +1,34 @@
+# Gitleaks configuration for DVMA.
+#
+# DVMA is an intentionally-vulnerable training app, so it deliberately ships a
+# handful of FAKE, self-labeled secrets as teaching fixtures (e.g. the
+# hardcoded_llm_api_keys and insecure_firebase_cloud_config modules). Those are
+# the point of the exercise, not real credentials.
+#
+# This config keeps the full upstream rule set active everywhere (so a genuine
+# leaked key, token, or private key still fails the scan) and allowlists ONLY
+# the specific, clearly-fake training fixtures - by value and by their known
+# file paths. Keep this list tight: never allowlist a whole directory or a
+# broad pattern that could mask a real secret.
+title = "DVMA gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Intentional, self-labeled training fixtures only."
+
+# Fake keys/secrets that are the subject of specific vulnerability modules.
+# Each carries an obvious DVMA/FAKE/do-not-ship marker so it cannot be mistaken
+# for a real credential.
+regexes = [
+  '''sk-DVMA00hardcodedTESTkeyAA11bb22cc33dd44ee55ff6677''',
+  '''AIzaSyD-DVMA-FAKE-KEY-0123456789abcdefGHI''',
+  '''firebase-admin-secret-do-not-ship''',
+]
+
+# The two files that host those fixtures, as defense in depth.
+paths = [
+  '''lib/modules/ai_ml/hardcoded_llm_api_keys/llm_api_config\.dart''',
+  '''lib/modules/supply_chain/insecure_firebase_cloud_config/firebase_cloud_config\.dart''',
+]

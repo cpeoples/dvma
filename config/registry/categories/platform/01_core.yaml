@@ -1,0 +1,1224 @@
+# DVMA registry category: platform (shard 01_core)
+# WebView, deep links, intents, providers, and IPC basics.
+# Shards merge in sorted filename order; append within the right shard,
+# then run: dart run tool/generate.dart
+
+platform:
+  title: Improper Platform Usage
+  owasp_mobile: M4
+  description: WebView JS-bridge RCE and file:// access, deep-link/URL-scheme hijack, exported components, content-provider SQLi, pending-intent hijack, tapjacking, over-privilege, push leakage, QR injection, zip-slip, and missing FLAG_SECURE.
+  vulnerabilities:
+  - id: insecure_webview
+    platform_note: Android WebView (addJavascriptInterface); iOS WKWebView (WKScriptMessageHandler).
+    title: Insecure WebView (JS Bridge RCE, file:// access)
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    mastg_v2:
+    - MASTG-TEST-0334
+    - MASTG-TEST-0333
+    - MASTG-TEST-0250
+    mastg_demo:
+    - MASTG-DEMO-0097
+    - MASTG-DEMO-0096
+    maswe:
+    - MASWE-0033
+    - MASWE-0034
+    owasp_mobile: M4
+    cwe:
+    - CWE-749
+    - CWE-79
+    tools:
+    - mitmproxy
+    - r2frida
+    - frida
+    - objection
+    tools_android:
+    - jadx
+    - apktool
+    tools_ios:
+    - ipsw
+    - class-dump
+    - Hopper
+    - r2ghidra
+    summary: WebView exposes a JS bridge and enables file:// access for RCE-style abuse.
+    manual_test: >-
+      reach the JS bridge / `file://` and demonstrate RCE-style behavior.
+    detail: >-
+      The WebView enables JavaScript, file:// access, and a native JS bridge (an
+      addJavaScriptChannel named "Native") with no origin allowlist, so a
+      malicious or MITM'd page can call into app internals to read files and
+      invoke native methods, an RCE-style abuse. This runs a real Android System
+      WebView: the loaded page posts to the exposed Native channel and the native
+      handler returns the app secret or an on-device file back to page JS.
+  - id: deeplink_url_scheme_hijack
+    platform_note: Android implicit deep links / App Links; iOS custom URL schemes / Universal Links.
+    title: Deep Link / URL Scheme Hijack
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0028
+    - MASTG-TEST-0393
+    - MASTG-TEST-0371
+    mastg_demo:
+    - MASTG-DEMO-0151
+    maswe:
+    - MASWE-0029
+    owasp_mobile: M4
+    cwe:
+    - CWE-939
+    - CWE-20
+    tools: []
+    tools_android:
+    - adb
+    - drozer
+    - jadx
+    tools_ios:
+    - xcrun simctl openurl
+    - idb
+    summary: Custom scheme is unvalidated and can be claimed/abused by another app.
+    manual_test: >-
+      fire crafted deep links with `adb`.
+    detail: >-
+      The custom URL scheme is unverified, so any installed app can also register
+      it, and its parameters are trusted as-is, so a crafted link can drive a
+      password reset or an open redirect. Verified App Links or Universal Links
+      should be used instead of a bare custom scheme.
+    references:
+    - 'CVE-2026-23866 (WhatsApp iOS/Android: message payload dispatches an OS custom-scheme handler without validation, CWE-940)|https://nvd.nist.gov/vuln/detail/CVE-2026-23866'
+    - 'Android: verify App Links (autoVerify)|https://developer.android.com/training/app-links/verify-android-applinks'
+    - 'Apple: supporting Universal Links|https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app'
+  - id: exported_android_components
+    platforms:
+    - android
+    title: Exported Android Components
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0364
+    - MASTG-TEST-0365
+    - MASTG-TEST-0366
+    mastg_demo:
+    - MASTG-DEMO-0128
+    - MASTG-DEMO-0129
+    - MASTG-DEMO-0130
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-926
+    - CWE-284
+    tools:
+    - adb
+    - drozer
+    - apktool
+    - jadx
+    summary: Activities/services/receivers exported with no permission checks.
+    manual_test: >-
+      enumerate/invoke with drozer.
+    detail: >-
+      Activities, receivers, and services are exported with no permission guard,
+      so any installed app (or adb/drozer) can start them directly and reach
+      privileged flows. This is a manifest-level flaw. On Android, DVMA declares
+      an exported AdminActivity, and this screen starts it in-process by component
+      name (the same startActivity path adb, drozer, or a separate app would hit)
+      and reads back the caller it recorded, reaching an internal-only screen with
+      no permission guard.
+  - id: content_provider_sql_injection
+    platforms:
+    - android
+    title: Content Provider SQL Injection
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0339
+    - MASTG-TEST-0355
+    mastg_demo:
+    - MASTG-DEMO-0102
+    - MASTG-DEMO-0121
+    maswe:
+    - MASWE-0018
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-89
+    display_tags:
+    - CWE-89
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    - sqlite3
+    summary: Exported content provider builds SQL by string concatenation.
+    manual_test: >-
+      inject via the provider with drozer.
+    detail: >-
+      An exported content provider concatenates the caller-supplied selection
+      straight into SQL instead of using parameterized args. A malicious app
+      (drozer, or adb shell content query) supplies a UNION or tautology
+      selection and exfiltrates the secret column. On a device the real exported
+      provider (content://com.dvma.provider.vuln/users) runs the concatenated
+      query over a seeded SQLite database and returns the leaked rows; offline an
+      in-memory engine mirrors it so the demo stays testable.
+  - id: pending_intent_hijacking
+    platforms:
+    - android
+    title: Pending Intent Hijacking
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0381
+    - MASTG-TEST-0030
+    mastg_demo:
+    - MASTG-DEMO-0147
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-927
+    tools:
+    - adb
+    - drozer
+    - jadx
+    - dumpsys
+    attack_inputs:
+    - malicious companion app
+    summary: Mutable, implicit PendingIntent can be intercepted/redirected.
+    manual_test: >-
+      intercept the mutable PendingIntent.
+    detail: >-
+      The PendingIntent is created MUTABLE and wraps an IMPLICIT base intent, so
+      a malicious app that receives it can fill in the blank component and extras
+      and fire it with this app's identity and permissions. On a real device the
+      module posts a genuine mutable, implicit PendingIntent inside a
+      notification, observable via dumpsys, rather than only describing the flaw.
+      The fix is FLAG_IMMUTABLE plus an explicit intent that names its target
+      component, leaving nothing for a recipient to redirect.
+  - id: tapjacking
+    platforms:
+    - android
+    title: Tapjacking
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-3
+    mastg_v2:
+    - MASTG-TEST-0035
+    - MASTG-TEST-0340
+    mastg_demo:
+    - MASTG-DEMO-0103
+    - MASTG-DEMO-0105
+    maswe:
+    - MASWE-0039
+    owasp_mobile: M4
+    cwe:
+    - CWE-1021
+    tools:
+    - adb
+    - jadx
+    attack_inputs:
+    - overlay PoC app
+    summary: Sensitive action screen does not set filterTouchesWhenObscured.
+    manual_test: >-
+      overlay a PoC app and confirm the tap passes through.
+    detail: >-
+      The sensitive confirm button never sets filterTouchesWhenObscured, so a
+      malicious full-screen overlay (SYSTEM_ALERT_WINDOW) can cover it and route
+      the user's taps to the hidden button. Toggle a simulated overlay, then tap
+      confirm to see the redirected tap.
+    references:
+    - CVE-2025-48597 (Android tapjacking permission grant)|https://nvd.nist.gov/vuln/detail/CVE-2025-48597
+    - CVE-2026-0036 (Android overlay/tapjacking privilege grant)|https://nvd.nist.gov/vuln/detail/CVE-2026-0036
+  - id: over_privileged_permissions
+    title: Over-Privileged Permissions
+    difficulty: easy
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-PRIVACY-2
+    mastg_v2:
+    - MASTG-TEST-0254
+    - MASTG-TEST-0255
+    mastg_demo:
+    - MASTG-DEMO-0033
+    maswe:
+    - MASWE-0066
+    owasp_mobile: M4
+    cwe:
+    - CWE-250
+    - CWE-272
+    display_tags:
+    - CWE-250
+    - CWE-272
+    - MASVS-PLATFORM-1
+    tools:
+    - MobSF
+    tools_android:
+    - aapt
+    - jadx
+    - apktool
+    tools_ios:
+    - ipsw
+    - codesign
+    - plutil
+    summary: Requests broad permissions unrelated to app functionality.
+    manual_test: >-
+      review the manifest with aapt/jadx.
+    detail: >-
+      The app declares dangerous Android permissions (contacts, precise
+      location, SMS, call log, phone state, microphone, external storage,
+      accounts) that none of its features use. They are declared in
+      AndroidManifest.xml and are recoverable from the built APK with aapt or
+      jadx, so the over-privilege widens the attack surface and privacy
+      exposure. CAMERA is excluded because it is declared not-required and
+      genuinely used by the QR-scanning demos, so it is justified rather than
+      over-privilege. iOS declares no unused usage-description keys (its camera,
+      tracking, and Face ID keys each back a demo), so this finding is
+      Android-specific.
+  - id: push_notification_leakage
+    title: Push Notification Leakage
+    difficulty: easy
+    masvs:
+    - MASVS-STORAGE-2
+    - MASVS-PRIVACY-1
+    mastg_v2:
+    - MASTG-TEST-0315
+    mastg_demo:
+    - MASTG-DEMO-0078
+    maswe:
+    - MASWE-0037
+    owasp_mobile: M4
+    cwe:
+    - CWE-200
+    display_tags:
+    - CWE-200
+    - MASVS-PRIVACY-1
+    tools: []
+    tools_android:
+    - adb logcat
+    tools_ios:
+    - idevicesyslog
+    - Console.app
+    summary: Sensitive data placed directly in notification payloads / lockscreen.
+    manual_test: >-
+      inspect notification payloads / lockscreen.
+    detail: >-
+      The app puts the full OTP and account balance directly in the notification
+      body with lockscreen visibility set to public, so anyone glancing at the
+      locked device sees the secret. Sensitive notifications should be redacted
+      (a secret or private lockscreen visibility) so the content is hidden until
+      the device is unlocked.
+  - id: qr_code_injection
+    title: QR Code Injection
+    difficulty: medium
+    masvs:
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-20
+    tools:
+    - adb
+    - frida
+    attack_inputs:
+    - crafted QR
+    summary: Scanner trusts scanned content and acts on it without validation.
+    manual_test: >-
+      scan a crafted QR and confirm unvalidated action.
+    detail: >-
+      The QR scanner trusts whatever it decodes and immediately acts on it,
+      following dvma:// app commands, javascript: and file: URIs, and links, with
+      no validation or confirmation. A malicious QR can therefore trigger
+      privileged actions. The decoded value entered on this screen stands in for
+      the camera scan.
+    tools_android:
+    - adb
+    tools_ios:
+    - xcrun simctl openurl
+  - id: zip_path_traversal
+    title: Zip Path Traversal (Zip-Slip)
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    - MASVS-STORAGE-1
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-22
+    display_tags:
+    - CWE-22
+    - MASVS-CODE-4
+    tools: []
+    attack_inputs:
+    - crafted zip
+    summary: Update-package unpacker writes entries outside the target dir.
+    manual_test: >-
+      feed a zip-slip archive to the update unpacker.
+    detail: >-
+      The update unpacker joins each zip entry name to the target directory
+      without verifying the result stays inside it, then writes the entry to
+      disk. A crafted entry name escapes into system paths and overwrites
+      arbitrary files. A real archive is built and each entry is extracted to a
+      real filesystem (recoverable from the device, adb-pullable, or via
+      backup/jailbreak on iOS); the traversing entry lands outside the extract
+      directory.
+  - id: missing_flag_secure
+    platforms:
+    - android
+    title: Missing FLAG_SECURE (screen recording exposure)
+    difficulty: easy
+    masvs:
+    - MASVS-PLATFORM-3
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0291
+    - MASTG-TEST-0293
+    mastg_demo:
+    - MASTG-DEMO-0061
+    maswe:
+    - MASWE-0038
+    owasp_mobile: M4
+    cwe:
+    - CWE-200
+    display_tags:
+    - CWE-200
+    - MASVS-PLATFORM-3
+    tools:
+    - adb shell screencap
+    - adb shell screenrecord
+    - scrcpy
+    summary: Sensitive screen allows screenshots/recording (no FLAG_SECURE).
+    manual_test: >-
+      `adb shell screenrecord` a sensitive screen.
+    detail: >-
+      This secret-bearing screen never sets FLAG_SECURE, so screenshots and
+      screen recording (adb screenrecord, or screen-mirroring malware) can
+      capture it. Sensitive screens must set FLAG_SECURE. This is a native window
+      flag; the button simulates a recorder capturing the frame.
+  - id: intent_redirection
+    platforms:
+    - android
+    title: Intent Redirection / Task Hijack (StrandHogg-style)
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0375
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-926
+    - CWE-940
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: An exported component forwards an attacker-supplied nested intent to an internal component (intent redirection), and lax task affinity enables task hijack.
+    manual_test: >-
+      send crafted extras carrying a nested intent via drozer/adb and confirm
+      it is forwarded to an internal component.
+    detail: >-
+      An exported component extracts a nested "forward" intent from
+      attacker-supplied extras and dispatches it with no target validation,
+      letting an external caller reach an internal-only component through the
+      app's own privileges. This is a Dart simulation; the real exploit is
+      Android-level, an exported Activity forwarding a parcelled "intent" extra.
+  - id: predictive_back_leakage
+    platforms:
+    - android
+    title: Predictive Back / Recents Snapshot Leakage
+    difficulty: easy
+    masvs:
+    - MASVS-STORAGE-2
+    - MASVS-PLATFORM-3
+    mastg_v2:
+    - MASTG-TEST-0289
+    - MASTG-TEST-0292
+    mastg_demo:
+    - MASTG-DEMO-0062
+    maswe:
+    - MASWE-0038
+    owasp_mobile: M9
+    cwe:
+    - CWE-200
+    display_tags:
+    - CWE-200
+    - MASVS-PLATFORM-3
+    - MASVS-STORAGE-2
+    tools:
+    - adb shell screencap
+    - scrcpy
+    summary: Android 14+ predictive-back / recents snapshot captures a sensitive screen because it is not marked secure.
+    manual_test: >-
+      trigger the Android 14+ predictive-back / recents snapshot on a
+      sensitive screen and confirm it is captured.
+    detail: >-
+      This sensitive screen is not marked secure, so Android 14+ captures its
+      content into the recents (task-switcher) and predictive-back snapshot,
+      retaining the secret where others can see it. Setting FLAG_SECURE or
+      setRecentsScreenshotEnabled(false) would store an obscured placeholder
+      instead. This button simulates the OS snapshot.
+  - id: photo_picker_over_access
+    title: Over-Broad Media Access (no scoped photo picker)
+    difficulty: easy
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-PRIVACY-2
+    mastg_v2:
+    - MASTG-TEST-0254
+    - MASTG-TEST-0255
+    mastg_demo:
+    - MASTG-DEMO-0033
+    maswe:
+    - MASWE-0066
+    owasp_mobile: M6
+    cwe:
+    - CWE-250
+    - CWE-359
+    display_tags:
+    - CWE-250
+    - CWE-359
+    - MASVS-PRIVACY-2
+    tools:
+    - MobSF
+    tools_android:
+    - aapt
+    - jadx
+    - apktool
+    tools_ios:
+    - ipsw
+    - plutil
+    summary: Requests full media/photo-library permission instead of the modern scoped photo picker, over-collecting user photos.
+    manual_test: >-
+      review the manifest/Info.plist and confirm full media-library access is
+      requested instead of the scoped photo picker.
+    detail: >-
+      To let the user attach one photo, the app requests full media-library
+      permission and receives every photo on the device (including sensitive
+      scans), plus standing access to future photos. The modern scoped photo
+      picker returns only the item the user selected and grants no standing
+      permission, collecting exactly what is needed.
+  - id: fileprovider_path_traversal
+    platforms:
+    - android
+    title: FileProvider Path Traversal / Arbitrary File Sharing
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-STORAGE-1
+    mastg_v2:
+    - MASTG-TEST-0357
+    mastg_demo:
+    - MASTG-DEMO-0122
+    - MASTG-DEMO-0123
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-22
+    - CWE-926
+    display_tags:
+    - CWE-22
+    - CWE-926
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: An over-broad FileProvider / grantUriPermissions lets another app read arbitrary app-private files via a traversal path.
+    manual_test: >-
+      via drozer / a companion app, request a traversal path (`../`) through
+      the FileProvider and read an app-private file.
+    detail: >-
+      A content resolver joins an attacker-supplied relative path onto the
+      app-private shared directory without confining the canonical result, then
+      performs a real filesystem read at that path. A "../" path therefore
+      escapes the export directory and reads arbitrary app-private files off disk
+      (session tokens, other users' data). The real exploit is at the Android
+      FileProvider level, an over-broad root-path or grantUriPermissions
+      resolving a content:// URI containing "..".
+  - id: dynamic_code_loading_rce
+    title: Dynamic Code Loading (Arbitrary Code Execution)
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    - MASVS-RESILIENCE-3
+    maswe:
+    - MASWE-0049
+    owasp_mobile: M4
+    cwe:
+    - CWE-494
+    - CWE-829
+    display_tags:
+    - CWE-494
+    - CWE-829
+    - MASVS-CODE-4
+    tools: []
+    tools_android:
+    - adb
+    - jadx
+    - apktool
+    tools_ios:
+    - ipsw
+    - class-dump
+    attack_inputs:
+    - malicious companion app
+    summary: Loads and executes a dex/module/plugin from an untrusted third-party app or external storage with no verification.
+    manual_test: >-
+      supply a malicious module/dex from a companion app or external storage
+      and confirm it executes unverified.
+    detail: >-
+      A plugin loader maps an untrusted module name to an executable op and runs
+      it with no signature or allowlist check, so an attacker-supplied
+      "wipe_data" module executes inside the app. This is a Dart simulation; the
+      real exploit is native (DexClassLoader or dlopen loading an unsigned
+      .dex/.so from an untrusted origin). A secure loader only runs allowlisted,
+      signed modules.
+  - id: overlay_phishing
+    platforms:
+    - android
+    title: Overlay Phishing
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-3
+    mastg_v2:
+    - MASTG-TEST-0035
+    - MASTG-TEST-0340
+    mastg_demo:
+    - MASTG-DEMO-0103
+    - MASTG-DEMO-0105
+    maswe:
+    - MASWE-0039
+    owasp_mobile: M4
+    cwe:
+    - CWE-1021
+    - CWE-290
+    tools:
+    - adb
+    - jadx
+    attack_inputs:
+    - overlay PoC app
+    summary: A credential screen can be covered by a look-alike overlay to phish input (no overlay/obscured-touch protection).
+    manual_test: >-
+      draw an overlay over the credential screen with a PoC app and confirm
+      input can be captured / the tap is obscured.
+    detail: >-
+      The credential field sets no obscured-touch or overlay protection, so a
+      malicious look-alike overlay drawn on top of it captures every keystroke
+      while the user believes they are typing into the real app. This is a Dart
+      simulation; the real exploit is platform-level, a SYSTEM_ALERT_WINDOW
+      overlay plus the app failing to set filterTouchesWhenObscured or
+      FLAG_SECURE.
+    references:
+    - CVE-2025-48639 (Android overlay permission-dialog confusion)|https://nvd.nist.gov/vuln/detail/CVE-2025-48639
+    - CVE-2026-0046 (Android overlay/tapjacking attack)|https://nvd.nist.gov/vuln/detail/CVE-2026-0046
+  - id: intent_arg_injection_rce
+    platforms:
+    - android
+    title: Intent Argument Injection -> Local Code Execution
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-88
+    - CWE-829
+    - CWE-94
+    display_tags:
+    - CWE-88
+    - CWE-829
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    - apktool
+    summary: An exported component feeds an attacker-controlled intent extra / command-line arg into an execution path, so another app runs code with this app's privileges (Unity CVE-2025-59489 class).
+    manual_test: >-
+      with drozer/adb, invoke the exported component with a crafted extra
+      (e.g. `-xrun`/`cmd`/`loadLibrary`) and confirm attacker-controlled args
+      reach an execution path with the app's privileges (Unity CVE-2025-59489
+      class); confirm the allowlist handler rejects it.
+    detail: >-
+      An exported "launcher" component reads attacker-controlled intent extras
+      (a command, a library path, a runtime flag) and feeds them straight into an
+      execution path. A malicious app can therefore send an intent that selects a
+      privileged op, dumping app secrets or "loading" an attacker-supplied
+      library path, which runs with this app's privileges (the Unity
+      CVE-2025-59489 class). This is an offline, deterministic simulation: the
+      intent is a map of extras and the executor maps op strings to effects. A
+      secure handler allowlists only safe navigation actions and ignores any
+      injected execution arg.
+  - id: deeplink_to_webview_navigation
+    title: Deep Link -> Trusted WebView Navigation
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0332
+    - MASTG-TEST-0027
+    mastg_demo:
+    - MASTG-DEMO-0095
+    maswe:
+    - MASWE-0035
+    - MASWE-0029
+    owasp_mobile: M4
+    cwe:
+    - CWE-939
+    - CWE-601
+    - CWE-749
+    display_tags:
+    - CWE-939
+    - CWE-601
+    - MASVS-PLATFORM-2
+    tools: []
+    tools_android:
+    - adb
+    - drozer
+    - jadx
+    tools_ios:
+    - xcrun simctl openurl
+    - idb
+    summary: A URL parameter from an incoming deep link/intent is loaded straight into a trusted WebView with no origin allowlist, so an attacker renders arbitrary content in-app (TikTok CVE-2024-45240 / Rakuten CVE-2024-41918 / EcoOnline CVE-2026-26897 class).
+    manual_test: >-
+      send a deep link whose `url` param points off-origin (or
+      `javascript:`/`file://`) and confirm it loads in the trusted WebView
+      with no origin allowlist (TikTok CVE-2024-45240 / Rakuten CVE-2024-41918
+      / EcoOnline CVE-2026-26897 class).
+    detail: >-
+      An incoming deep link carries a url parameter that the app loads directly
+      into a trusted in-app WebView. Because there is no origin allowlist, any
+      origin, and even javascript: or file:// URLs, is rendered inside the app's
+      security context (shared session and cookies, JS bridges), enabling
+      phishing and local-file or JS execution (the CVE-2026-26897 class). On
+      Android the resolved URL is navigated into a real trusted in-app WebView,
+      rendering it inside the app security context. The secure router allows only
+      first-party https origins and rejects everything else.
+    references:
+    - CVE-2026-22072 (OPPO arbitrary URL -> WebView token theft)|https://github.com/advisories/GHSA-96vw-w9m3-gj89
+    - CVE-2024-45240 (TikTok deep-link -> LynxView WebView takeover)|https://nvd.nist.gov/vuln/detail/CVE-2024-45240
+    - CVE-2026-26897 (EcoOnline EHS deep-link validation bypass -> WebView open redirect)|https://poc.intelseclab.com/pocs/web/2026-07-05_cve-2026-26897-ecoonline-deeplink-redirect/
+  - id: exported_component_arbitrary_url_activity
+    platforms:
+    - android
+    title: Exported Component -> Arbitrary URL / Activity Launch
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0364
+    mastg_demo:
+    - MASTG-DEMO-0128
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-926
+    - CWE-749
+    - CWE-601
+    display_tags:
+    - CWE-926
+    - CWE-749
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    summary: An exported component takes an attacker-supplied URL/activity target and opens it with the app's identity/privileges (ABEMA CVE-2024-28745 / Samsung Members CVE-2026-20985 & CVE-2025-21079 class).
+    manual_test: >-
+      via drozer/adb, deliver an external intent naming an attacker URL /
+      internal activity and confirm it opens with the app's identity (ABEMA
+      CVE-2024-28745 / Samsung Members CVE-2026-20985 & CVE-2025-21079 class).
+    detail: >-
+      An exported component reads attacker-supplied extras naming a URL and/or an
+      activity and opens whatever is named, with this app's identity and
+      privileges. With no allowlist, another app can point it at an arbitrary URL
+      or, worse, a privileged internal activity (admin, debug, session-export)
+      that should only be reachable in-process (the ABEMA CVE-2024-28745 /
+      Samsung Members CVE-2026-20985 & CVE-2025-21079 class). This is an offline,
+      deterministic simulation: the intent is a map of extras and "opening"
+      returns a descriptor of what would launch. The secure handler allowlists
+      only public activities and first-party https URLs.
+  - id: implicit_intent_sensitive_data
+    platforms:
+    - android
+    title: Implicit Intent Leaks Sensitive Data
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0374
+    - MASTG-TEST-0372
+    mastg_demo:
+    - MASTG-DEMO-0138
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-927
+    - CWE-200
+    display_tags:
+    - CWE-927
+    - CWE-200
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    summary: Sensitive data is placed on an implicit intent (no explicit component/package), so any co-resident app registering a matching filter receives it (Samsung Smart View CVE-2025-21024 class).
+    manual_test: >-
+      register a receiver in a second app for the same action and confirm
+      sensitive extras sent on an implicit intent are delivered to it (Samsung
+      Smart View CVE-2025-21024 class); confirm an explicit (packaged) send
+      does not leak.
+    detail: >-
+      Sensitive extras (an auth token and the account email) are placed on an
+      implicit intent, one that names only an action and sets no explicit
+      component or package, and broadcast. Android resolves an implicit intent by
+      its action and delivers it to every app that registered a matching
+      intent-filter, so a co-resident malicious app that claimed the same action
+      silently receives the payload (the Samsung Smart View CVE-2025-21024
+      class). On Android, DVMA emits the implicit broadcast and the companion
+      attacker (which claimed the same action) receives the extras. The secure
+      path sends an explicit intent addressed to the single trusted package, so
+      the eavesdropper gets nothing.
+  - id: pendingintent_provenance_confusion
+    platforms:
+    - android
+    title: PendingIntent Provenance Confusion
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0381
+    mastg_demo:
+    - MASTG-DEMO-0147
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-441
+    - CWE-290
+    - CWE-923
+    display_tags:
+    - CWE-441
+    - CWE-290
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: An SDK/receiver assumes 'who presents a PendingIntent' == 'who created it', so a replayed/forwarded PendingIntent authenticates an attacker as the creating app (PendingIntent provenance-confusion research, arXiv 2603.02539).
+    manual_test: >-
+      obtain/replay a PendingIntent the app created and confirm the receiving
+      SDK authenticates the presenter as the creator app (arXiv 2603.02539);
+      confirm strict presenter==creator checking rejects it.
+    detail: >-
+      A PendingIntent is a capability that can be forwarded, stored, and
+      replayed. This SDK authenticates a caller by trusting what the token
+      claims (its creatorPackage) instead of verifying who actually presents it.
+      So a token minted by a trusted app, once forwarded to or stolen by a
+      malicious app, lets the attacker present it and be authenticated as the
+      trusted app, a confused-deputy or provenance-confusion flaw (arXiv
+      2603.02539). This is an offline, deterministic simulation: the token is a
+      plain value and authentication returns the attributed identity. The strict
+      authenticator binds the capability to its creator and requires a
+      non-replayable, immutable, single-use token, rejecting the mismatch.
+  - id: inapp_browser_ui_spoofing
+    title: In-App Browser UI / Address-Bar Spoofing
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-2
+    maswe:
+    - MASWE-0035
+    owasp_mobile: M4
+    cwe:
+    - CWE-1021
+    - CWE-451
+    tools:
+    - frida
+    - objection
+    summary: An in-app WebView browser derives the displayed origin/address-bar from attacker-controllable content instead of the real committed URL, enabling website spoofing / UI misrepresentation (Firefox Focus CVE-2025-10290 / LINE CVE-2024-5739 trust class).
+    manual_test: >-
+      load attacker content that sets a fake title/origin and confirm the
+      in-app browser address bar shows a trusted origin while the real
+      committed URL is the attacker's (Firefox Focus CVE-2025-10290 / LINE
+      CVE-2024-5739 class).
+    detail: >-
+      The in-app WebView browser builds the origin shown in its address bar from
+      attacker-controllable page content (document.title, a pushState path, or a
+      data: or about: trick) instead of the real committed URL. So the chrome
+      shows a trusted https origin while the page actually loaded is the
+      attacker's site, and the user trusts a lie and enters credentials (the
+      Firefox Focus CVE-2025-10290 / LINE CVE-2024-5739 trust class). On Android
+      this drives a real in-app WebView: the loaded page sets document.title, and
+      the address bar is driven from that page-controlled title rather than the
+      true committed origin. The secure version always derives the address bar
+      from the true committed origin, ignoring page claims.
+    references:
+    - CVE-2025-10290 (Firefox Focus iOS URL-scheme UI spoofing)|https://nvd.nist.gov/vuln/detail/CVE-2025-10290
+    - CVE-2025-31254 (iOS unexpected URL redirection / insufficient URL validation)|https://support.apple.com/en-ca/125108
+    - CVE-2026-14137 (Chrome for iOS UI spoofing via crafted HTML)|https://nvd.nist.gov/vuln/detail/CVE-2026-14137
+    tools_android:
+    - adb
+    tools_ios:
+    - xcrun simctl openurl
+  - id: cross_app_scripting
+    platforms:
+    - android
+    title: Cross-App Scripting (Untrusted Intent -> Exported Activity -> WebView JS)
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0332
+    - MASTG-TEST-0031
+    mastg_demo:
+    - MASTG-DEMO-0095
+    maswe:
+    - MASWE-0035
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-79
+    - CWE-749
+    - CWE-940
+    display_tags:
+    - CWE-79
+    - CWE-749
+    - CWE-940
+    - MASVS-PLATFORM-2
+    tools:
+    - adb
+    - drozer
+    - jadx
+    summary: An exported activity takes an attacker-controlled Intent value and passes it to WebView loadUrl()/evaluateJavascript() without validation, giving JS execution in the trusted origin (Google's named Cross-App Scripting class; Element CVE-2024-26131/26132, FireDown CVE-2024-31974, TikTok CVE-2024-45240).
+    manual_test: >-
+      from a co-resident app, fire an Intent whose value is a `javascript:`
+      payload (or an attacker URL) at the exported activity and confirm it
+      executes in the WebView's trusted origin; verify the secure build
+      validates scheme+origin first (Google Cross-App Scripting class; Element
+      CVE-2024-26131/26132, TikTok CVE-2024-45240).
+    detail: >-
+      An exported activity reads an attacker-controlled Intent extra (a URL
+      string) and hands it straight to a WebView via loadUrl() or
+      evaluateJavascript() with no validation. The WebView is already
+      authenticated to the trusted first-party origin, so a "javascript:" payload
+      from a co-resident malicious app executes in that trusted origin and can
+      read the victim's cookies and session (Google's Cross-App Scripting class;
+      Element CVE-2024-26131/26132, FireDown CVE-2024-31974, TikTok
+      CVE-2024-45240). On Android a "javascript:" payload is actually run inside a
+      real in-app WebView committed to the trusted origin, so it executes in that
+      origin and can read the victim's session. The offline model records what
+      executed and in which origin. The secure path rejects the "javascript:"
+      scheme and only navigates to https URLs on the trusted-origin allowlist.
+    references:
+    - 'Google: Fixing a Cross-App Scripting Vulnerability|https://support.google.com/faqs/answer/9084685?hl=en'
+    - CVE-2024-26131 / CVE-2024-26132 (Element Android)|https://www.shielder.com/blog/2024/04/element-android-cve-2024-26131-cve-2024-26132-never-take-intents-from-strangers/
+    - CVE-2024-31974 (Solarized FireDown)|https://github.com/actuator/com.solarized.firedown/blob/main/CVE-2024-31974
+    - CVE-2024-45240 (TikTok LynxView)|https://nvd.nist.gov/vuln/detail/CVE-2024-45240
+  - id: grant_uri_permission_abuse
+    platforms:
+    - android
+    title: URI Permission / GRANT_URI_PERMISSIONS Abuse
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0357
+    mastg_demo:
+    - MASTG-DEMO-0123
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-266
+    - CWE-668
+    - CWE-927
+    display_tags:
+    - CWE-266
+    - CWE-668
+    - CWE-927
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: A forwarded/redirected Intent carries FLAG_GRANT_READ/WRITE_URI_PERMISSION to a private content:// URI, so a malicious app is transitively granted access to files it should not reach (Pixel CVE-2024-27222 Intent-redirect + grant-URI class).
+    manual_test: >-
+      send a redirected Intent carrying `FLAG_GRANT_READ_URI_PERMISSION` to a
+      private `content://` URI and confirm the malicious app reads a file it
+      was never granted directly (Pixel CVE-2024-27222 class).
+    detail: >-
+      The app receives an Intent from an untrusted caller and forwards it onward
+      without stripping the grant flags. The forwarded Intent still carries
+      FLAG_GRANT_READ/WRITE_URI_PERMISSION pointing at a private content://
+      provider URI the app can read, so the transitive grant reaches the
+      attacker-chosen target, handing a malicious app read/write access to files
+      it should never reach (Pixel CVE-2024-27222 Intent-redirect and grant-URI
+      class). This is an offline, deterministic simulation: the broker returns
+      which package ended up holding the grant. The secure path strips inbound
+      grant flags on redirect and only forwards to a trusted target allowlist.
+    references:
+    - CVE-2024-27222 (Pixel/Android intent-redirect + grant-URI)|https://nvd.nist.gov/vuln/detail/CVE-2024-27222
+  - id: custom_url_scheme_authorization
+    title: Custom URL Scheme Authorization (arbitrary URL load)
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-3
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0371
+    - MASTG-TEST-0370
+    mastg_demo:
+    - MASTG-DEMO-0134
+    - MASTG-DEMO-0135
+    maswe:
+    - MASWE-0029
+    owasp_mobile: M4
+    cwe:
+    - CWE-939
+    - CWE-862
+    - CWE-601
+    display_tags:
+    - CWE-939
+    - CWE-862
+    - CWE-601
+    - MASVS-PLATFORM-3
+    tools: []
+    tools_android:
+    - adb
+    - drozer
+    - jadx
+    tools_ios:
+    - xcrun simctl openurl
+    - idb
+    summary: A custom URL-scheme handler loads a caller-supplied URL without checking the caller or an allowlist, so any co-resident app can make DVMA display an attacker site (Rakuten CVE-2024-41918 / @cosme CVE-2024-45203 / Skylark CVE-2024-54014 / Groww CVE-2026-12065 class).
+    manual_test: >-
+      `adb shell am start`/`xcrun simctl openurl` a
+      `dvma://open?url=https://attacker.example` and confirm the app loads the
+      attacker site with no caller/allowlist check (Rakuten CVE-2024-41918 /
+      @cosme CVE-2024-45203 / Groww CVE-2026-12065 class).
+    detail: >-
+      The app registers a custom URL scheme (dvma://open?url=...) whose handler
+      loads the caller-supplied "url" parameter without checking the caller or an
+      allowlist. Any co-resident app can fire the scheme and make DVMA render an
+      attacker-controlled site inside its trusted chrome (Rakuten CVE-2024-41918 /
+      @cosme CVE-2024-45203 / Skylark CVE-2024-54014 / Groww CVE-2026-12065
+      class). On Android the caller-supplied URL is loaded into a real in-app
+      WebView inside DVMA's trusted chrome. The secure path only displays https
+      URLs on a trusted-host allowlist and refuses everything else.
+    references:
+    - CVE-2024-41918 (Rakuten Ichiba)|https://nvd.nist.gov/vuln/detail/CVE-2024-41918
+    - CVE-2024-45203 (@cosme)|https://nvd.nist.gov/vuln/detail/CVE-2024-45203
+    - CVE-2024-54014 (Skylark)|https://db.gcve.eu/search?product=%27Skylark%27+App+for+Android
+    - CVE-2026-12065 (Groww)|https://nvd.nist.gov/vuln/detail/CVE-2026-12065
+    - CVE-2024-44155 (Apple iOS custom URL scheme -> iframe sandbox violation)|https://nvd.nist.gov/vuln/detail/cve-2024-44155
+    - 'CVE-2026-23866 (WhatsApp iOS/Android: message payload triggers fetch of an arbitrary URL and OS custom-scheme dispatch, CWE-940)|https://nvd.nist.gov/vuln/detail/CVE-2026-23866'
+  - id: wkwebview_untrusted_url_local_file
+    platforms:
+    - ios
+    title: WebView Untrusted URL -> Local File Read (iOS WKWebView)
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0333
+    - MASTG-TEST-0332
+    mastg_demo:
+    - MASTG-DEMO-0096
+    maswe:
+    - MASWE-0034
+    - MASWE-0035
+    owasp_mobile: M4
+    cwe:
+    - CWE-79
+    - CWE-73
+    - CWE-200
+    display_tags:
+    - CWE-79
+    - CWE-73
+    - CWE-200
+    - MASVS-PLATFORM-2
+    tools:
+    - objection
+    - frida
+    - r2frida
+    - ipsw
+    - class-dump
+    - Hopper
+    - r2ghidra
+    - Ghidra
+    summary: Unsanitized user-controlled fields are reflected into a WebView, and file access is left enabled, so injected JS can read the app's local files from the WebView context (ZOLL ePCR iOS CVE-2025-12699 class).
+    manual_test: >-
+      inject HTML/JS into a reflected field and confirm the WebView (with file
+      access enabled) can read the app's local files; verify the secure build
+      escapes output and disables file access (ZOLL ePCR iOS CVE-2025-12699
+      class).
+    detail: >-
+      An unsanitized user-controlled field is reflected into HTML rendered in a
+      WKWebView that was created with local file access enabled and a file://
+      origin. Injected JavaScript therefore runs and can fetch() the app's own
+      local files (session tokens, patient records) and exfiltrate them (ZOLL
+      ePCR iOS CVE-2025-12699 class). On a real device this runs a genuine
+      WebView that actually reads the seeded local file: on iOS a real WKWebView
+      backed by a custom WKURLSchemeHandler that serves the page and the secret
+      under one origin, and on Android a System WebView with file access enabled
+      reading over a file:// origin; off-device it falls back to a deterministic
+      model. The secure path HTML-escapes the reflected field and disables local
+      file access, so the payload is inert and no files are reachable.
+    references:
+    - CVE-2025-12699 (ZOLL ePCR iOS)|https://nvd.nist.gov/vuln/detail/CVE-2025-12699
+  - id: confused_deputy_intent_validation
+    platforms:
+    - android
+    title: Confused-Deputy Intent Validation Bypass
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0364
+    mastg_demo:
+    - MASTG-DEMO-0128
+    maswe:
+    - MASWE-0032
+    - MASWE-0018
+    owasp_mobile: M4
+    cwe:
+    - CWE-441
+    - CWE-863
+    - CWE-862
+    display_tags:
+    - CWE-441
+    - CWE-863
+    - CWE-862
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: A privileged component performs an action on behalf of a caller after only a superficial Intent check, letting a local app abuse the app's privileges (Android Settings CVE-2025-32326 / CVE-2025-32321 confused-deputy class).
+    manual_test: >-
+      from an unprivileged app, invoke the privileged component with a
+      superficially-valid Intent and confirm the action runs with the app's
+      privileges (Android Settings CVE-2025-32326 / CVE-2025-32321 class).
+    detail: >-
+      A privileged, exported component performs a protected action (for example
+      writing a secure setting) on behalf of a caller after only a superficial
+      check: it validates the requested action string but never verifies the
+      caller's identity or permission. A local, unprivileged app crafts the
+      Intent and the deputy carries out the privileged operation for it (Android
+      Settings CVE-2025-32326 / CVE-2025-32321 confused-deputy class). This is an
+      offline, deterministic simulation: the deputy returns whether it performed
+      the action and for whom. The secure path verifies the caller actually holds
+      the required permission before acting.
+    references:
+    - CVE-2025-32326 (Android Settings)|https://nvd.nist.gov/vuln/detail/cve-2025-32326
+    - CVE-2025-32321 (Android Settings)|https://www.sentinelone.com/vulnerability-database/cve-2025-32321/
+  - id: ssrf_url_media_handler
+    title: SSRF via URL / Media Handler
+    difficulty: medium
+    masvs:
+    - MASVS-NETWORK-1
+    - MASVS-PLATFORM-3
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-918
+    - CWE-601
+    display_tags:
+    - CWE-918
+    - CWE-601
+    - MASVS-NETWORK-1
+    tools:
+    - Burp Suite
+    - mitmproxy
+    summary: An attacker-controlled URL parameter passed into a fetch/media loader is not restricted to an allowlist, so the app can be steered to internal/loopback endpoints (WhatsApp iOS CVE-2026-23866 SSRF-via-URL-scheme class).
+    manual_test: >-
+      pass an internal/loopback/metadata URL (`http://169.254.169.254/...`) to
+      the media/URL loader and confirm the app fetches it; verify the secure
+      build allowlists public hosts only (WhatsApp iOS CVE-2026-23866 class).
+    detail: >-
+      An attacker-controlled URL parameter is passed into a fetch or media loader
+      with no allowlist and no check that the destination is a public host. The
+      app can be steered at internal, loopback, or link-local endpoints, here the
+      cloud metadata service (169.254.169.254), issuing requests from inside the
+      trust boundary (WhatsApp iOS CVE-2026-23866 SSRF-via-URL-scheme class). The
+      vulnerable path opens a real socket to the caller URL, so the loopback or
+      metadata request actually leaves the device and can be watched in a proxy.
+      The secure path only fetches https URLs on a public-host allowlist,
+      refusing all internal targets without dispatching.
+    references:
+    - CVE-2026-23866 (WhatsApp iOS SSRF)|https://www.sentinelone.com/vulnerability-database/cve-2026-23866/
+  - id: qr_url_no_validation
+    title: QR Scanner -> URL With No Validation
+    difficulty: easy
+    masvs:
+    - MASVS-PLATFORM-3
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-601
+    - CWE-20
+    display_tags:
+    - CWE-601
+    - CWE-20
+    - MASVS-PLATFORM-3
+    tools:
+    - frida
+    attack_inputs:
+    - crafted QR
+    summary: A scanned QR code's payload is treated as a trusted URL/deeplink and opened/navigated without validation (Firefox iOS QR-scanner CVE-2025-54145 class).
+    manual_test: >-
+      scan a QR encoding a `javascript:` or privileged `dvma://` payload and
+      confirm it is opened/navigated with no validation (Firefox iOS
+      QR-scanner CVE-2025-54145 class).
+    detail: >-
+      A scanned QR code's payload is treated as a trusted URL or deeplink and
+      opened or navigated without validation. A QR code is fully
+      attacker-controlled, so it can carry a "javascript:" URI, a privileged
+      in-app deeplink, or a phishing link, and the app acts on it as if the user
+      typed it (Firefox iOS QR-scanner CVE-2025-54145 class). This is an offline,
+      deterministic simulation: the handler classifies the payload and reports
+      what it would open or execute. The secure path refuses "javascript:" and
+      privileged "dvma://" deeplinks from an untrusted QR, only allowing plain
+      https external links.
+    references:
+    - CVE-2025-54145 (Firefox iOS QR scanner)|https://nvd.nist.gov/vuln/detail/CVE-2025-54145
+    - CVE-2025-54144 (Firefox iOS URL scheme)|https://nvd.nist.gov/view/vuln/detail?vulnId=CVE-2025-54144
+    tools_android:
+    - adb
+    tools_ios:
+    - xcrun simctl openurl

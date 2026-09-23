@@ -1,0 +1,326 @@
+# DVMA registry category: supply_chain
+# Append new modules here, then run: dart run tool/generate.dart
+
+supply_chain:
+  title: Supply Chain (OWASP Mobile M2)
+  owasp_mobile: M2
+  description: A maliciously-behaving bundled SDK, a typosquatted-package scenario, and a build artifact with no signing/integrity verification.
+  vulnerabilities:
+  - id: malicious_third_party_sdk
+    title: Malicious Third-Party SDK
+    difficulty: medium
+    masvs:
+    - MASVS-CODE-3
+    - MASVS-PRIVACY-1
+    mastg_v2:
+    - MASTG-TEST-0318
+    - MASTG-TEST-0319
+    mastg_demo:
+    - MASTG-DEMO-0081
+    maswe:
+    - MASWE-0048
+    owasp_mobile: M2
+    cwe:
+    - CWE-506
+    - CWE-829
+    display_tags:
+    - CWE-506
+    - CWE-829
+    - MASVS-CODE-3
+    tools:
+    - mitmproxy
+    - Burp Suite
+    - MobSF
+    - JEB
+    tools_android:
+    - jadx
+    - apktool
+    tools_ios:
+    - ipsw
+    - class-dump
+    summary: A bundled SDK exfiltrates data far beyond its stated purpose.
+    manual_test: >-
+      confirm exfiltration under mitmproxy.
+    detail: >-
+      A bundled SDK advertised for one benign purpose actually harvests the auth
+      token, clipboard, and keystrokes on init and beacons them to an attacker
+      exfiltration endpoint. A pentester sees the exfil in mitmproxy; jadx reveals
+      the endpoint.
+  - id: typosquatted_dependency
+    title: Typosquatted Dependency
+    difficulty: easy
+    masvs:
+    - MASVS-CODE-3
+    mastg_v2:
+    - MASTG-TEST-0272
+    - MASTG-TEST-0273
+    mastg_demo:
+    - MASTG-DEMO-0050
+    - MASTG-DEMO-0052
+    maswe:
+    - MASWE-0048
+    owasp_mobile: M2
+    cwe:
+    - CWE-829
+    - CWE-427
+    tools:
+    - pubspec review
+    - osv-scanner
+    - MobSF
+    tools_android:
+    - gradle/Maven inspection
+    tools_ios:
+    - CocoaPods/SPM
+    summary: Depends on a lookalike package name mimicking a trusted one.
+    manual_test: >-
+      review pubspec for the lookalike name.
+    detail: >-
+      Typosquatted dependencies use lookalike package names that mimic trusted
+      ones (a missing letter, a swap); the squatted package runs its own code in
+      your build/app. This repo does not actually depend on these lookalikes; the
+      sample below is an illustrative comparison of squatted vs. real names. Verify
+      your real resolved tree with `dart pub deps`.
+  - id: unsigned_unverified_build_artifact
+    title: Unsigned / Unverified Build Artifact
+    difficulty: medium
+    masvs:
+    - MASVS-RESILIENCE-3
+    - MASVS-CODE-1
+    maswe:
+    - MASWE-0057
+    owasp_mobile: M2
+    cwe:
+    - CWE-347
+    - CWE-494
+    display_tags:
+    - CWE-347
+    - CWE-494
+    - MASVS-RESILIENCE-3
+    tools: []
+    tools_android:
+    - apksigner
+    - apktool
+    tools_ios:
+    - codesign
+    summary: Update artifact fetched and applied with no signature/checksum check.
+    manual_test: >-
+      verify with `apksigner` and confirm the update path skips
+      signature/checksum checks.
+    detail: >-
+      The in-app updater fetches an artifact over the network and applies it with
+      no signature and no checksum comparison against a trusted value. An on-path
+      attacker swaps in a trojaned artifact and it installs unchanged. Apply a
+      "tampered" artifact below.
+  - id: insecure_firebase_cloud_config
+    title: Insecure Firebase / Cloud Backend Config
+    difficulty: medium
+    masvs:
+    - MASVS-STORAGE-2
+    - MASVS-NETWORK-1
+    - MASVS-CODE-2
+    mastg_v2:
+    - MASTG-TEST-0212
+    - MASTG-TEST-0214
+    maswe:
+    - MASWE-0002
+    owasp_mobile: M8
+    cwe:
+    - CWE-1188
+    - CWE-668
+    - CWE-798
+    display_tags:
+    - CWE-1188
+    - CWE-798
+    - MASVS-STORAGE-2
+    tools:
+    - mitmproxy
+    - strings
+    - MobSF
+    tools_android:
+    - jadx
+    - apkleaks
+    tools_ios:
+    - ipsw
+    - class-dump
+    summary: A world-readable Firebase/cloud backend URL plus hardcoded cloud credentials expose backend data.
+    manual_test: >-
+      extract the Firebase/cloud URL + keys with jadx/`strings` and confirm an
+      unauthenticated read returns other users' data (curl / mitmproxy).
+    detail: >-
+      The Firebase database URL and cloud API key/secret are hardcoded in the app
+      (recoverable with standard reverse-engineering tools, jadx/strings on
+      Android, class-dump/nm/strings on iOS) and the backend rules are
+      world-readable (.read=true). An unauthenticated read therefore returns every
+      user's records, not just the caller's. The real check is hitting the exposed
+      endpoint, for example curl https://<db>.firebaseio.com/users.json. A secure
+      backend requires auth and scopes reads to the owner.
+  - id: sbom_missing_or_stale
+    title: Missing / Stale SBOM (No Component Inventory)
+    difficulty: easy
+    masvs:
+    - MASVS-CODE-3
+    - MASVS-CODE-1
+    mastg_v2:
+    - MASTG-TEST-0274
+    - MASTG-TEST-0275
+    mastg_demo:
+    - MASTG-DEMO-0051
+    - MASTG-DEMO-0053
+    maswe:
+    - MASWE-0044
+    owasp_mobile: M2
+    cwe:
+    - CWE-1104
+    - CWE-1035
+    display_tags:
+    - CWE-1104
+    - CWE-1035
+    - MASVS-CODE-3
+    tools:
+    - cyclonedx
+    - osv-scanner
+    - pubspec review
+    tools_android:
+    - gradle/Maven inspection
+    tools_ios:
+    - CocoaPods/SPM
+    summary: No Software Bill of Materials is produced, so bundled SDKs and their known-vulnerable versions are invisible to defenders.
+    manual_test: >-
+      confirm the build produces no Software Bill of Materials; generate one
+      (e.g. CycloneDX) and cross-reference bundled SDK versions against
+      advisories to reveal the components that were invisible.
+    detail: >-
+      The app bundles third-party SDKs (image_loader, analytics_sdk, net_http,
+      and others) and some are pinned to versions with publicly-known CVEs. But
+      the build ships no Software Bill of Materials, so there is no component
+      inventory to cross-reference against advisory feeds. You cannot audit what
+      you never inventoried, so the vulnerable components stay invisible, the same
+      blind spot that lets a stale, known-vulnerable SDK ride along in a release.
+      This is an offline, deterministic simulation: the "advisory feed" is a local
+      map. Generating an SBOM (CycloneDX) and auditing it surfaces the exact
+      components that the blind path misses.
+  - id: silent_sdk_auto_update
+    title: Silent SDK Auto-Update (Post-Deploy Behavior Change)
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-3
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0043
+    owasp_mobile: M2
+    cwe:
+    - CWE-494
+    - CWE-829
+    display_tags:
+    - CWE-494
+    - CWE-829
+    - MASVS-CODE-3
+    tools:
+    - jadx
+    - apktool
+    summary: A benign-looking SDK silently fetches and swaps in new behavior at runtime (SpinOK-style), turning malicious after install with no app update or review.
+    manual_test: >-
+      under mitmproxy, serve a modified remote "SDK behavior" payload and
+      confirm it is applied at runtime with no signature/checksum check,
+      changing app behavior post-install (SpinOK-style).
+    detail: >-
+      A benign-looking analytics/ads SDK ships inside the app and passes store
+      review serving only ads. At runtime it silently fetches a new "behavior
+      descriptor" from its server and applies it without verifying any signature
+      or checksum, the SpinOK-style pattern where a library turns malicious after
+      install, with no new app version and no store re-review. Once the malicious
+      descriptor lands, the same unchanged binary begins exfiltrating device
+      contacts and the auth token. This is an offline, deterministic simulation:
+      the "remote" is a local Map. The secure contrast requires a valid signature
+      before applying any update, so the unsigned payload is rejected and behavior
+      stays benign.
+  - id: dependency_confusion
+    title: Dependency Confusion / Substitution
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-3
+    - MASVS-CODE-1
+    maswe:
+    - MASWE-0048
+    owasp_mobile: M2
+    cwe:
+    - CWE-427
+    - CWE-1357
+    - CWE-494
+    display_tags:
+    - CWE-427
+    - CWE-1357
+    - MASVS-CODE-3
+    tools:
+    - pubspec review
+    - osv-scanner
+    tools_android:
+    - gradle/Maven inspection
+    tools_ios:
+    - CocoaPods/SPM
+    summary: An internal/private package name is resolved from a public registry, so an attacker who publishes that name to the public index gets their impostor pulled into the build (iOS dependency-management research; classic dependency-confusion class).
+    manual_test: >-
+      confirm an internal/private package name can be resolved from a public
+      registry (pubspec/CocoaPods/SPM), so a higher public version would be
+      pulled over the trusted private one; confirm scoped/pinned resolution
+      prevents it (iOS dependency-management research class).
+    detail: >-
+      The build resolves an internal package name (acme-internal-auth) from both
+      the private registry and the public index and picks the highest version. The
+      internal package exists privately at 1.2.0, but an attacker has squatted the
+      same name publicly at 9.9.9, so the resolver selects the attacker's impostor
+      and pulls it into the build (the classic dependency-confusion / substitution
+      class). This is an offline, deterministic model of pubspec / CocoaPods / SPM
+      resolution: the private and public registries are in-memory maps. The secure
+      resolver pins internal names to the private registry/scope and never resolves
+      them from public, returning the trusted 1.2.0.
+  - id: sdk_exported_component_redirection
+    title: Bundled SDK Ships a Vulnerable Exported Component
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-3
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0364
+    - MASTG-TEST-0372
+    mastg_demo:
+    - MASTG-DEMO-0128
+    - MASTG-DEMO-0136
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M2
+    cwe:
+    - CWE-926
+    - CWE-749
+    - CWE-829
+    display_tags:
+    - CWE-926
+    - CWE-749
+    - MASVS-CODE-3
+    tools: []
+    tools_android:
+    - jadx
+    - adb
+    - drozer
+    - apktool
+    tools_ios:
+    - ipsw
+    - class-dump
+    summary: A bundled third-party SDK ships its own vulnerable exported component that intent-redirects, so another app abuses the SDK (not the host app's code) to reach private data / credentials (EngageLab SDK, 50M+ installs).
+    manual_test: >-
+      with drozer/adb, deliver a nested "forward" intent to a bundled SDK's
+      exported component and confirm it redirects to a private component
+      (leaking credentials) with the host app's privileges (EngageLab SDK
+      class); confirm the allowlisted handler refuses.
+    detail: >-
+      The vulnerability is not in the host app's own code; it ships inside a
+      bundled third-party SDK (the EngageLab SDK class, 50M+ installs). The SDK's
+      exported component takes a forwarded/nested intent and redirects to the
+      embedded target without validating the destination. Because the SDK runs
+      with the host app's identity and permissions, another app can route the
+      redirect at a private component (an internal AccountCredentialsProvider) and
+      exfiltrate credentials the host can reach. The lesson: auditing your own code
+      is not enough, a dependency's exported component can expose you, and only
+      updating or removing the SDK (or the platform hardening it) fixes it. This is
+      an offline, deterministic simulation. The secure handler allowlists only the
+      SDK's own public endpoints and refuses external/private redirect targets.

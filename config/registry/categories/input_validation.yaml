@@ -1,0 +1,210 @@
+# DVMA registry category: input_validation
+# Append new modules here, then run: dart run tool/generate.dart
+
+input_validation:
+  title: Input Validation (OWASP Mobile M4)
+  owasp_mobile: M4
+  description: Unsafe deserialization of untrusted data, and Intent extras trusted without validation leading to privilege escalation.
+  vulnerabilities:
+  - id: unsafe_deserialization
+    title: Unsafe Deserialization
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0337
+    - MASTG-TEST-0386
+    mastg_demo:
+    - MASTG-DEMO-0100
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-502
+    tools:
+    - frida
+    - r2frida
+    attack_inputs:
+    - crafted payloads
+    summary: Deserializes untrusted data into typed objects with no validation.
+    manual_test: >-
+      craft a malicious serialized payload.
+    detail: >-
+      Untrusted JSON is deserialized straight into a privileged session object
+      with no validation, so attacker-supplied fields (isAdmin, role) and even a
+      payload-named type are trusted. The built object is then persisted to the
+      local key-value store (SharedPreferences on Android, UserDefaults on iOS),
+      so the injected privilege survives on disk and is recoverable across
+      launches (recover the backing file, SharedPreferences XML on Android or a
+      UserDefaults plist on iOS, with adb or on a rooted/jailbroken device).
+      Edit the payload below to grant yourself admin. The secure path
+      validates against a strict schema/allowlist and never lets input choose
+      privilege or a type.
+    tools_android:
+    - jadx
+    tools_ios:
+    - class-dump
+  - id: unvalidated_intent_extras
+    platforms:
+    - android
+    title: Unvalidated Intent Extras
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0375
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-20
+    - CWE-926
+    display_tags:
+    - CWE-20
+    - CWE-926
+    - MASVS-PLATFORM-1
+    tools:
+    - adb
+    - drozer
+    - jadx
+    summary: Intent extras trusted as-is, enabling privilege escalation.
+    manual_test: >-
+      send crafted extras with drozer/adb.
+    detail: >-
+      An exported activity reads Intent extras (user_id, is_admin, redirect) and
+      trusts them without validation, so a malicious app (drozer or adb) sets
+      is_admin=true and escalates privileges or forces an internal redirect. On
+      Android this actually starts DVMA's real exported component with the
+      attacker-supplied extras and reads back the privileged op it ran; the
+      in-memory panel is the offline contrast. Handle the crafted intent below.
+  - id: unsafe_media_decoding
+    title: Unsafe Media / Image Decoding
+    difficulty: medium
+    masvs:
+    - MASVS-CODE-4
+    - MASVS-PLATFORM-2
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-20
+    - CWE-1284
+    - CWE-409
+    display_tags:
+    - CWE-20
+    - CWE-1284
+    - MASVS-CODE-4
+    tools:
+    - ImageMagick
+    - radamsa
+    - frida
+    attack_inputs:
+    - crafted image
+    summary: Untrusted image/media bytes are passed straight to a decoder with no type/size/dimension checks, enabling decompression bombs and codec exploitation (Samsung CVE-2025-21043 class).
+    manual_test: >-
+      feed a crafted image (spoofed huge dimensions / decompression bomb /
+      unexpected format) and confirm the app decodes it with no
+      size/type/dimension validation (Samsung CVE-2025-21043 class); confirm
+      the safe decoder rejects it on caps + format allowlist.
+    detail: >-
+      Untrusted media is decoded by trusting its declared header verbatim: no
+      format allowlist, no dimension cap, no byte-length sanity check. A tiny file
+      can declare 100000x100000 pixels, so the decoder tries to allocate
+      width*height*4 bytes (tens of GB) and OOMs the process; spoofed formats
+      reach the codec too (the Samsung CVE-2025-21043 class). This demo actually
+      attempts the declared pixel-buffer allocation as a Uint8List inside a
+      try/catch (clamped to a 2 GiB demo ceiling so the host is not hard-crashed)
+      and reports the real outcome; the thrown OutOfMemoryError/RangeError is the
+      observable over-allocation. The secure path enforces an 8192x8192 cap, a max
+      byte size, and a format allowlist, rejecting the bomb before allocating
+      anything.
+  - id: deeplink_regex_dos
+    title: Deep Link Regex DoS (ReDoS)
+    difficulty: medium
+    masvs:
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-1333
+    - CWE-400
+    - CWE-20
+    display_tags:
+    - CWE-1333
+    - CWE-400
+    - MASVS-CODE-4
+    tools: []
+    tools_android:
+    - adb
+    - jadx
+    tools_ios:
+    - xcrun simctl openurl
+    - class-dump
+    attack_inputs:
+    - crafted deep link
+    summary: A catastrophically-backtracking regex parses incoming deep-link URLs, so a crafted link freezes/hangs the app (Mattermost CVE-2024-3872 class).
+    manual_test: >-
+      send a crafted deep link that triggers catastrophic regex backtracking
+      in link parsing and confirm the app freezes/hangs (Mattermost
+      CVE-2024-3872 class); confirm the linear/anchored parser stays
+      responsive.
+    detail: >-
+      A catastrophically-backtracking regex (a nested-quantifier pattern like
+      ^(a+)+$) parses incoming deep-link URLs. A crafted link, a long run of a
+      repeated character followed by one non-matching char, forces the engine into
+      exponential backtracking (about 2^(n-1) steps), freezing the app on the main
+      isolate (the Mattermost CVE-2024-3872 class). This demo actually executes
+      ^(a+)+$ against the crafted input and measures real wall-clock time with a
+      Stopwatch; the ambiguous run is clamped to about 26 chars so the blow-up is
+      observable (hundreds of ms to a few seconds) but bounded so it returns. The
+      secure parser uses a linear, anchored, non-backtracking pattern whose cost
+      grows linearly with input length.
+  - id: protected_data_access_via_input_validation
+    title: Protected-Data Access via Input-Validation Confusion
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    - MASVS-AUTH-1
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    cwe:
+    - CWE-20
+    - CWE-863
+    - CWE-180
+    display_tags:
+    - CWE-20
+    - CWE-863
+    - MASVS-CODE-4
+    tools:
+    - frida
+    - frida-trace
+    tools_android:
+    - jadx
+    tools_ios:
+    - ipsw
+    - class-dump
+    summary: Untrusted app-supplied input flows through a security-sensitive parser/normalizer whose result is then used to authorize access to a protected resource, so an input-sanitization confusion (canonicalization / encoding / type coercion) grants access to protected user data - the flaw is the authorization decision made after insufficiently validated input, not the specific parser (Apple protected-data-via-input-sanitization CVE-2026-43714 class).
+    manual_test: >-
+      send an evasive identifier (encoded / `..` / case / unicode variant such
+      as `users/./admin/%2E%2E/admin/SSN`) that slips a protected id past a
+      naive deny check and returns protected data; verify the secure build
+      canonicalizes FIRST and checks the canonical form (Apple
+      protected-data-via-input-sanitization CVE-2026-43714 class).
+    detail: >-
+      Untrusted input flows through a security-sensitive normalizer whose result
+      authorizes access to a protected resource. The vulnerable path runs a naive
+      deny check on the raw input and only then canonicalizes for lookup, so an
+      encoded, `..`, or mixed-case variant of a protected identifier slips past the
+      deny rule yet canonicalizes back to the protected id and returns its data.
+      The flaw is the authorization decision on insufficiently-validated input, not
+      the parser itself (Apple CVE-2026-43714 class). The protected records are
+      written to a real on-disk store (the local key-value store, SharedPreferences
+      on Android, UserDefaults on iOS); the vulnerable path then reads the protected
+      record back via the encoded/traversal variant. The secure path canonicalizes
+      first with a strict canonicalizer and checks the canonical form before any
+      read.
+    references:
+    - 'CVE-2026-43714 (Apple: malicious app accesses protected data after input-sanitization issue)|https://github.com/advisories/ghsa-x9g7-jjx9-q98g'

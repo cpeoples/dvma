@@ -1,0 +1,153 @@
+# Pre-commit quality gate for DVMA. Install once:
+#
+#   pip install pre-commit && pre-commit install
+#
+# Then every commit runs the fast checks below. Run the whole suite manually
+# with `pre-commit run --all-files` (or `make check-all`).
+#
+# Scope note: this gate holds formatting, linting, syntax, schema, and secret
+# checks that are fast enough to run on every commit (Dart, Python, JS, Markdown,
+# YAML, JSON, shell, GitHub Actions, plus the registry contract). `flutter test`
+# and the native harness compiles (Gradle / Xcode for Kotlin/Swift/C) are
+# deliberately CI-only, in .github/workflows/ci.yml, because they are too slow
+# for a per-commit hook; compilation is the syntax gate for those languages.
+minimum_pre_commit_version: "3.5.0"
+default_install_hook_types: [pre-commit]
+fail_fast: false
+
+repos:
+  # Generic hygiene.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$|\.bat$|(^|/)build/|(^|/)\.hugo/(public|content|resources|themes)/'
+      - id: end-of-file-fixer
+        exclude: '\.bat$|(^|/)build/|(^|/)\.hugo/(public|content|resources|themes)/|\.svg$'
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: '\.bat$|(^|/)\.hugo/themes/'
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-yaml
+        # Multi-doc / custom-tag files (none today) would need --allow-multiple; keep strict.
+        exclude: '(^|/)\.hugo/'
+      - id: check-json
+        exclude: '(^|/)build/|(^|/)\.hugo/(public|resources)/'
+      - id: detect-private-key
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+
+  # Python (tooling under automation/scripts/ and tool/): format + lint.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: '\.py$'
+      - id: ruff-format
+        files: '\.py$'
+
+  # JavaScript (the Appium/WebdriverIO suite): format only. Uses the maintained
+  # prettier mirror (the upstream pre-commit/mirrors-prettier is archived).
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.3.3
+    hooks:
+      - id: prettier
+        files: '^automation/appium/.*\.js$'
+
+  # Markdown (hand-authored docs only; generated pages are excluded in-config).
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.16.0
+    hooks:
+      - id: markdownlint-cli2
+        files: '^(README\.md|CONTRIBUTING\.md|docs/.*\.md)$'
+        exclude: '^docs/vulnerabilities/'
+
+  # Shell.
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.11.0
+    hooks:
+      - id: shellcheck
+        files: '^automation/scripts/.*\.sh$'
+        # warning+ only: the info-level notes are false positives on intentional
+        # idioms here (trap-invoked cleanup -> SC2317, sourced lib/common.sh ->
+        # SC1091, `A && B || C` guards -> SC2015). Real warnings/errors still gate.
+        args: [--severity=warning]
+
+  # GitHub Actions workflows.
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+
+  # YAML style, scoped to the registry (the contribution surface).
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        files: '^config/registry/.*\.ya?ml$'
+        args: [-c, .yamllint.yaml]
+
+  # Secret scan.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  # Registry schema validation (fast declarative first line; the Dart generator
+  # is the authoritative gate below).
+  - repo: local
+    hooks:
+      - id: registry-schema
+        name: registry schema (jsonschema)
+        entry: python3 automation/scripts/validate_registry.py
+        language: python
+        additional_dependencies: ["jsonschema>=4.0", "pyyaml>=6.0"]
+        files: '^config/registry/'
+        pass_filenames: false
+
+      - id: registry-schema-selftest
+        name: registry schema self-test (rejects known-bad modules)
+        entry: python3 automation/scripts/validate_registry.py --self-test
+        language: python
+        additional_dependencies: ["jsonschema>=4.0", "pyyaml>=6.0"]
+        files: '^config/registry/schema/module\.schema\.json$'
+        pass_filenames: false
+
+      - id: standards-links
+        name: standards ids resolve (mas.owasp.org)
+        entry: python3 automation/scripts/standards_mapping_audit.py --check
+        language: python
+        additional_dependencies: ["pyyaml>=6.0"]
+        files: '^(config/registry/|.hugo/scripts/mas_links\.json)'
+        pass_filenames: false
+
+      - id: dart-format
+        name: dart format
+        entry: dart format --output=none --set-exit-if-changed
+        language: system
+        files: '\.dart$'
+        exclude: '(^|/)build/'
+
+      - id: flutter-analyze
+        name: flutter analyze
+        entry: flutter analyze
+        language: system
+        files: '\.dart$'
+        pass_filenames: false
+
+      - id: registry-generate
+        name: registry generator in sync (dart run tool/generate.dart)
+        entry: bash -c 'dart run tool/generate.dart && git diff --exit-code -- lib/vulnerability_registry.dart lib/core/module_router.dart automation/vuln_manifest.json'
+        language: system
+        files: '^(config/registry/|tool/generate\.dart)'
+        pass_filenames: false
+
+      - id: app-id-sync
+        name: app id sync (config/app.json is source of truth)
+        entry: dart run tool/sync_app_id.dart --check
+        language: system
+        files: '^(config/app\.json|config/flavors/|ios/Runner\.xcodeproj/|companion/)'
+        pass_filenames: false

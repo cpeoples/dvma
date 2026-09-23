@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cpeoples/dvma/config/registry/schema/module.schema.json",
+  "title": "DVMA vulnerability module",
+  "description": "One entry under a category's `vulnerabilities:` list in config/registry/categories/. tool/generate.dart is the authoritative validator; this schema documents the same contract declaratively for editors and the pre-commit/CI fast path.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "difficulty", "masvs", "maswe", "cwe", "owasp_mobile", "summary", "detail"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$",
+      "description": "Unique snake_case id across the whole registry; used for the slug, router key, screen path, and automation ids."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable module name shown in the app and docs."
+    },
+    "difficulty": {
+      "enum": ["easy", "medium", "hard"],
+      "description": "Relative exercise difficulty; drives list sort order within a category."
+    },
+    "severity": {
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Optional qualitative severity. Add only when there is a defensible rating; the CWE/MASWE/OWASP mappings remain the primary severity signal, so never fabricate one to fill the field."
+    },
+    "masvs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^MASVS-[A-Z]+-\\d+$" },
+      "description": "At least one MASVS control, e.g. MASVS-CRYPTO-1."
+    },
+    "maswe": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^MASWE-\\d+$" },
+      "description": "At least one MASWE weakness id, e.g. MASWE-0007."
+    },
+    "cwe": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^CWE-\\d+$" },
+      "description": "At least one CWE, e.g. CWE-327."
+    },
+    "owasp_mobile": {
+      "type": "string",
+      "pattern": "^M\\d+$",
+      "description": "OWASP Mobile Top 10 category, e.g. M10."
+    },
+    "owasp_llm": {
+      "type": "string",
+      "description": "Optional OWASP LLM Top 10 category; add only when a genuine mapping exists."
+    },
+    "owasp_agentic": {
+      "type": "string",
+      "description": "Optional OWASP Agentic threat mapping; add only when a genuine mapping exists."
+    },
+    "mastg_v2": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional MASTG v2 test/knowledge ids."
+    },
+    "mastg_demo": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional MASTG demo ids."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One-line description of the module."
+    },
+    "detail": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Longer explanation rendered into the module's docs page."
+    },
+    "display_tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional curated badge labels; defaults to cwe + masvs + owasp_llm + owasp_agentic when omitted."
+    },
+    "tools": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Cross-platform tooling used to verify the module."
+    },
+    "tools_android": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Android-only tooling, in addition to `tools`."
+    },
+    "tools_ios": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "iOS-only tooling, in addition to `tools`."
+    },
+    "attack_inputs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Inputs the tester authors to drive the module."
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["android", "ios"] },
+      "description": "Platforms the module applies to. Omit for a shared module (defaults to both)."
+    },
+    "platform_note": {
+      "type": "string",
+      "description": "Note explaining how a shared module differs per platform."
+    },
+    "manual_test": {
+      "type": "string",
+      "description": "Optional external/manual verification step the in-app integration suite cannot drive; rendered into the Manual Testing checklist."
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "\\|https?://",
+        "description": "Format: \"text|https://url\"."
+      }
+    },
+    "real_demo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": { "type": "string" },
+        "command": { "type": "string" },
+        "observe": {
+          "type": "string",
+          "description": "How to watch the demo take effect (log filter, pulled evidence file, or the CI regression test that guards it)."
+        }
+      },
+      "description": "Optional pointer to an end-to-end demo script for the module."
+    }
+  }
+}

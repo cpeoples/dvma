@@ -1,0 +1,344 @@
+# DVMA registry category: crypto
+# Append new modules here, then run: dart run tool/generate.dart
+
+crypto:
+  title: Insufficient Cryptography
+  owasp_mobile: M10
+  description: Weak algorithms, hardcoded keys and static IVs, insecure randomness, trivial key derivation, and homegrown "encryption".
+  vulnerabilities:
+  - id: weak_algorithms
+    title: Weak Cryptographic Algorithms (MD5/SHA1/DES/RC4/ECB)
+    difficulty: easy
+    masvs:
+    - MASVS-CRYPTO-1
+    mastg_v2:
+    - MASTG-TEST-0210
+    - MASTG-TEST-0221
+    - MASTG-TEST-0232
+    - MASTG-TEST-0317
+    - MASTG-TEST-0211
+    mastg_demo:
+    - MASTG-DEMO-0022
+    - MASTG-DEMO-0023
+    - MASTG-DEMO-0015
+    maswe:
+    - MASWE-0007
+    - MASWE-0008
+    owasp_mobile: M10
+    cwe:
+    - CWE-327
+    - CWE-328
+    tools:
+    - frida
+    - frida-trace
+    - r2
+    - MobSF
+    tools_android:
+    - jadx
+    - apktool
+    tools_ios:
+    - ipsw
+    - Hopper
+    - Ghidra
+    - r2ghidra
+    - class-dump
+    summary: MD5/SHA1 for password hashing and DES/RC4/AES-ECB for encryption.
+    manual_test: >-
+      `strings`/jadx the binary and confirm a broken primitive
+      (DES/RC4/MD5/SHA-1/ECB) is used; capture ciphertext and show the
+      structural weakness (e.g. ECB pattern leakage).
+    detail: >-
+      Passwords are hashed with fast, unsalted MD5/SHA-1, which are friendly to
+      rainbow-table lookups and brute forcing, and data is encrypted with AES in
+      ECB mode using a hardcoded key. ECB leaks plaintext structure because
+      identical plaintext blocks produce identical ciphertext blocks.
+  - id: hardcoded_keys_ivs
+    title: Hardcoded Keys & Static IVs
+    difficulty: easy
+    masvs:
+    - MASVS-CRYPTO-1
+    - MASVS-CRYPTO-2
+    mastg_v2:
+    - MASTG-TEST-0212
+    - MASTG-TEST-0214
+    - MASTG-TEST-0309
+    - MASTG-TEST-0310
+    mastg_demo:
+    - MASTG-DEMO-0017
+    maswe:
+    - MASWE-0004
+    - MASWE-0007
+    owasp_mobile: M10
+    cwe:
+    - CWE-321
+    - CWE-329
+    display_tags:
+    - CWE-321
+    - CWE-329
+    - MASVS-CRYPTO-2
+    tools:
+    - strings
+    - frida
+    - r2
+    - MobSF
+    - JEB
+    tools_android:
+    - jadx
+    - apktool
+    - apkleaks
+    tools_ios:
+    - ipsw
+    - class-dump
+    - Hopper
+    - otool
+    summary: Symmetric key and IV baked into the binary; IV reused across messages.
+    manual_test: >-
+      `strings`/jadx the binary and recover the key/IV.
+    detail: >-
+      The AES key and IV are hardcoded in the app and the same IV is reused for
+      every message. Extracting the key with standard reverse-engineering tools
+      (jadx/strings on Android, class-dump/nm/strings on iOS) decrypts all
+      traffic forever, and IV reuse in CBC makes identical plaintexts produce
+      identical ciphertexts, so encrypting the same input twice yields the same
+      hex output.
+  - id: insecure_random
+    title: Insecure Randomness (predictable tokens/session IDs)
+    difficulty: medium
+    masvs:
+    - MASVS-CRYPTO-1
+    mastg_v2:
+    - MASTG-TEST-0204
+    - MASTG-TEST-0205
+    - MASTG-TEST-0311
+    - MASTG-TEST-0349
+    mastg_demo:
+    - MASTG-DEMO-0007
+    - MASTG-DEMO-0008
+    maswe:
+    - MASWE-0012
+    owasp_mobile: M10
+    cwe:
+    - CWE-330
+    - CWE-338
+    tools:
+    - frida
+    - frida-trace
+    - token analysis
+    summary: Uses Random() instead of Random.secure() for tokens/session IDs.
+    manual_test: >-
+      sample the "random" token/nonce/OTP repeatedly and confirm it is
+      predictable (java.util.Random / non-CSPRNG seed).
+    detail: >-
+      Session tokens are generated with a non-cryptographic PRNG seeded with a
+      fixed, known seed, so the entire token stream is reproducible by anyone who
+      knows the seed and regenerating produces the same values every time. The
+      secure path uses a cryptographically secure random source so tokens cannot
+      be predicted.
+  - id: weak_key_derivation
+    title: Weak Key Derivation (no/low PBKDF2 iterations)
+    difficulty: medium
+    masvs:
+    - MASVS-CRYPTO-1
+    maswe:
+    - MASWE-0014
+    owasp_mobile: M10
+    cwe:
+    - CWE-916
+    - CWE-327
+    tools:
+    - hashcat
+    - frida
+    - frida-trace
+    summary: Derives keys from passwords with missing or trivial KDF iteration counts.
+    manual_test: >-
+      capture the derived material and crack with hashcat given the low/absent
+      iteration count.
+    detail: >-
+      The encryption key is derived from the password with PBKDF2 at only a
+      single iteration and a fixed, shared salt, orders of magnitude below OWASP
+      guidance, so a cracking tool such as hashcat recovers it near-instantly. A
+      second path skips the KDF entirely and uses raw SHA-256 of the password.
+  - id: custom_crypto_implementation
+    title: Custom / Homegrown Crypto
+    difficulty: medium
+    masvs:
+    - MASVS-CRYPTO-1
+    mastg_v2:
+    - MASTG-TEST-0210
+    - MASTG-TEST-0221
+    maswe:
+    - MASWE-0007
+    owasp_mobile: M10
+    cwe:
+    - CWE-327
+    tools:
+    - r2
+    - r2ghidra
+    - Ghidra
+    - JEB
+    - r2frida
+    - frequency analysis
+    summary: A homegrown XOR-based 'encryption' scheme trivially reversible.
+    manual_test: >-
+      reverse the hand-rolled cipher with jadx/Ghidra and confirm it is
+      trivially reversible (XOR / rolled AES) vs a platform primitive.
+    detail: >-
+      This encryption is repeating-key XOR with a 4-byte constant, base64-wrapped
+      to look opaque. XOR is its own inverse, so the ciphertext is reversed with
+      no real key and leaks structure to frequency analysis. The app decrypts its
+      own output immediately, which shows it protects nothing.
+  - id: improper_mac_verification
+    title: Improper MAC Verification (non-constant-time / unauthenticated)
+    difficulty: medium
+    masvs:
+    - MASVS-CRYPTO-1
+    maswe:
+    - MASWE-0009
+    owasp_mobile: M10
+    cwe:
+    - CWE-347
+    - CWE-208
+    display_tags:
+    - MASWE-0009
+    - CWE-347
+    - CWE-208
+    tools:
+    - frida
+    - frida-trace
+    - r2
+    attack_inputs:
+    - forged tag
+    summary: A signed token's HMAC is verified with a short-circuiting string equals (==) instead of a constant-time compare, leaking a timing oracle; a companion path skips MAC verification entirely and trusts the payload, so a forged tag is accepted.
+    manual_test: >-
+      flip a byte in an authenticated payload and confirm it is accepted (no
+      constant-time MAC compare / MAC not checked).
+    detail: >-
+      A signed token has the form "<payload>.<hmac>". The verifier compares the
+      presented tag with a short-circuiting == , which is a timing oracle that
+      leaks the correct tag byte by byte, and a second path skips MAC
+      verification entirely for tokens with no tag, trusting a forged, unsigned
+      payload.
+  - id: improper_signature_verification
+    title: Improper Signature Verification (payload not bound)
+    difficulty: hard
+    masvs:
+    - MASVS-CRYPTO-1
+    maswe:
+    - MASWE-0011
+    owasp_mobile: M10
+    cwe:
+    - CWE-347
+    display_tags:
+    - MASWE-0011
+    - CWE-347
+    tools:
+    - frida
+    - r2
+    - openssl
+    attack_inputs:
+    - tampered payload
+    summary: An RSA-SHA256 signed update blob is accepted because the app only checks a signature is present and well-formed, never that it binds to the payload; an attacker keeps the original signature, swaps the payload, and the tampered update is accepted while a correct verification rejects it.
+    manual_test: >-
+      tamper a signed blob/update and confirm it is accepted (signature
+      skipped or wrong key/no chain check).
+    detail: >-
+      An update blob ships with a real RSA-SHA256 signature. The app accepts the
+      update because a signature is present and well-formed, but never verifies
+      that it binds to the payload. An attacker keeps the original signature,
+      swaps the payload, and the update is accepted, while a correct verification
+      against the payload rejects it.
+  - id: device_secure_lock_not_enforced
+    title: Device Secure Lock Not Enforced for Sensitive Storage
+    difficulty: medium
+    masvs:
+    - MASVS-CRYPTO-2
+    - MASVS-STORAGE-1
+    maswe:
+    - MASWE-0017
+    owasp_mobile: M9
+    cwe:
+    - CWE-311
+    - CWE-522
+    display_tags:
+    - MASWE-0017
+    - CWE-311
+    tools:
+    - frida
+    tools_android:
+    - adb
+    attack_inputs:
+    - unlocked device
+    summary: A secret is persisted without requiring a device secure lock (PIN/passcode/biometric) or binding the key to it, so on a device with no lock screen the secret is recoverable at rest with no user presence.
+    manual_test: >-
+      run the app on a device with no screen lock and confirm sensitive
+      features/keys are still available (no `setUserAuthenticationRequired` /
+      secure-lock gate).
+    detail: >-
+      A session secret is persisted without requiring a device secure lock
+      (PIN/passcode/biometric) or binding the key to one. On a device with no
+      lock screen the secret is recoverable at rest with no user presence, which
+      is the value a hardened app would keep only in lock-gated
+      Keystore/Keychain.
+  - id: unauthenticated_encryption_malleable_ciphertext
+    title: Unauthenticated Encryption (malleable ciphertext / bit-flipping)
+    difficulty: medium
+    masvs:
+    - MASVS-CRYPTO-1
+    - MASVS-CRYPTO-2
+    maswe:
+    - MASWE-0021
+    owasp_mobile: M10
+    cwe:
+    - CWE-353
+    - CWE-326
+    display_tags:
+    - CWE-353
+    - MASVS-CRYPTO-2
+    tools:
+    - frida
+    - r2
+    attack_inputs:
+    - flipped ciphertext byte
+    summary: A token is encrypted with AES-CBC and no MAC, so an attacker who never learns the key flips a ciphertext byte to predictably change the decrypted plaintext (bit-flipping); the secure path uses authenticated encryption (AES-GCM / encrypt-then-MAC) and rejects the tampered ciphertext.
+    manual_test: >-
+      bit-flip AES-CBC ciphertext (no MAC) and confirm the corresponding
+      plaintext bit flips on decrypt (malleable / no integrity).
+    detail: >-
+      A grant token is encrypted with AES-CBC and shipped with no integrity tag,
+      so the ciphertext is malleable: flipping a byte in one CBC block flips the
+      corresponding byte of the next decrypted block in a predictable way. An
+      attacker who never learns the key edits the ciphertext to change the
+      decrypted role from user to admin, and the app decrypts the tampered blob
+      and acts on it without noticing. The secure path uses authenticated
+      encryption (AES-GCM, or encrypt-then-MAC) whose tag check fails on the
+      edited ciphertext and rejects it before decryption is trusted.
+  - id: rsa_no_oaep_padding
+    title: RSA Without OAEP Padding
+    difficulty: medium
+    masvs:
+    - MASVS-CRYPTO-1
+    maswe:
+    - MASWE-0022
+    owasp_mobile: M10
+    cwe:
+    - CWE-780
+    - CWE-327
+    display_tags:
+    - CWE-780
+    - MASVS-CRYPTO-1
+    tools:
+    - frida
+    - openssl
+    summary: A payload is RSA-encrypted with legacy PKCS#1 v1.5 padding instead of OAEP, exposing it to Bleichenbacher-style chosen-ciphertext padding-oracle attacks; the secure path uses RSA-OAEP.
+    manual_test: >-
+      confirm RSA uses PKCS#1 v1.5 (not OAEP) and demonstrate the
+      padding-oracle distinguisher against the decrypt endpoint.
+    detail: >-
+      A payload is RSA-encrypted with legacy PKCS#1 v1.5 padding instead of
+      OAEP. PKCS#1 v1.5 is malleable and its padding-validity behavior is a
+      classic chosen-ciphertext (Bleichenbacher) oracle, letting an attacker who
+      can submit modified ciphertexts recover the plaintext without the private
+      key. The module encrypts the same payload both ways with a real RSA
+      keypair and shows that v1.5 padding produces structurally weaker,
+      oracle-exposed ciphertext, while the secure path uses RSA-OAEP, whose
+      randomized, non-malleable padding closes the oracle.

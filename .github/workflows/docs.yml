@@ -1,0 +1,117 @@
+name: Build & Deploy Docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: pip install pyyaml
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Generate Hugo content from the registry
+        env:
+          # Pass the deploy path prefix (e.g. /dvma) so the generator's raw-HTML
+          # links/assets (breadcrumbs, prev/next nav, hero logo) resolve on a
+          # project Pages site. Hugo only baseURL-prefixes markdown links, not
+          # raw HTML. Empty for a user/root site.
+          DVMA_SITE_BASEPATH: ${{ steps.pages.outputs.base_path }}
+        run: python3 .hugo/scripts/build_docs.py
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@2752ce1d29631191ea3f27c23495fa06139a5b78 # v3
+        with:
+          hugo-version: "0.165.0"
+          extended: true
+
+      - name: Verify theme submodule
+        working-directory: .hugo
+        run: |
+          if [ ! -f "themes/hugo-theme-relearn/layouts/_default/baseof.html" ] && \
+             [ ! -f "themes/hugo-theme-relearn/hugo.toml" ]; then
+            echo "ERROR: relearn theme submodule not populated (need submodules: true)."
+            exit 1
+          fi
+
+      - name: Build Hugo site
+        working-directory: .hugo
+        env:
+          HUGO_ENVIRONMENT: production
+        run: |
+          hugo --minify --baseURL "${{ steps.pages.outputs.base_url || '/' }}"
+          test -f public/index.html || { echo "ERROR: Hugo build produced no index.html"; exit 1; }
+
+      - name: Build root-relative copy for link checking
+        working-directory: .hugo
+        env:
+          HUGO_ENVIRONMENT: production
+          # Regenerate with an empty basepath so the generator's raw-HTML links
+          # (breadcrumbs, nav, logo) are root-relative and resolve under the
+          # root-baseURL build the link checker validates against.
+          DVMA_SITE_BASEPATH: ""
+        run: |
+          python3 scripts/build_docs.py
+          hugo --minify --baseURL "/" --destination public-linkcheck
+
+      - name: Check internal links
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2
+        with:
+          # Validate only links inside the site, built with a root baseURL so
+          # every internal href is root-relative and resolves against the output
+          # dir. External URLs are skipped (--offline) so third-party flakiness
+          # never fails the docs build; --include-fragments also catches broken
+          # in-page anchors.
+          args: >-
+            --offline
+            --include-fragments
+            --root-dir "$GITHUB_WORKSPACE/.hugo/public-linkcheck"
+            ".hugo/public-linkcheck/**/*.html"
+          fail: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .hugo/public
+
+  deploy-docs:
+    needs: build-docs
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

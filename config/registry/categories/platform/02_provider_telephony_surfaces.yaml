@@ -1,0 +1,131 @@
+# DVMA registry category: platform (shard 02_provider_telephony_surfaces)
+#
+# Inbound provider / telephony platform-surface attacks. Each module reproduces
+# the *app-layer weakness pattern* behind a notable disclosure on an inbound
+# surface (an exported provider query, an incoming-call metadata read, a
+# ring-time VoIP media parse), NOT a copy of the OS/vendor bug (those live in
+# the platform, not in a vulnerable-app catalog). They exist so a trainee can
+# exercise the same class the disclosure exploited, on a self-contained,
+# offline-testable surface. Shards merge in sorted filename order; the ids here
+# join the `platform` category alongside 01_core.
+# After editing: dart run tool/generate.dart
+
+platform:
+  vulnerabilities:
+  - id: contacts_provider_blind_sqli_oracle
+    platforms:
+    - android
+    title: Blind SQLi Boolean-Oracle Extraction (Contacts-Provider class)
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-89
+    - CWE-862
+    display_tags:
+    - CWE-89
+    - CWE-862
+    - MASVS-PLATFORM-1
+    tools_android:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - crafted selection clause
+    summary: A provider accepts a crafted WHERE/selection clause on a legacy code path with no strict-SQL hardening, so a permission-less caller uses a balanced subquery as a boolean oracle and dumps a protected column one character at a time (Android 17 Contacts Provider CVE-2026-28576 class; reproduced app-layer offline).
+    manual_test: >-
+      with drozer, send boolean/time-based `selection` clauses to the
+      contacts-style provider and confirm a blind-SQLi oracle leaks rows the
+      caller shouldn't see.
+    detail: >-
+      A provider concatenates the caller-supplied selection into SQL on a legacy
+      path with no strict-SQL hardening, so a balanced sub-query is evaluated as a
+      WHERE predicate. The query returns a row or none, giving a boolean oracle: a
+      permission-less caller recovers the protected column one character at a
+      time, never reading it directly. On Android this drives the real exported
+      provider (content://com.dvma.provider.vuln/users) over its seeded SQLite
+      secret column, the same surface adb or drozer hit; offline an engine mirrors
+      it. Reproduces CVE-2026-28576.
+    references:
+    - CVE-2026-28576 (Android 17 Contacts Provider blind SQLi, CVSS 10)|https://nvd.nist.gov/vuln/detail/CVE-2026-28576
+  - id: incoming_call_metadata_missing_authorization
+    platforms:
+    - android
+    title: Incoming-Call Metadata Read (Missing Authorization class)
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-PRIVACY-1
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-862
+    - CWE-200
+    display_tags:
+    - CWE-862
+    - CWE-200
+    - MASVS-PLATFORM-1
+    tools_android:
+    - adb
+    - drozer
+    attack_inputs:
+    - unprivileged local query
+    summary: A provider path returns an incoming call's phone number and associated metadata with no permission check, so a local app reads it with zero grants and no user interaction (Android 17 Contacts Provider CVE-2026-0057 class; reproduced app-layer).
+    manual_test: >-
+      from an unprivileged app read/observe incoming-call metadata
+      (number/state) via the exported surface with no permission check and
+      confirm it is disclosed.
+    detail: >-
+      A provider path returns an incoming call's phone number and associated
+      metadata without checking the caller's permission, so a local app reads it
+      with zero grants and no user interaction. This reproduces the Android 17
+      Contacts-Provider missing-authorization read (CVE-2026-0057); the hardened
+      path enforces the permission the vulnerable path omits.
+    references:
+    - CVE-2026-0057 (Android 17 Contacts Provider missing permission check)|https://nvd.nist.gov/vuln/detail/CVE-2026-0057
+  - id: zero_click_call_media_parse_sink
+    platforms:
+    - android
+    - ios
+    title: Zero-Click Media Parse Before User Accept (VoIP-ring class)
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    - MASVS-PLATFORM-3
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M7
+    cwe:
+    - CWE-20
+    - CWE-125
+    display_tags:
+    - CWE-20
+    - CWE-125
+    - MASVS-CODE-4
+    tools:
+    - frida
+    - radamsa
+    attack_inputs:
+    - malformed call-setup payload
+    summary: Attacker-controlled call-setup media is parsed while the call is still ringing, before the user accepts, so a declared-length lie drives an out-of-bounds read over adjacent reassembly memory with no user interaction, and the leaked region is written to a real pullable artifact (WeWorm zero-click WeChat VoIP RCE class; reproduced app-layer over an offline arena).
+    manual_test: >-
+      deliver a crafted call/media payload that reaches the parser with no
+      user interaction and confirm it is parsed unsafely (crash / state
+      confusion) at the zero-click sink.
+    detail: >-
+      Call-setup media is reassembled into a fixed buffer while the call is still
+      ringing, before the user accepts, and the parser trusts an attacker-declared
+      length field instead of the bytes actually present. A frame whose declared
+      length exceeds the buffer drives an out-of-bounds write with zero user
+      interaction. This reproduces the WeWorm zero-click WeChat VoIP surface as an
+      offline, deterministic bounds check over an in-memory buffer. On Android the
+      parse runs as real compiled C in libdvma_native.so (a genuine out-of-bounds
+      read); on iOS there is no native equivalent yet, so it runs as the offline
+      Dart model, the same class, lower fidelity.
+    references:
+    - WeWorm zero-click WeChat VoIP worm (Aug 2026, no CVE assigned)|https://labs.cloudsecurityalliance.org/research/csa-research-note-wechat-weworm-zeroclick-20260909-csa-style/

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  DVMA App Group entitlement.
+
+	  This arms the ONE real Tier-C native iOS probe: the App Group shared-container
+	  over-read demonstrated by the `app_group_shared_container_amplification`
+	  module (see ios/Runner/DvmaNativeProbes.swift `dvma/app_group`). With this
+	  entitlement present AND a matching provisioning profile,
+	  `containerURL(forSecurityApplicationGroupIdentifier:)` returns a real shared
+	  container and the probe performs a genuine cross-member file write→read.
+
+	  Without a paid Apple Developer account you cannot provision this group, so
+	  the probe reports `reason=entitlement-missing` and the Dart module falls back
+	  to its deterministic in-app simulation - the demo still works everywhere.
+
+	  The group id MUST match `AppGroupContainer.appGroupId` (Dart) and `appGroupId`
+	  in DvmaNativeProbes.swift.
+	-->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.example.dvma</string>
+	</array>
+</dict>
+</plist>

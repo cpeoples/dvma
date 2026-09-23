@@ -1,0 +1,12 @@
+{
+  "_comment": "DVMA build flavor: TRAINING. A curated subset for classroom use - the highest-signal, most self-contained vulns that need no external MITM/native tooling. Select with: flutter run --dart-define-from-file=config/flavors/training.json",
+  "DVMA_FLAVOR": "training",
+  "_app_id_note": "Generated from config/app.json by tool/sync_app_id.dart. Do not edit by hand; edit config/app.json and re-run the sync tool.",
+  "DVMA_APP_ID": "com.dvma",
+  "DVMA_ENABLE_ALL": false,
+  "DVMA_VERBOSE_LOGGING": true,
+  "DVMA_ENABLED_CATEGORIES": "storage,crypto,auth,platform,input_validation,ai_ml,ai_mobile,native_bridge",
+  "DVMA_DISABLED_VULNS": "native_code_memory_bugs,frida_detection_bypass,anti_debugging_bypass,toctou_race_condition",
+  "DVMA_LLM_API_BASE": "http://10.0.2.2:8080",
+  "DVMA_INSECURE_UPDATE_URL": "http://10.0.2.2:8080/model/update"
+}

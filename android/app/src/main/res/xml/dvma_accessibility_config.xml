@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    accessibility_service_privilege_abuse (CWE-284 / CWE-269): configuration for
+    DvmaAccessibilityService. Declaring this makes DVMA a REAL, user-enablable
+    AccessibilityService (Settings > Accessibility). It requests the powerful
+    window-content + gesture capabilities that, once the user enables the
+    service, let it observe other apps' UI and inject actions with no per-action
+    validation. FOR AUTHORIZED SECURITY-TRAINING USE ONLY.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeAllMask"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds"
+    android:canRetrieveWindowContent="true"
+    android:canPerformGestures="true"
+    android:description="@string/dvma_a11y_description"
+    android:notificationTimeout="100" />

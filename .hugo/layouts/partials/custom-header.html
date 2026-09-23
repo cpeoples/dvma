@@ -1,0 +1,22 @@
+<!-- Google Search Console site verification. -->
+<meta name="google-site-verification" content="ZwtXu4I3Awbxnd1dDpGjRBlCxxOHHW5Eplsw6rG8ujs" />
+
+<!-- Load DVMA's custom stylesheet and script (mirrors the theme default this
+     partial overrides, so overriding it here does not drop the CSS/JS). -->
+{{- $filePath := "css/custom.css" }}
+{{- with partial "asset.gotmpl" (print "/" $filePath) }}
+    <link href="{{ .RelPermalink }}" rel="stylesheet">
+{{- else }}
+  {{- with partial "_relearn/staticResource.gotmpl" $filePath }}
+    <link href="{{ (partial "asset.gotmpl" .).RelPermalink }}" rel="stylesheet">
+  {{- end }}
+{{- end }}
+
+{{- $filePath := "js/custom.js" }}
+{{- with partial "asset.gotmpl" (print "/" $filePath) }}
+    <script src="{{ .RelPermalink }}" defer></script>
+{{- else }}
+  {{- with partial "_relearn/staticResource.gotmpl" $filePath }}
+    <script src="{{ (partial "asset.gotmpl" .).RelPermalink }}" defer></script>
+  {{- end }}
+{{- end }}

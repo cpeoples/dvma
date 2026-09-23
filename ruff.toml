@@ -1,0 +1,26 @@
+# Ruff config for DVMA's Python tooling (docs/registry generators under
+# automation/scripts/ and tool/). These scripts carry long prose in docstrings
+# and generated Markdown, so the line length is generous. Ruff runs as the
+# Python format + lint gate in pre-commit and CI.
+line-length = 100
+target-version = "py311"
+
+# Skip vendored/generated trees (a bare `ruff .` would otherwise lint them).
+extend-exclude = [
+    ".hugo/themes",
+    ".hugo/content",
+    ".hugo/public",
+    ".hugo/public-linkcheck",
+    ".hugo/resources",
+]
+
+[lint]
+# High-signal, low-churn set: pyflakes (F) catches real defects (unused imports
+# and variables, undefined names, f-strings without placeholders); isort (I)
+# keeps imports ordered deterministically. Broader style/upgrade rules are
+# intentionally left off so the gate never rewrites working scripts in
+# surprising ways; the formatter below handles layout.
+select = ["F", "I"]
+
+[format]
+quote-style = "double"

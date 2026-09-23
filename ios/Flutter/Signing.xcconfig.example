@@ -1,0 +1,16 @@
+// Template for local iOS code-signing config.
+//
+// Setup (once per machine):
+//   1. Add your Apple ID in Xcode -> Settings -> Accounts.
+//   2. Copy this file to Signing.xcconfig (same dir):
+//        cp ios/Flutter/Signing.xcconfig.example ios/Flutter/Signing.xcconfig
+//   3. Replace the value below with your own 10-character Apple Team ID.
+//
+// Find your Team ID from the CLI:
+//   security cms -D -i ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.mobileprovision \
+//     | plutil -extract TeamIdentifier xml1 -o - -
+//   # or: security find-identity -v -p codesigning
+//
+// Signing.xcconfig is gitignored so each contributor uses their own team and
+// nobody's ID is committed to the repo.
+DEVELOPMENT_TEAM = YOUR_TEAM_ID

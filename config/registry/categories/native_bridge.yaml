@@ -1,0 +1,737 @@
+# DVMA registry category: native_bridge
+# Append new modules here, then run: dart run tool/generate.dart
+
+native_bridge:
+  title: Native / WebView Bridge (JS <-> Native)
+  owasp_mobile: M4
+  description: 'The WebView<->native JavaScript bridge as its own cross-platform trust boundary (Android addJavascriptInterface / WebMessageListener; iOS WKUserContentController / WKScriptMessageHandler). Web content - including a cross-origin iframe - reaches the bridge and, without main-frame/origin validation, callback-id validation, or a permission gate, invokes privileged native functionality. Also covers framework/plugin boundaries (Flutter / React Native / Cordova / Capacitor) where the dangerous code lives in the plugin layer behind an innocent-looking app API. Modelled on 2024-2026 disclosures: Home Assistant Companion (CVE-2026-44698 iframe->bridge token theft; GHSA NFC/QR silent automation; GHSA exported-receiver location spoof), Cordova InAppBrowser (CVE-2026-47430 callback-id injection), and Flutter file_picker (CVE-2026-38093 provider-metadata path traversal).'
+  vulnerabilities:
+  - id: js_bridge_callback_id_injection
+    title: JS Bridge Callback-ID Injection
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0334
+    mastg_demo:
+    - MASTG-DEMO-0097
+    maswe:
+    - MASWE-0033
+    owasp_mobile: M4
+    cwe:
+    - CWE-345
+    - CWE-441
+    - CWE-20
+    tools:
+    - r2frida
+    - objection
+    - frida
+    - mitmproxy
+    tools_android:
+    - jadx
+    tools_ios:
+    - ipsw
+    - class-dump
+    - Hopper
+    summary: The native bridge trusts a caller-supplied callbackId and dispatches the result to it without validation, so web content forges an id to invoke a native callback belonging to another (privileged) plugin - Camera/Contacts/Files/Geolocation (Cordova InAppBrowser iOS CVE-2026-47430 class).
+    manual_test: >-
+      from web content, post a bridge message naming another plugin's
+      `callbackId` and confirm you receive that plugin's native result
+      (Camera/Contacts/Files/Geolocation); verify the secure build validates
+      the callback id (regex + plugin ownership) and rejects it (Cordova
+      InAppBrowser iOS CVE-2026-47430 class).
+    detail: >-
+      A Cordova-style native bridge lets each JS plugin register a native callback
+      keyed by a caller-supplied callbackId. When a plugin resolves, the native side
+      dispatches the result to whatever callbackId the web message names, without
+      verifying the id belongs to the requesting plugin. So attacker JS running as
+      the unprivileged Console plugin forges the privileged Camera plugin's
+      callbackId and receives the Camera result (a photo URI and bytes) into its own
+      handler (Cordova InAppBrowser iOS CVE-2026-47430 class). This runs in a real
+      WebView: the page forges the Camera callbackId over a native JS channel and
+      the native side delivers the Camera result into the attacker's handler (the
+      in-memory panels are the offline contrast). The secure path validates the
+      callbackId format with a strict regex and checks that the id was registered by
+      the requesting plugin, so the forged id is refused.
+    references:
+    - CVE-2026-47430 (Cordova InAppBrowser callback-id injection)|https://www.tenable.com/cve/CVE-2026-47430
+    - Cordova InAppBrowser 6.0.1 fix advisory|https://cordova.apache.org/announcements/2026/06/07/inappbrowser-release-6.0.1.html
+  - id: crossorigin_iframe_to_native_bridge
+    title: Cross-Origin Iframe -> Native Bridge (No Main-Frame/Origin Check)
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0334
+    - MASTG-TEST-0376
+    mastg_demo:
+    - MASTG-DEMO-0097
+    maswe:
+    - MASWE-0033
+    owasp_mobile: M4
+    cwe:
+    - CWE-346
+    - CWE-1021
+    - CWE-668
+    tools:
+    - mitmproxy
+    - r2frida
+    - frida
+    - objection
+    tools_android:
+    - jadx
+    tools_ios:
+    - ipsw
+    - class-dump
+    summary: The JS-bridge message handler does not verify the message came from the main frame / trusted origin, so a cross-origin iframe reaches the bridge, runs JS in the trusted main-frame origin, and exfiltrates the session/access token (Home Assistant Companion CVE-2026-44698 class; Android addJavascriptInterface + iOS WKUserContentController).
+    manual_test: >-
+      deliver a bridge message from a cross-origin iframe and confirm the
+      handler acts on it and returns the access/session token; verify the
+      secure build requires `isMainFrame` and a trusted origin and blocks it
+      (Home Assistant Companion CVE-2026-44698 class, Android
+      `addJavascriptInterface` / iOS `WKUserContentController`).
+    detail: >-
+      A WebView JS-bridge message handler (Android addJavascriptInterface /
+      WebMessageListener; iOS WKUserContentController) is registered on the app
+      WebView, but it does not verify that a message came from the main frame or the
+      trusted first-party origin. So a cross-origin ad iframe embedded in the page
+      posts a "getAccessToken" message; the native side honors it as if it were the
+      trusted app UI and returns the session token, which the iframe exfiltrates
+      (Home Assistant Companion CVE-2026-44698 class). This runs in a real WebView: a
+      cross-origin iframe posts the message over a native JS bridge and the native
+      side returns the token (the in-memory panel is the offline contrast). The
+      secure path requires isMainFrame and origin==trusted before returning anything
+      sensitive.
+    references:
+    - CVE-2026-44698 / GHSA-7jp2-p2fw-mgvf (Home Assistant iframe->bridge token theft)|https://github.com/home-assistant/core/security/advisories/GHSA-7jp2-p2fw-mgvf
+    - CVE-2024-28895 (Yahoo! JAPAN cross-app WebView XSS)|https://nvd.nist.gov/vuln/detail/CVE-2024-28895
+    - CVE-2026-35643 (OpenClaw untrusted WebView origin -> JavascriptInterface injection)|https://nvd.nist.gov/vuln/detail/CVE-2026-35643
+  - id: js_bridge_exposes_privileged_api
+    title: JS Bridge Exposes a Privileged Native API
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0334
+    mastg_demo:
+    - MASTG-DEMO-0097
+    maswe:
+    - MASWE-0033
+    owasp_mobile: M4
+    cwe:
+    - CWE-749
+    - CWE-862
+    - CWE-926
+    tools:
+    - r2frida
+    - frida
+    - objection
+    - mitmproxy
+    tools_android:
+    - jadx
+    - apktool
+    tools_ios:
+    - ipsw
+    - class-dump
+    - Hopper
+    summary: A bridge method exposes a privileged native capability (auth-token read, Keychain/Keystore, filesystem, camera/location) to any web content with no origin allowlist or permission gate, so a loaded page calls it directly.
+    manual_test: >-
+      from an arbitrary loaded page, call a bridge method that returns an auth
+      token / reads a file (or reaches camera/location) and confirm it
+      succeeds with no gate; verify the secure build enforces an origin
+      allowlist + capability check.
+    detail: >-
+      A WebView native bridge exposes a privileged capability, reading the auth token
+      from the Keychain/Keystore, as a plain bridge method callable by any loaded web
+      content. There is no origin allowlist and no capability/permission gate, so an
+      untrusted ad origin simply calls getAuthToken() and gets the token (Home
+      Assistant Companion CVE-2026-44698 class). On a real device this runs a real
+      WebView whose ungated privileged channel reads the token from a genuine
+      app-private file and hands it to the untrusted page; the deterministic offline
+      model backs the contrast panels. The secure path gates every privileged method
+      behind an origin allowlist and a per-origin capability check, so the untrusted
+      origin is denied before the native capability runs.
+    references:
+    - CVE-2026-44698 / GHSA-7jp2-p2fw-mgvf (Home Assistant token exfiltration via bridge)|https://github.com/home-assistant/core/security/advisories/GHSA-7jp2-p2fw-mgvf
+    - CVE-2026-15193 (OpenClaw WebView bridge -> OS command injection)|https://nvd.nist.gov/vuln/detail/CVE-2026-15193
+  - id: qr_nfc_to_privileged_action
+    title: QR / NFC Scan -> Privileged Action Without Confirmation
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-PLATFORM-3
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-306
+    - CWE-862
+    - CWE-346
+    tools:
+    - frida
+    - objection
+    attack_inputs:
+    - crafted QR
+    - crafted NFC tag
+    summary: A scanned QR/NFC tag from an untrusted caller is forwarded straight to a privileged action / automation trigger with no user confirmation, so a co-resident app or a planted tag executes it silently (Home Assistant Companion GHSA NFC/QR class).
+    manual_test: >-
+      feed a QR/NFC payload from an untrusted caller and confirm the named
+      automation/action fires with no user confirmation; verify the secure
+      build requires a trusted source and an explicit confirmation (Home
+      Assistant Companion GHSA NFC/QR class).
+    detail: >-
+      A scanned QR code or tapped NFC tag carries a payload naming a privileged
+      automation. The app forwards that payload straight to the action dispatcher
+      with no authentication of the scan source and no explicit user confirmation,
+      so a planted/overwritten NFC tag fed by a co-resident app silently triggers the
+      automation (Home Assistant Companion GHSA NFC/QR class). This is an offline,
+      deterministic simulation: a scan event carries its source, caller trust, and
+      payload. The secure path requires both a trusted scan source and an explicit
+      user confirmation before firing.
+    references:
+    - GHSA (Home Assistant NFC/QR silent automation)|https://github.com/home-assistant/core/security
+    tools_android:
+    - jadx
+    - adb
+    - drozer
+    tools_ios:
+    - ipsw
+    - class-dump
+  - id: exported_broadcast_receiver_spoof
+    platforms:
+    - android
+    title: Exported BroadcastReceiver Data Spoofing
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-1
+    mastg_v2:
+    - MASTG-TEST-0366
+    mastg_demo:
+    - MASTG-DEMO-0130
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-925
+    - CWE-862
+    - CWE-346
+    tools:
+    - adb
+    - drozer
+    - jadx
+    attack_inputs:
+    - malicious companion app
+    summary: An exported BroadcastReceiver accepts broadcasts from any app and trusts their extras, so a local app spoofs data the app treats as authoritative (e.g. device location) (Home Assistant Companion GHSA location-spoof class).
+    manual_test: >-
+      send a broadcast from a `com.evil.*` package with spoofed extras (e.g.
+      device location) and confirm the app treats it as authoritative; verify
+      the secure build checks the sender package / signature-level permission
+      (Home Assistant Companion GHSA location-spoof class).
+    detail: >-
+      The app registers a BroadcastReceiver that is exported with no signature-level
+      permission, so any app on the device can send it a broadcast. The receiver
+      trusts the extras it receives as authoritative, a device-location update, and
+      updates app state from them. A local app sends a spoofed LOCATION_UPDATE and
+      the app believes the fake coordinates (Home Assistant Companion GHSA
+      location-spoof class). On Android, the app registers a matching exported
+      receiver; the companion attacker fires the broadcast and this screen reads back
+      the applied extras. The secure path verifies the sender is a trusted
+      first-party package and holds the app's signature-level permission before
+      applying any extras.
+    references:
+    - GHSA (Home Assistant exported-receiver location spoof)|https://github.com/home-assistant/core/security
+    - CVE-2024-0015 (Android intent redirection to protected activity)|https://nvd.nist.gov/vuln/detail/cve-2024-0015
+  - id: webview_origin_confusion_ipc
+    title: WebView Origin Confusion -> Local-Only IPC
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0334
+    maswe:
+    - MASWE-0034
+    owasp_mobile: M4
+    cwe:
+    - CWE-346
+    - CWE-863
+    - CWE-441
+    tools:
+    - mitmproxy
+    - r2frida
+    - frida
+    tools_android:
+    - jadx
+    tools_ios:
+    - ipsw
+    - class-dump
+    summary: The WebView IPC layer classifies the caller's origin incorrectly, so a remote page is treated as the local/trusted application origin and can invoke local-only, privileged IPC commands it should never reach (Tauri WebView IPC origin confusion CVE-2026-42184 class).
+    manual_test: >-
+      invoke a local-only privileged IPC command from a remote origin (e.g.
+      `https://tauri.localhost.evil.com`) and confirm the loose origin
+      classifier treats it as local and executes it; verify the secure build
+      compares the canonical origin (scheme+host+port) exactly and rejects the
+      remote page (Tauri WebView IPC origin confusion CVE-2026-42184 class).
+    detail: >-
+      A WebView IPC layer decides whether a call is from the local/trusted
+      application origin before it will run local-only, privileged IPC commands. The
+      vulnerable classifier uses a sloppy substring/contains check, so a remote page
+      whose host merely contains the local host token "localhost" is misclassified as
+      the local origin and the privileged command executes (Tauri WebView IPC
+      origin-confusion CVE-2026-42184 class). This runs in a real WebView: the page
+      posts the command with an attacker Origin over a native IPC channel and the
+      misclassified caller reaches the privileged command (the in-memory panels are
+      the offline contrast). The secure path does an exact canonical-origin
+      comparison (scheme, host, and port) so only the true local origin is trusted.
+    references:
+    - CVE-2026-42184 / GHSA-7gmj-67g7-phm9 (Tauri origin confusion -> local-only IPC)|https://github.com/advisories/GHSA-7gmj-67g7-phm9
+    - CVE-2026-35643 (OpenClaw untrusted WebView origin -> JavascriptInterface injection)|https://nvd.nist.gov/vuln/detail/CVE-2026-35643
+  - id: webview_js_injection_ssl_bypass
+    title: WebView JS Injection + SSL-Validation Bypass
+    difficulty: hard
+    masvs:
+    - MASVS-NETWORK-1
+    - MASVS-PLATFORM-2
+    mastg_v2:
+    - MASTG-TEST-0284
+    mastg_demo:
+    - MASTG-DEMO-0056
+    maswe:
+    - MASWE-0027
+    - MASWE-0035
+    owasp_mobile: M5
+    cwe:
+    - CWE-295
+    - CWE-79
+    - CWE-749
+    tools:
+    - mitmproxy
+    - Burp Suite
+    - r2frida
+    - frida
+    - testssl.sh
+    tools_android:
+    - jadx
+    tools_ios:
+    - ipsw
+    - class-dump
+    summary: The WebView disables/relaxes TLS certificate validation (accept-all handler) while also permitting script injection, so a MITM attacker rewrites the loaded page, injects JavaScript, and escapes the WebView security boundary to reach privileged actions / steal tokens (PayRange CVE-2026-13461 class).
+    manual_test: >-
+      with the accept-all TLS handler, MITM the WebView load, inject
+      `<script>`, and confirm a token is exfiltrated / a privileged action
+      fires; verify the secure build validates the certificate so the
+      forged/MITM content never loads (PayRange CVE-2026-13461 class).
+    detail: >-
+      A WebView loads page content over a transport whose TLS certificate validation
+      is disabled (an accept-all handler; Android onReceivedSslError ->
+      handler.proceed(); iOS URLSession credential trust) while also permitting
+      script injection. A MITM attacker on the path presents a forged certificate;
+      the accept-all handler proceeds anyway, so the attacker's rewritten page loads
+      and its injected script calls window.bridge.getToken() and beacons the session
+      token to the attacker (PayRange CVE-2026-13461 class). This demo boots a real
+      WebView that runs the injected MITM script and exfiltrates the token over a JS
+      channel, and performs a real dart:io HTTPS handshake: the accept-all client
+      trusts a self-signed/forged cert while the validating client rejects it
+      (in-memory panels are the offline contrast). The secure path validates the
+      certificate against the trusted roots, so the forged cert fails and no content
+      ever loads.
+    references:
+    - CVE-2026-13461 (PayRange WebView JS injection + SSL bypass)|https://avd.aquasec.com/nvd/2026/cve-2026-13461/
+    - CVE-2026-22072 (OPPO arbitrary URL -> WebView token theft)|https://github.com/advisories/GHSA-96vw-w9m3-gj89
+  - id: embedded_miniapp_secret_exposure
+    title: Embedded Mini-App Secret Exposure
+    difficulty: medium
+    masvs:
+    - MASVS-STORAGE-1
+    - MASVS-PLATFORM-2
+    mastg_v2:
+    - MASTG-TEST-0320
+    maswe:
+    - MASWE-0001
+    owasp_mobile: M9
+    cwe:
+    - CWE-312
+    - CWE-522
+    - CWE-294
+    display_tags:
+    - CWE-312
+    - CWE-522
+    - MASVS-STORAGE-1
+    tools:
+    - r2frida
+    - frida
+    - objection
+    - sqlite3
+    tools_android:
+    - jadx
+    - adb
+    tools_ios:
+    - ipsw
+    - ifuse
+    summary: An embedded web-app / Mini-App persists plaintext, replayable auth tokens (and recovery secrets such as wallet mnemonics) in WebView storage reachable over the JS<->native bridge with no origin isolation, so any embedded content or co-resident inspector reads and replays them (Telegram Mini App / TENET research class).
+    manual_test: >-
+      read the embedded Mini-App's WebView storage over the JS↔native bridge
+      and confirm a plaintext, replayable auth token (and a recovery secret
+      such as a wallet mnemonic) is exposed to any origin; verify the secure
+      build issues an origin-bound, single-use handle and never exposes the
+      mnemonic (Telegram Mini App / TENET research class).
+    detail: >-
+      An embedded Mini-App persists plaintext, replayable auth tokens, and a recovery
+      secret such as a wallet mnemonic, in WebView storage reachable over the
+      JS<->native bridge with no origin isolation. So a co-resident inspector or
+      injected script under another origin calls the bridge getter, reads the
+      plaintext token and mnemonic, and replays the token (Telegram Mini App / TENET
+      research class). This persists the token and mnemonic in real WebView storage
+      and reads them back over a native JS bridge (the in-memory panel is the offline
+      contrast). The secure path never persists the raw token or mnemonic in
+      WebView-reachable storage: it mints a short-lived, origin-bound, single-use
+      handle, so a replay from another origin (or a second time) fails and the
+      mnemonic is never reachable over the bridge.
+    references:
+    - 'TENET: Telegram Mini App (in)security|https://arxiv.org/abs/2608.17538'
+  - id: webview_sop_csp_disabled
+    title: WebView SOP / CSP Disabled (Cross-Origin & Inline Script)
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0335
+    - MASTG-TEST-0333
+    mastg_demo:
+    - MASTG-DEMO-0096
+    maswe:
+    - MASWE-0034
+    owasp_mobile: M4
+    cwe:
+    - CWE-346
+    - CWE-79
+    - CWE-829
+    display_tags:
+    - CWE-346
+    - CWE-79
+    - MASVS-PLATFORM-2
+    tools:
+    - mitmproxy
+    - r2frida
+    - frida
+    tools_android:
+    - jadx
+    tools_ios:
+    - ipsw
+    - class-dump
+    summary: The app's WebView relaxes/omits Same-Origin-Policy and Content-Security-Policy enforcement (e.g. allowUniversalAccessFromFileURLs / allowFileAccessFromFileURLs, no CSP on loaded content), so cross-origin reads and inline/injected script execute in the trusted app origin (WebKit SOP-bypass CVE-2026-20643 / CSP-bypass CVE-2026-20665 app-level analog).
+    manual_test: >-
+      with universal file access on and no CSP, confirm a `file://` page reads
+      a cross-origin resource and runs inline script in the app origin (token
+      read); verify the secure build disables universal access and enforces a
+      restrictive CSP (WebKit SOP CVE-2026-20643 / CSP CVE-2026-20665
+      app-level analog).
+    detail: >-
+      The app's WebView relaxes/omits Same-Origin-Policy and Content-Security-Policy
+      (allowUniversalAccessFromFileURLs true, no CSP), so a file:// page can read a
+      cross-origin resource and run inline/injected script in the trusted app origin
+      (WebKit SOP-bypass CVE-2026-20643 / CSP-bypass CVE-2026-20665 app-level
+      analog). This writes real files and loads them in a real WebView with universal
+      file access on and no CSP, so the page reads a cross-origin resource and inline
+      script exfiltrates it (the in-memory panel is the offline contrast). The secure
+      config (universal access off, restrictive CSP) blocks the cross-origin read and
+      refuses inline script.
+    references:
+    - About the security content of iOS 26.4 (CVE-2026-20643 SOP bypass / CVE-2026-20665 CSP bypass)|https://support.apple.com/en-us/126792
+  - id: shared_webview_miniapp_isolation
+    title: Shared WebView Mini-App Isolation Failure (Cross-Tenant Cookies)
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-STORAGE-2
+    maswe:
+    - MASWE-0034
+    owasp_mobile: M4
+    cwe:
+    - CWE-346
+    - CWE-668
+    - CWE-200
+    display_tags:
+    - CWE-346
+    - CWE-668
+    - MASVS-PLATFORM-2
+    tools:
+    - r2frida
+    - frida
+    - objection
+    - sqlite3
+    tools_android:
+    - jadx
+    - adb
+    tools_ios:
+    - ipsw
+    - ifuse
+    summary: A super-app hosts multiple mini-programs in ONE shared WebView instance (shared cookie jar / localStorage), so one mini-app reads another mini-app's cookies and storage - a cross-tenant isolation failure enabling data exfiltration between mini-apps (WeChat/Alipay/TikTok/Baidu cross-mini-program cookie-sharing research).
+    manual_test: >-
+      from mini-app A, read mini-app B's cookie/localStorage out of the shared
+      WebView jar; verify the secure build partitions storage per mini-app
+      origin so A cannot see B (WeChat/Alipay cross-mini-program
+      cookie-sharing research class).
+    detail: >-
+      A super-app hosts multiple mini-programs in one shared WebView instance with a
+      single shared cookie jar / localStorage keyed loosely, so mini-app A reads
+      mini-app B's cookies and storage, a cross-tenant isolation failure enabling
+      data exfiltration between mini-apps (WeChat / Alipay / TikTok / Baidu
+      cross-mini-program cookie-sharing research). This loads two mini-apps in one
+      real shared WebView so mini-app A reads B's cookie/storage from the shared jar
+      (the in-memory panel is the offline contrast). The secure path partitions
+      storage per mini-app origin, so A cannot see B's cookie while B still reads its
+      own.
+    references:
+    - Demystifying Cookie Sharing Risks in WebView-based app-in-app ecosystems|https://arxiv.org/abs/2510.24141
+  - id: provider_metadata_to_filesystem_traversal
+    platforms:
+    - android
+    title: Provider-Controlled Metadata -> Plugin Filesystem Traversal
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-STORAGE-2
+    mastg_demo:
+    - MASTG-DEMO-0139
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    cwe:
+    - CWE-22
+    - CWE-73
+    - CWE-20
+    display_tags:
+    - CWE-22
+    - CWE-73
+    - MASVS-PLATFORM-1
+    tools: []
+    tools_android:
+    - drozer
+    - jadx
+    - adb
+    tools_ios:
+    - ipsw
+    - class-dump
+    attack_inputs:
+    - malicious companion app
+    summary: A framework/plugin layer (Flutter/React Native/Cordova/Capacitor) reads DISPLAY_NAME from an UNTRUSTED ContentProvider via ContentResolver.query() and uses it in filesystem path construction with no sanitization, so a malicious provider returns a `../` filename and the plugin writes/reads outside its intended cache - a plugin-boundary traversal where the dangerous code lives behind an innocent-looking app API (Flutter file_picker CVE-2026-38093 class).
+    manual_test: >-
+      from a malicious ContentProvider return a DISPLAY_NAME of
+      `../../shared_prefs/x` and confirm the file-picker plugin writes/reads
+      outside its cache root while the app only called an innocent `pick()`;
+      verify the secure build takes the basename / canonicalizes and confines
+      under the cache root (Flutter file_picker CVE-2026-38093 plugin-boundary
+      class).
+    detail: >-
+      A framework/plugin layer reads DISPLAY_NAME from an untrusted ContentProvider
+      and uses it directly in filesystem path construction with no sanitization. The
+      app author calls an innocent-looking pick() API, but inside the plugin a
+      malicious provider's "../" display name traverses out of the plugin cache and
+      clobbers the app's shared_prefs secrets on disk (Flutter file_picker
+      CVE-2026-38093 class). On device this performs a real File(cacheRoot,
+      displayName) write. The secure path takes the basename or canonicalizes the
+      path and confines the write under the plugin cache root.
+    references:
+    - CVE-2026-38093 / GHSA-r2rg-pm28-j8gw (Flutter file_picker DISPLAY_NAME path traversal)|https://github.com/advisories/GHSA-r2rg-pm28-j8gw
+  - id: webview_cleartext_mixed_content_downgrade
+    title: WebView Cleartext / Mixed-Content Transport Downgrade
+    difficulty: medium
+    masvs:
+    - MASVS-NETWORK-1
+    - MASVS-PLATFORM-2
+    mastg_v2:
+    - MASTG-TEST-0235
+    - MASTG-TEST-0237
+    maswe:
+    - MASWE-0026
+    - MASWE-0035
+    owasp_mobile: M5
+    cwe:
+    - CWE-319
+    - CWE-311
+    - CWE-829
+    display_tags:
+    - CWE-319
+    - CWE-311
+    - MASVS-NETWORK-1
+    tools:
+    - mitmproxy
+    - Burp Suite
+    - Wireshark
+    - testssl.sh
+    summary: A WebView opts out of cleartext blocking (android:usesCleartextTraffic / relaxed network-security-config) and relaxes the Mixed Content Policy (setMixedContentMode(MIXED_CONTENT_ALWAYS_ALLOW)), then loads HTTP or mixed content, so a network attacker injects script / downgrades HTTPS->HTTP and escalates to phishing or full app takeover - a WebView-transport failure distinct from app-level cleartext and from WebView XSS (USENIX Security 2026 large-scale HTTP-in-WebView study).
+    manual_test: >-
+      with cleartext allowed and mixed-content set to ALWAYS_ALLOW, load an
+      `http://` (or mixed) page under mitmproxy, inject a script, and confirm
+      it runs / a subresource downgrades HTTPS→HTTP; verify the secure build
+      blocks cleartext and sets mixed-content to BLOCK so the load is refused
+      (USENIX Security 2026 HTTP-in-WebView study).
+    detail: >-
+      The WebView opts out of cleartext blocking (usesCleartextTraffic / relaxed
+      network-security-config) and relaxes mixed content
+      (setMixedContentMode(MIXED_CONTENT_ALWAYS_ALLOW)), then loads an http:// page
+      (or an http:// subresource on an https page). A network attacker on the path
+      downgrades HTTPS->HTTP and injects a script that runs in the WebView and
+      exfiltrates the session token (USENIX Security 2026 HTTP-in-WebView study
+      class). This loads a real http:// page in a real WebView with mixed content
+      allowed (the in-memory panel is the offline contrast). The secure path blocks
+      cleartext and sets mixed-content to BLOCK so the http load / mixed subresource
+      is refused.
+    references:
+    - 'Plain Text, Plain Risks: Measuring HTTP Inclusion in Android WebViews at Scale (USENIX Security 2026)|https://www.usenix.org/conference/usenixsecurity26/presentation/beer'
+    tools_android:
+    - jadx
+  - id: webview_safe_browsing_disabled
+    platforms:
+    - android
+    title: WebView Safe Browsing Disabled
+    difficulty: easy
+    masvs:
+    - MASVS-PLATFORM-2
+    mastg_v2:
+    - MASTG-TEST-0399
+    mastg_demo:
+    - MASTG-DEMO-0156
+    maswe:
+    - MASWE-0035
+    owasp_mobile: M8
+    cwe:
+    - CWE-1188
+    - CWE-693
+    - CWE-829
+    display_tags:
+    - CWE-1188
+    - CWE-693
+    - MASVS-PLATFORM-2
+    tools:
+    - jadx
+    - apktool
+    attack_inputs:
+    - phishing/malware URL
+    summary: 'The WebView disables Google Safe Browsing (android:usesCleartextTraffic aside, `EnableSafeBrowsing=false` / `setSafeBrowsingEnabled(false)`), stripping the browser-originated malware/phishing protection, so attacker-controlled navigation to a known-bad URL is loaded with no warning. Distinct from XSS: the app deliberately removes a platform protection from its embedded browser (Android WebView MASTG-TEST-0399 class).'
+    manual_test: >-
+      disable Safe Browsing (`setSafeBrowsingEnabled(false)` / manifest
+      `EnableSafeBrowsing=false`), navigate to a known phishing/malware URL,
+      and confirm it loads with no interstitial; verify the secure build keeps
+      Safe Browsing on and blocks the bad URL while allowing benign ones
+      (MASTG-TEST-0399).
+    detail: >-
+      The WebView turns off Google Safe Browsing (setSafeBrowsingEnabled(false) /
+      manifest EnableSafeBrowsing=false), stripping the browser-originated
+      malware/phishing protection that normally shows a full-page interstitial before
+      a known-bad navigation. With it disabled, the app silently loads a known
+      phishing/malware URL with no warning. This is not XSS; it is a deliberately
+      removed platform protection (Android WebView MASTG-TEST-0399 class). This
+      navigates a real WebView to the known-bad URL (the in-memory panel is the
+      offline contrast). The secure path keeps Safe Browsing on, blocks known-bad
+      hosts with an interstitial, and still allows benign URLs.
+    references:
+    - 'OWASP MASTG-TEST-0399: SafeBrowsing disabled|https://mas.owasp.org/MASTG/tests/'
+  - id: webview_remote_debugging_enabled
+    platforms:
+    - android
+    title: WebView Remote Debugging Enabled
+    difficulty: medium
+    masvs:
+    - MASVS-RESILIENCE-1
+    - MASVS-PLATFORM-2
+    mastg_v2:
+    - MASTG-TEST-0227
+    maswe:
+    - MASWE-0063
+    owasp_mobile: M8
+    cwe:
+    - CWE-489
+    - CWE-215
+    - CWE-200
+    display_tags:
+    - CWE-489
+    - CWE-215
+    - MASVS-RESILIENCE-1
+    tools:
+    - adb
+    - jadx
+    - chrome://inspect
+    attack_inputs:
+    - chrome://inspect session
+    summary: '`WebView.setWebContentsDebuggingEnabled(true)` is left on in a production build, so anyone with adb / chrome://inspect access can attach DevTools to the WebView, inspect the DOM/JS, and execute script in the app''s web context - reading tokens, cookies, and authentication material. A production-configuration failure the release build should disable (Android WebView MASTG-TEST-0227 class).'
+    manual_test: >-
+      with `setWebContentsDebuggingEnabled(true)` in a release build, attach
+      chrome://inspect and read the web-context session token; verify the
+      secure build disables debugging in release builds (MASTG-TEST-0227).
+    detail: >-
+      The app leaves WebView.setWebContentsDebuggingEnabled(true) on in a release
+      build. That exposes the WebView over the Chrome DevTools Protocol, so anyone
+      with adb / chrome://inspect access attaches DevTools to the app web context,
+      inspects the live DOM/JS, and evaluates script, reading the session
+      cookie/token and auth material in the page (Android WebView MASTG-TEST-0227
+      class). This boots a real WebView with debugging enabled and reads the live JS
+      context back; the in-memory panel is the offline contrast. The secure path
+      forces debugging off in release builds so the inspector fails closed, while
+      still allowing DevTools in debug builds for local development.
+    references:
+    - 'OWASP MASTG-TEST-0227: debugging enabled for WebViews|https://mas.owasp.org/MASTG/tests/'
+  - id: webview_url_loading_policy_confusion
+    platforms:
+    - android
+    - ios
+    platform_note: 'Android shouldOverrideUrlLoading / iOS decidePolicyForNavigationAction: the URL-policy handler implementation is the boundary.'
+    title: WebView URL-Loading Policy Confusion
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0332
+    - MASTG-TEST-0398
+    mastg_demo:
+    - MASTG-DEMO-0157
+    maswe:
+    - MASWE-0035
+    owasp_mobile: M4
+    cwe:
+    - CWE-20
+    - CWE-441
+    - CWE-939
+    display_tags:
+    - CWE-20
+    - CWE-939
+    - MASVS-PLATFORM-2
+    tools:
+    - mitmproxy
+    - frida
+    - objection
+    tools_ios:
+    - ipsw
+    - Hopper
+    attack_inputs:
+    - crafted navigation URL
+    summary: The WebView's URL-policy handler (`shouldOverrideUrlLoading` / `decidePolicyForNavigationAction`) makes a trust decision on a raw, un-canonicalized URL, so scheme/host confusion (`javascript:`, `file:`, `content:`, a custom scheme, a redirect, or a malformed URL) slips past the allow/deny logic and loads privileged content. The bug is the policy IMPLEMENTATION, not merely calling loadUrl (Android/iOS URL-loading-handler MASTG-TEST-0332 class).
+    manual_test: >-
+      feed the URL-policy handler (`shouldOverrideUrlLoading` /
+      `decidePolicyForNavigationAction`) crafted URLs (`javascript:`, `file:`,
+      look-alike subdomain, host-in-query) and confirm the naive
+      `contains`-style check loads them; verify the secure handler
+      canonicalizes + allowlists scheme AND exact host (MASTG-TEST-0332).
+    detail: >-
+      The WebView navigation-policy handler (shouldOverrideUrlLoading /
+      decidePolicyForNavigationAction) makes its allow/deny trust decision on a raw,
+      un-canonicalized URL. A naive substring check against the intended host lets
+      scheme/host confusion slip through: javascript: (script), file:// (local file
+      read), content:// (privileged provider), a look-alike subdomain
+      (app.example.evil.com), or the genuine host smuggled into a query
+      (evil.example/?next=app.example). The bug is the policy implementation, not
+      loadUrl (MASTG-TEST-0332 class). This applies the naive policy in a real
+      WebView navigation delegate and loads the crafted URL (the in-memory panel is
+      the offline contrast). The secure path canonicalizes and parses the URL, then
+      allowlists scheme (https only) and the exact host, rejecting the crafted URLs
+      while allowing the genuine one.
+    references:
+    - 'OWASP MASTG-TEST-0332: attacker-controlled URI in WebViews|https://mas.owasp.org/MASTG/tests/ios/MASVS-PLATFORM/MASTG-TEST-0332/'
+    tools_android:
+    - jadx

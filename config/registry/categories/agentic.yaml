@@ -1,0 +1,345 @@
+# DVMA registry category: agentic
+# Append new modules here, then run: dart run tool/generate.dart
+
+agentic:
+  title: Agentic AI (OWASP Agentic Top 10)
+  owasp_mobile: M4
+  description: 'An in-app AI *agent* with persistent memory, tool/MCP-style connectors, and sub-agents. Demonstrates the OWASP Top 10 for Agentic AI Applications (2025) adapted to a mobile client: memory poisoning, tool/MCP poisoning, confused-deputy privilege abuse, and insecure inter-agent communication.'
+  vulnerabilities:
+  - id: agent_memory_poisoning
+    title: Agent Memory & Context Poisoning
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    - MASVS-STORAGE-1
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_llm: LLM01
+    owasp_agentic: ASI06
+    cwe:
+    - CWE-349
+    - CWE-77
+    display_tags:
+    - ASI06
+    - LLM01
+    - CWE-349
+    tools:
+    - promptfoo
+    - garak
+    - frida
+    - sqlite3
+    attack_inputs:
+    - crafted prompt
+    summary: A malicious instruction is written to the agent's persistent memory and re-fires across future sessions after the context resets (MINJA-style).
+    manual_test: >-
+      plant an instruction in the agent's persistent memory and confirm it
+      re-fires in a later session after reset.
+    detail: >-
+      The agent writes "remember this" notes into persistent long-term memory
+      with no sanitization, so a crafted note can embed an instruction. When a
+      new session starts the app resets only short-term memory, so the poisoned
+      instruction is recalled from long-term memory and the naive planner obeys
+      it, re-firing across every future session. The evidence records the
+      poisoned directive being recalled and re-executed after the reset. A
+      hardened agent treats stored memory as untrusted data, not instructions,
+      and re-authorizes any action a recalled note requests.
+  - id: mcp_tool_poisoning
+    title: MCP / Tool Description Poisoning
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    - MASVS-CODE-3
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_agentic: ASI04
+    cwe:
+    - CWE-829
+    - CWE-77
+    display_tags:
+    - ASI04
+    - CWE-829
+    - CWE-77
+    tools:
+    - promptfoo
+    - Burp Suite
+    - MCP scanner
+    - mitmproxy
+    attack_inputs:
+    - malicious MCP server
+    - crafted prompt
+    summary: A connected tool/MCP server's description carries hidden instructions that the agent ingests and obeys during planning.
+    manual_test: >-
+      connect a tool/MCP server whose description carries hidden directives
+      and confirm the agent obeys them during planning.
+    detail: >-
+      The agent reads every connected tool/MCP server's description while
+      planning and trusts it verbatim. A poisoned connector hides a directive
+      inside its otherwise-benign description. With no description integrity
+      check, the planner extracts and obeys the hidden instruction, invoking a
+      tool the user never asked for. A hardened planner would verify
+      description integrity and never treat connector metadata as
+      instructions.
+  - id: mcp_capability_attestation_absent
+    title: MCP Connector Capability Attestation Absent
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-3
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_agentic: ASI04
+    cwe:
+    - CWE-290
+    - CWE-862
+    display_tags:
+    - ASI04
+    - CWE-290
+    - CWE-862
+    tools:
+    - promptfoo
+    - MCP scanner
+    - Burp Suite
+    - mitmproxy
+    attack_inputs:
+    - connector declaring unattested capabilities
+    summary: A connected MCP server self-declares the capabilities (scopes) it holds, and the agent host grants them from the declaration alone with no attestation, so a connector that lists a privileged scope it was never issued is trusted with it (MCP capability-attestation gap, arXiv 2601.17549).
+    detail: >-
+      An MCP connector advertises the capabilities (scopes) it holds as part of
+      its handshake, and the agent host authorizes tool calls from that
+      self-declared list alone. Because the host performs no attestation, it
+      cannot tell a capability it actually issued from one the connector simply
+      claims, so a connector that lists a privileged scope it was never granted
+      is authorized to use it and the privileged tool call executes. This is a
+      protocol-level trust gap distinct from tool-description poisoning: the
+      untrusted input is the capability claim itself, not a hidden instruction.
+      The hardened host issues a signed capability grant when it provisions a
+      connector and, at call time, verifies each requested scope against that
+      attested grant, refusing any scope it did not issue.
+    references:
+    - 'Breaking the Protocol: absence of MCP capability attestation|https://arxiv.org/pdf/2601.17549'
+    - CWE-290 (Authentication Bypass by Spoofing)|https://cwe.mitre.org/data/definitions/290.html
+  - id: agent_tool_confused_deputy
+    title: Agent Tool Misuse / Confused Deputy
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-3
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0023
+    owasp_mobile: M4
+    owasp_agentic: ASI03
+    cwe:
+    - CWE-441
+    - CWE-862
+    display_tags:
+    - ASI03
+    - CWE-441
+    - CWE-862
+    tools:
+    - promptfoo
+    - Burp Suite
+    - MCP scanner
+    - mitmproxy
+    - frida
+    attack_inputs:
+    - crafted prompt
+    summary: The agent reuses the app's own permissions/credentials to perform an unauthorized action on behalf of untrusted input (confused deputy).
+    manual_test: >-
+      cause the agent to reuse the app's ambient permission/credential for an
+      unauthorized action with no re-auth.
+    detail: >-
+      The agent has a privileged bank-transfer tool that rides on the app's
+      own signed-in session. When asked to process untrusted content, it
+      extracts a transfer directive and fires the tool using the app's ambient
+      credential with no re-authentication. The attacker never had the
+      credential, but the trusted agent did. A hardened agent re-authorizes
+      any privileged action instead of reusing the app's ambient session.
+  - id: insecure_inter_agent_comms
+    title: Insecure Inter-Agent Communication
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    - MASVS-NETWORK-1
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_agentic: ASI07
+    cwe:
+    - CWE-345
+    - CWE-290
+    display_tags:
+    - ASI07
+    - CWE-345
+    - CWE-290
+    tools:
+    - promptfoo
+    - Burp Suite
+    - MCP scanner
+    - mitmproxy
+    attack_inputs:
+    - message spoofing
+    - crafted prompt
+    summary: Messages between sub-agents are unauthenticated, so a spoofed message misdirects the agent cluster.
+    manual_test: >-
+      spoof a message between sub-agents and confirm the receiver acts on the
+      unauthenticated message.
+    detail: >-
+      Sub-agents talk over a message bus that never authenticates the sender,
+      so the "from" field is an unverified string. An attacker posts a message
+      spoofing the trusted planner agent, and the executor agent accepts it and
+      carries out the injected directive. An authenticated bus would require a
+      valid signature and reject the spoof.
+  - id: mcp_open_url_arbitrary_intent
+    title: MCP open_url -> Arbitrary Android Intent
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-CODE-4
+    mastg_v2:
+    - MASTG-TEST-0026
+    - MASTG-TEST-0027
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    owasp_llm: LLM01
+    owasp_agentic: ASI03
+    cwe:
+    - CWE-77
+    - CWE-939
+    - CWE-862
+    display_tags:
+    - ASI03
+    - LLM01
+    - CWE-939
+    - CWE-862
+    tools:
+    - promptfoo
+    - Burp Suite
+    - MCP scanner
+    - mitmproxy
+    tools_android:
+    - adb
+    tools_ios:
+    - xcrun simctl openurl
+    attack_inputs:
+    - crafted prompt
+    summary: An MCP tool the agent can invoke (mobile_open_url) maps a model-supplied URL straight to Android startActivity() with no scheme allowlist, so a prompt-injected agent fires dangerous intents (tel:/sms:/content://) and reaches privileged, cross-app actions (Mobile MCP CVE-2026-35394 class).
+    manual_test: >-
+      via prompt injection, drive the agent's `mobile_open_url` MCP tool to a
+      dangerous scheme (`tel:`, `sms:`, `content://`, `intent://`) and confirm
+      it is dispatched to `startActivity()` with no allowlist; verify the
+      secure build allows only http/https and requires user confirmation
+      (Mobile MCP CVE-2026-35394 class).
+    detail: >-
+      An MCP tool the agent can invoke, mobile_open_url, takes a model-supplied
+      URL and maps it straight to Android startActivity() with no scheme
+      allowlist and no confirmation. Because a prompt-injected agent controls
+      that argument, it can fire dangerous intents (tel:, sms:, content://,
+      intent://) that reach privileged, cross-app actions such as dialing a
+      premium line, reading a content provider, or launching an arbitrary
+      intent on the user's behalf (Mobile MCP CVE-2026-35394 class). The secure
+      path allows only https and http, refuses every privileged scheme, and
+      requires explicit user confirmation, so a model argument alone can never
+      dispatch a privileged intent.
+    references:
+    - CVE-2026-35394 / GHSA-5qhv-x9j4-c3vm (Mobile MCP arbitrary Android intent via mobile_open_url)|https://github.com/advisories/GHSA-5qhv-x9j4-c3vm
+  - id: gui_agent_action_rebinding
+    title: GUI Agent Action Rebinding (Observation-Action Gap)
+    difficulty: hard
+    masvs:
+    - MASVS-PLATFORM-1
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0032
+    owasp_mobile: M4
+    owasp_llm: LLM01
+    owasp_agentic: ASI03
+    cwe:
+    - CWE-367
+    - CWE-441
+    - CWE-862
+    display_tags:
+    - ASI03
+    - CWE-367
+    - CWE-862
+    tools:
+    - promptfoo
+    - frida
+    tools_android:
+    - adb
+    - uiautomator
+    attack_inputs:
+    - crafted prompt
+    - foreground swap
+    summary: A GUI agent plans a tap against the screen it observed, but a zero-permission app swaps the foreground to a sensitive target during the reasoning latency, so the planned action lands in a privileged context the agent never saw (cross-app Action Rebinding).
+    detail: >-
+      The GUI agent observes the foreground screen, plans a tap against that
+      observation, then acts after a reasoning delay without re-checking the
+      foreground. A zero-permission app swaps the foreground to a sensitive
+      target during the latency window, so the planned tap lands in a
+      privileged context the agent never saw.
+    references:
+    - Mind the Gap - Action Rebinding Attacks against Android GUI Agents|https://www.alphaxiv.org/abs/2601.12349
+  - id: agent_recovery_loop_weaponization
+    title: Agent Task-Recovery Loop Weaponization
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_agentic: ASI03
+    cwe:
+    - CWE-693
+    - CWE-441
+    display_tags:
+    - ASI03
+    - CWE-693
+    tools:
+    - promptfoo
+    attack_inputs:
+    - crafted prompt
+    summary: The agent's own error/task-recovery logic ("if stuck, tap back and retry") is steered by attacker-planted on-screen hints into a programmable multi-step exploit loop, turning resilience logic into an attack primitive.
+    detail: >-
+      When the agent thinks it is stuck it follows on-screen recovery hints to
+      proceed, but those hints are untrusted screen content. An attacker plants
+      a sequence of recovery cues that walk the agent's own recovery logic
+      through a multi-step privileged exploit, turning resilience logic into an
+      attack primitive.
+    references:
+    - Mind the Gap - Action Rebinding Attacks against Android GUI Agents|https://www.alphaxiv.org/abs/2601.12349
+  - id: agent_state_toctou_swap
+    title: Agent External-State TOCTOU Swap
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    - MASVS-STORAGE-2
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_agentic: ASI03
+    cwe:
+    - CWE-367
+    - CWE-345
+    display_tags:
+    - ASI03
+    - CWE-367
+    - CWE-345
+    tools:
+    - promptfoo
+    - frida
+    attack_inputs:
+    - config swap
+    - crafted prompt
+    summary: The agent validates an external resource (a config file / API response) and then reads it again at use time; a swap between check and use makes it act on attacker-controlled state it never validated (TOCTOU in an LLM tool pipeline).
+    detail: >-
+      The agent reads an external config to validate it, then reads it again
+      from the same location at use time and acts on it. The two reads are not
+      atomic, so an attacker who swaps the file between check and use makes the
+      agent act on state it never validated (a TOCTOU race in an LLM tool
+      pipeline).
+    references:
+    - Mind the Gap - TOCTOU Vulnerabilities in LLM-Enabled Agents|https://arxiv.org/abs/2508.17155

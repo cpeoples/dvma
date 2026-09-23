@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    remoteviews_widget_action_injection (CWE-926 / CWE-862): initial layout for
+    DvmaWidgetProvider's home-screen widget. A single clickable TextView whose
+    RemoteViews click PendingIntent is wired (mutable) to the injected transfer
+    action. FOR AUTHORIZED SECURITY-TRAINING USE ONLY.
+-->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/text1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="8dp"
+    android:text="@string/dvma_widget_label"
+    android:textSize="14sp" />

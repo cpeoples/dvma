@@ -1,0 +1,442 @@
+# DVMA registry category: ai_ml
+# Append new modules here, then run: dart run tool/generate.dart
+
+ai_ml:
+  title: AI/ML (OWASP LLM/GenAI Top 10)
+  owasp_mobile: M4
+  description: 'An in-app AI assistant demonstrating the OWASP Top 10 for LLM/GenAI, adapted to a mobile client: prompt injection (direct + indirect), insecure output handling, excessive agency, system-prompt leakage, hardcoded API keys, insecure on-device model storage, unverified model supply chain, and unbounded resource consumption.'
+  vulnerabilities:
+  - id: prompt_injection_direct
+    title: Direct Prompt Injection
+    difficulty: easy
+    masvs:
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_llm: LLM01
+    cwe:
+    - CWE-77
+    - CWE-20
+    display_tags:
+    - LLM01
+    - CWE-77
+    - M4
+    tools:
+    - garak
+    - promptfoo
+    attack_inputs:
+    - crafted prompt
+    summary: User input can override the assistant's system instructions.
+    detail: >-
+      The in-app assistant concatenates untrusted user input with its system
+      prompt and applies no guardrails. Injected instructions override the
+      assistant's behavior, can trigger tool calls such as send_message with no
+      confirmation, and can leak the system-prompt secret.
+  - id: prompt_injection_indirect
+    title: Indirect Prompt Injection (scanned QR/image/file)
+    difficulty: medium
+    masvs:
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_llm: LLM01
+    cwe:
+    - CWE-77
+    - CWE-20
+    display_tags:
+    - LLM01
+    - CWE-77
+    - M4
+    tools:
+    - garak
+    - promptfoo
+    attack_inputs:
+    - crafted QR
+    - crafted document
+    - crafted image
+    summary: Hidden instructions in scanned QR/image/shared file are executed by the LLM.
+    manual_test: >-
+      encode hidden instructions in a scanned QR/image/file and confirm the
+      assistant obeys them.
+    detail: >-
+      Content decoded from a scanned QR code, image, or shared file is fed to
+      the assistant as trusted context without sanitization. Hidden
+      instructions inside that content override the assistant and trigger tool
+      calls, so the attack fires even though the user never typed it.
+  - id: insecure_output_handling
+    title: Insecure Output Handling
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-2
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_llm: LLM02
+    cwe:
+    - CWE-79
+    - CWE-89
+    display_tags:
+    - LLM02
+    - CWE-79
+    - CWE-89
+    tools:
+    - garak
+    - promptfoo
+    - frida
+    attack_inputs:
+    - crafted prompt
+    summary: LLM output rendered unsanitized into a WebView / run as a query.
+    manual_test: >-
+      confirm LLM output is rendered/executed unsanitized.
+    detail: >-
+      The app treats LLM output as trusted and pipes it, unsanitized, into a
+      real WebView as HTML and into a real SQLite statement. A prompt-injected
+      model emits a script tag or SQL syntax and it executes: XSS runs in the
+      WebView, proven by the rewritten page title, and injected SQL runs
+      against the on-device database, dropping the secrets table. Output must
+      be escaped or parameterized for the sink it flows into.
+  - id: excessive_agent_agency
+    title: Excessive Agent Agency
+    difficulty: medium
+    masvs:
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_llm: LLM06
+    cwe:
+    - CWE-862
+    - CWE-306
+    display_tags:
+    - LLM06
+    - CWE-862
+    - CWE-306
+    tools:
+    - promptfoo
+    - garak
+    - Burp Suite
+    - mitmproxy
+    attack_inputs:
+    - crafted prompt
+    summary: Assistant has tool-calling (e.g. send message) with no confirmation.
+    manual_test: >-
+      confirm a tool call fires with no confirmation.
+    detail: >-
+      The assistant can call real tools (send_message, and by extension
+      transfer or delete) and the app executes whatever tool call the model
+      emits with no confirmation and no allow-list. A single injected
+      instruction performs privileged actions on the user's behalf.
+  - id: system_prompt_leakage
+    title: System Prompt Leakage
+    difficulty: easy
+    masvs:
+    - MASVS-STORAGE-2
+    maswe:
+    - MASWE-0002
+    owasp_mobile: M4
+    owasp_llm: LLM07
+    cwe:
+    - CWE-200
+    display_tags:
+    - LLM07
+    - CWE-200
+    - M4
+    tools:
+    - garak
+    - promptfoo
+    attack_inputs:
+    - crafted prompt
+    summary: System prompt (with a fake secret) is extractable via the chat.
+    detail: >-
+      The assistant has no protection around its system prompt, which contains
+      a hardcoded internal secret. A simple request makes it echo the full
+      system prompt, and the secret with it, back to the user.
+  - id: hardcoded_llm_api_keys
+    title: Hardcoded LLM API Keys
+    difficulty: easy
+    masvs:
+    - MASVS-STORAGE-1
+    - MASVS-CRYPTO-1
+    mastg_v2:
+    - MASTG-TEST-0212
+    - MASTG-TEST-0214
+    mastg_demo:
+    - MASTG-DEMO-0017
+    maswe:
+    - MASWE-0004
+    owasp_mobile: M1
+    owasp_llm: LLM10
+    cwe:
+    - CWE-798
+    display_tags:
+    - LLM10
+    - CWE-798
+    - M1
+    tools:
+    - strings
+    - r2
+    - MobSF
+    tools_android:
+    - jadx
+    - apktool
+    - apkleaks
+    tools_ios:
+    - ipsw
+    - class-dump
+    - Hopper
+    summary: A cloud-LLM API key is shipped in the binary.
+    manual_test: >-
+      `strings`/jadx the binary and recover the key.
+    detail: >-
+      The cloud-LLM API key is a string constant compiled into the app, so
+      standard reverse-engineering tools (jadx/strings on Android,
+      class-dump/nm/strings on iOS) recover it from the package and anyone can
+      spend on the owner's account. Keys must sit server-side behind a proxy,
+      never in the client.
+  - id: insecure_ondevice_model_storage
+    title: Insecure On-Device Model Storage
+    difficulty: medium
+    masvs:
+    - MASVS-STORAGE-1
+    - MASVS-RESILIENCE-3
+    mastg_v2:
+    - MASTG-TEST-0302
+    - MASTG-TEST-0300
+    maswe:
+    - MASWE-0001
+    owasp_mobile: M9
+    owasp_llm: LLM03
+    cwe:
+    - CWE-312
+    - CWE-353
+    display_tags:
+    - LLM03
+    - CWE-312
+    - CWE-353
+    tools:
+    - r2
+    - objection
+    - frida
+    - xxd
+    tools_android:
+    - adb
+    - run-as
+    tools_ios:
+    - ifuse
+    - afcclient
+    summary: On-device model file is unsigned/unencrypted and swappable.
+    manual_test: >-
+      locate and swap the model file.
+    detail: >-
+      The on-device model is stored unencrypted with no signature, so an
+      attacker can read it or swap in a poisoned model and the app loads it
+      with no integrity check. In the demo a legitimate model is saved,
+      swapped, and the poisoned bytes load unchallenged. A hardened store
+      verifies a signature over the model bytes before loading, so a swapped
+      model is rejected.
+  - id: unverified_model_supply_chain
+    title: Unverified Model Supply Chain
+    difficulty: medium
+    masvs:
+    - MASVS-NETWORK-1
+    - MASVS-CODE-3
+    mastg_v2:
+    - MASTG-TEST-0233
+    - MASTG-TEST-0338
+    maswe:
+    - MASWE-0048
+    owasp_mobile: M2
+    owasp_llm: LLM03
+    cwe:
+    - CWE-494
+    - CWE-345
+    display_tags:
+    - LLM03
+    - CWE-494
+    - CWE-345
+    tools:
+    - mitmproxy
+    - Burp Suite
+    summary: Model update fetched from an unauthenticated URL with no checksum.
+    manual_test: >-
+      MITM the model update and serve a tampered model with no checksum
+      failure.
+    detail: >-
+      Model updates are fetched over plain HTTP from a hardcoded update URL
+      with no checksum or signature check, so a malicious mirror or on-path
+      attacker serves a poisoned model and the app installs it. The demo
+      performs a real cleartext GET and installs whatever comes back,
+      unverified.
+  - id: unbounded_ai_resource_consumption
+    title: Unbounded AI Resource Consumption
+    difficulty: easy
+    masvs:
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_llm: LLM04
+    cwe:
+    - CWE-770
+    - CWE-400
+    display_tags:
+    - LLM04
+    - CWE-770
+    - CWE-400
+    tools:
+    - Burp Suite
+    - mitmproxy
+    attack_inputs:
+    - load script
+    summary: No rate limiting on AI calls enables a cost-exhaustion attack.
+    manual_test: >-
+      script rapid AI calls and confirm no rate limiting.
+    detail: >-
+      The assistant applies no rate limiting or per-user quota, so an attacker
+      can flood it with requests, each billed against the app's API key, for a
+      cost-exhaustion or denial-of-wallet attack. Firing a burst shows the
+      unbounded call count climb.
+  - id: rag_vector_store_poisoning
+    title: RAG Vector Store Poisoning
+    difficulty: hard
+    masvs:
+    - MASVS-CODE-4
+    - MASVS-STORAGE-1
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_llm: LLM08
+    cwe:
+    - CWE-349
+    - CWE-345
+    display_tags:
+    - LLM08
+    - CWE-349
+    - CWE-345
+    tools:
+    - promptfoo
+    - objection
+    - frida
+    - sqlite3
+    attack_inputs:
+    - crafted document
+    summary: A poisoned entry written to the on-device RAG/vector store is retrieved and trusted on later, unrelated queries.
+    manual_test: >-
+      ingest a poisoned document, then run an unrelated query and confirm the
+      poisoned entry is retrieved and obeyed.
+    detail: >-
+      The in-app RAG store ingests documents with no provenance or trust check
+      and retrieves them by naive similarity alone. A poisoned shared document
+      carrying an embedded instruction is retrieved for a later, unrelated
+      query and concatenated into the prompt as trusted context, so the
+      assistant obeys the attacker.
+  - id: hidden_context_exposure
+    title: Hidden Context Exposure
+    difficulty: medium
+    masvs:
+    - MASVS-STORAGE-2
+    maswe:
+    - MASWE-0002
+    owasp_mobile: M4
+    owasp_llm: LLM07
+    cwe:
+    - CWE-200
+    - CWE-668
+    display_tags:
+    - LLM07
+    - CWE-200
+    - CWE-668
+    tools:
+    - garak
+    - promptfoo
+    attack_inputs:
+    - crafted prompt
+    summary: Untrusted retrieved/tool context that should have stayed out of reach (secrets, other users' data) is exposed to the model and the user (successor to system-prompt leakage).
+    manual_test: >-
+      confirm private/other-tenant context is surfaced to the model/user (no
+      context partitioning).
+    detail: >-
+      The assistant assembles its context from a single flat store that mixes
+      records from every user and internal secrets with no owner or trust
+      partitioning. When one user asks a question, another user's private
+      record and an internal secret are concatenated into the prompt and
+      surfaced in the response, context they should never be able to reach. A
+      hardened design partitions context by owner and keeps secrets out of the
+      prompt entirely.
+  - id: ondevice_model_extraction
+    title: On-Device Model Extraction / Theft
+    difficulty: medium
+    masvs:
+    - MASVS-STORAGE-1
+    - MASVS-RESILIENCE-3
+    mastg_v2:
+    - MASTG-TEST-0302
+    - MASTG-TEST-0300
+    maswe:
+    - MASWE-0001
+    owasp_mobile: M9
+    owasp_llm: LLM10
+    cwe:
+    - CWE-312
+    - CWE-200
+    display_tags:
+    - LLM10
+    - CWE-312
+    - CWE-200
+    tools:
+    - objection
+    - r2
+    - frida
+    - xxd
+    tools_android:
+    - adb
+    - run-as
+    tools_ios:
+    - ifuse
+    - afcclient
+    summary: On-device model weights are readable/extractable from app storage, enabling model theft and offline attack crafting.
+    manual_test: >-
+      pull the on-device model file and confirm the weights are extractable
+      (unencrypted/unsigned).
+    detail: >-
+      The on-device model is bundled in plaintext with no encryption or
+      signature. Any attacker who can read the app package can copy the file
+      and recover the full weights, and even an embedded system-prompt secret.
+      The demo reads the bundled placeholder and shows its raw, fully
+      extractable contents; the real theft is a simple file copy.
+  - id: unicode_invisible_prompt_injection
+    title: Invisible / Unicode Prompt Injection
+    difficulty: medium
+    masvs:
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0050
+    owasp_mobile: M4
+    owasp_llm: LLM01
+    cwe:
+    - CWE-77
+    - CWE-176
+    display_tags:
+    - LLM01
+    - CWE-77
+    - CWE-176
+    tools:
+    - garak
+    - promptfoo
+    attack_inputs:
+    - crafted QR
+    - crafted text
+    - unicode tooling
+    summary: Hidden instructions encoded with zero-width / RTL-override characters in scanned or shared text are obeyed by the assistant.
+    manual_test: >-
+      craft text with zero-width / RTL-override characters and confirm the
+      assistant obeys the hidden instruction (input not sanitized).
+    detail: >-
+      A shared note looks benign but hides an instruction using zero-width
+      characters and an RTL override. The app's sanitizer only touches ASCII
+      whitespace, so the invisible instruction survives and the assistant
+      obeys it. A correct sanitizer strips all zero-width and formatting
+      control characters before trusting the text.

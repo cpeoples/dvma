@@ -1,0 +1,759 @@
+# DVMA registry category: storage
+# Append new modules here, then run: dart run tool/generate.dart
+
+storage:
+  title: Insecure Data Storage
+  owasp_mobile: M9
+  description: 'Sensitive data persisted without protection: plaintext key-value stores, misused Keychain/Keystore, backup leakage, clipboard, screenshots, logs, keyboard cache, temp files, and over-sharing third-party SDKs.'
+  vulnerabilities:
+  - id: insecure_local_storage
+    title: Insecure Local Storage (Plaintext SharedPreferences/UserDefaults)
+    difficulty: easy
+    masvs:
+    - MASVS-STORAGE-1
+    mastg_v2:
+    - MASTG-TEST-0287
+    - MASTG-TEST-0300
+    - MASTG-TEST-0301
+    - MASTG-TEST-0302
+    mastg_demo:
+    - MASTG-DEMO-0059
+    maswe:
+    - MASWE-0001
+    owasp_mobile: M9
+    cwe:
+    - CWE-312
+    - CWE-922
+    display_tags:
+    - CWE-312
+    - MASVS-STORAGE-1
+    tools:
+    - objection
+    tools_android:
+    - adb
+    - run-as
+    - SharedPreferences/XML inspection
+    - sqlite3
+    tools_ios:
+    - objection
+    - ifuse
+    - afcclient
+    - plutil
+    - plist inspection
+    summary: Auth token and PII written to SharedPreferences/UserDefaults in cleartext.
+    manual_test: >-
+      pull `shared_prefs/*.xml` (Android) or the app's `NSUserDefaults` plist
+      (iOS) via `adb`/objection and confirm the token/SSN/card are cleartext.
+    detail: >-
+      Sensitive values are written to the local key-value store (SharedPreferences
+      on Android, UserDefaults on iOS) as cleartext. Via adb on a rooted or
+      jailbroken device, the key-value backing file
+      (SharedPreferences XML on Android, a UserDefaults plist on iOS) exposes
+      everything. The secure path keeps such values in app-private, encrypted
+      storage rather than the plaintext key-value store.
+  - id: keychain_keystore_misuse
+    platform_note: Android Keystore/EncryptedSharedPreferences; iOS Keychain (kSecAttr* accessibility).
+    title: Keychain/Keystore Misuse
+    difficulty: medium
+    masvs:
+    - MASVS-STORAGE-1
+    - MASVS-CRYPTO-2
+    mastg_v2:
+    - MASTG-TEST-0287
+    - MASTG-TEST-0300
+    - MASTG-TEST-0301
+    mastg_demo:
+    - MASTG-DEMO-0059
+    maswe:
+    - MASWE-0003
+    owasp_mobile: M9
+    cwe:
+    - CWE-312
+    - CWE-522
+    display_tags:
+    - CWE-522
+    - MASVS-STORAGE-1
+    - MASVS-CRYPTO-2
+    tools:
+    - objection
+    - frida
+    - r2frida
+    tools_android:
+    - adb
+    - run-as
+    - KeyStore inspection
+    - jadx
+    tools_ios:
+    - objection
+    - keychain-dumper
+    - plutil
+    summary: Secrets stored without hardware-backed protection / with weak accessibility flags.
+    manual_test: >-
+      dump the Keychain with objection / `keychain-dumper` and confirm weak
+      accessibility / no hardware backing.
+    detail: >-
+      The secret is stored in the platform secret store with the weakest
+      accessibility class (kSecAttrAccessibleAlways / no user-auth, no hardware
+      backing). On device the value lands in the local key-value store
+      (SharedPreferences on Android, UserDefaults on iOS) in cleartext, so it is
+      readable while the device is locked, is copied into backups, and is
+      recoverable via adb or a rooted/jailbroken device. The stronger exploit is
+      platform-level (keychain-dumper / frida); the weak flags and the missing
+      auth gate are the faithful core of the finding.
+    references:
+    - CVE-2026-28864 (iOS Keychain authorization bypass - access to another user's items)|https://support.apple.com/en-euro/126792
+  - id: insecure_backups
+    title: Insecure Backups (allowBackup / unencrypted iOS backups)
+    difficulty: easy
+    masvs:
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0216
+    - MASTG-TEST-0215
+    - MASTG-TEST-0262
+    - MASTG-TEST-0298
+    mastg_demo:
+    - MASTG-DEMO-0020
+    - MASTG-DEMO-0035
+    maswe:
+    - MASWE-0006
+    owasp_mobile: M9
+    cwe:
+    - CWE-530
+    tools: []
+    tools_android:
+    - adb backup
+    - apktool
+    tools_ios:
+    - idevicebackup2
+    - ifuse
+    - plist inspection
+    summary: android:allowBackup=true and no iOS backup exclusion leak app data to backups.
+    manual_test: >-
+      run `adb backup` (or a Finder/iMazing backup) and confirm app data is
+      recoverable from the backup.
+    detail: >-
+      android:allowBackup=true with no backup rules (and no iOS
+      NSURLIsExcludedFromBackupKey) means a full device backup captures the whole
+      app sandbox: tokens, databases, and PII. The app writes a JSON blob of
+      tokens and PII into the app documents directory, which is part of the sandbox
+      a backup sweeps up, so the real exploit is a full device backup pulling
+      exactly this file. The secure path excludes sensitive files from backup and
+      disables unconditional backup of the sandbox.
+  - id: clipboard_leakage
+    title: Clipboard Leakage of Sensitive Fields
+    difficulty: easy
+    masvs:
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0276
+    - MASTG-TEST-0277
+    - MASTG-TEST-0278
+    - MASTG-TEST-0279
+    - MASTG-TEST-0280
+    maswe:
+    - MASWE-0030
+    owasp_mobile: M9
+    cwe:
+    - CWE-200
+    tools:
+    - objection
+    - frida
+    tools_android:
+    - adb
+    tools_ios:
+    - idb
+    - idevicesyslog
+    summary: Copies passwords/tokens to the global clipboard readable by any app.
+    manual_test: >-
+      copy a sensitive field, then read the clipboard from a second app / `adb
+      shell` and confirm the secret is present.
+    detail: >-
+      The password or token is copied to the shared system clipboard with no
+      sensitivity flag and no auto-clear. On Android any app can read the clipboard
+      (pre-10) or it appears in clipboard history; on iOS it is exposed to the
+      universal pasteboard. Secrets should never touch the global clipboard.
+    references:
+    - CVE-2026-17766 (Android Chrome clipboard cross-origin data leak)|https://nvd.nist.gov/vuln/detail/CVE-2026-17766
+  - id: screenshot_taskswitcher_leakage
+    title: Screenshot / Task-Switcher Leakage
+    difficulty: easy
+    masvs:
+    - MASVS-STORAGE-2
+    - MASVS-PLATFORM-3
+    mastg_v2:
+    - MASTG-TEST-0289
+    - MASTG-TEST-0291
+    - MASTG-TEST-0292
+    - MASTG-TEST-0290
+    mastg_demo:
+    - MASTG-DEMO-0061
+    - MASTG-DEMO-0062
+    maswe:
+    - MASWE-0038
+    owasp_mobile: M9
+    cwe:
+    - CWE-200
+    display_tags:
+    - CWE-200
+    - MASVS-PLATFORM-3
+    tools: []
+    tools_android:
+    - adb shell screencap
+    - adb shell screenrecord
+    - scrcpy
+    tools_ios:
+    - idevicescreenshot
+    - QuickTime screen recording
+    summary: Sensitive screen rendered into the app-switcher snapshot with no FLAG_SECURE.
+    manual_test: >-
+      background the app on a sensitive screen and inspect the task-switcher
+      snapshot.
+    detail: >-
+      This sensitive screen does not set FLAG_SECURE (Android) and does not blur its
+      iOS snapshot, so it is eligible to be captured into the recents
+      (task-switcher) thumbnail when the app is backgrounded, readable by anyone
+      with the device or via a recents screenshot. A researcher can confirm the
+      posture with the FLAG_SECURE probe and by opening the app switcher; setting
+      FLAG_SECURE / setRecentsScreenshotEnabled(false) would hide the thumbnail. The
+      offline model still tracks the background/foreground state when the native
+      probe is unavailable.
+  - id: sensitive_data_in_logs
+    title: Sensitive Data in Logs
+    difficulty: easy
+    masvs:
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0203
+    - MASTG-TEST-0231
+    - MASTG-TEST-0296
+    - MASTG-TEST-0297
+    mastg_demo:
+    - MASTG-DEMO-0006
+    - MASTG-DEMO-0065
+    maswe:
+    - MASWE-0005
+    owasp_mobile: M9
+    cwe:
+    - CWE-532
+    tools: []
+    tools_android:
+    - adb logcat
+    tools_ios:
+    - idevicesyslog
+    - Console.app
+    summary: PII, tokens, and passwords printed to system logs.
+    manual_test: >-
+      `adb logcat` / `idevicesyslog` while using the app; confirm PII/tokens
+      are logged.
+    detail: >-
+      The login handler writes the username, plaintext password, and auth token
+      straight to the system log (Logcat on Android, the unified log on iOS). This
+      emits a log line that anyone with the system-log reader (adb logcat on
+      Android, idevicesyslog/Console on iOS) can harvest with zero effort.
+  - id: keyboard_cache_autofill_leakage
+    title: Keyboard Cache & Autofill Leakage
+    difficulty: medium
+    masvs:
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0258
+    - MASTG-TEST-0313
+    - MASTG-TEST-0314
+    mastg_demo:
+    - MASTG-DEMO-0064
+    - MASTG-DEMO-0076
+    - MASTG-DEMO-0077
+    maswe:
+    - MASWE-0036
+    owasp_mobile: M9
+    cwe:
+    - CWE-524
+    tools: []
+    tools_android:
+    - adb
+    - run-as
+    - SharedPreferences/XML inspection
+    tools_ios:
+    - ifuse
+    - afcclient
+    - plutil
+    - plist inspection
+    summary: Sensitive text fields allow keyboard caching / autofill of secrets.
+    manual_test: >-
+      type into a sensitive field, then inspect the IME's
+      personalized-dictionary / autofill cache and confirm the secret was
+      retained (field not marked no-suggestions / no-autofill).
+    detail: >-
+      This secret field leaves autocorrect and suggestions ON and is not obscured,
+      so what the user types is eligible to be learned by the keyboard (personal
+      dictionary / next-word model, later autofilled in other apps) and, because
+      the window is not FLAG_SECURE, captured into the recents thumbnail. The
+      misconfigured field is the real artifact; the probe reports only the field's
+      actual configuration flags and the real window screenshot posture, not
+      invented dictionary entries. A secure field would set obscureText:true,
+      autocorrect:false, and enableSuggestions:false.
+  - id: temp_file_leftovers
+    title: Temp / Cache File Leftovers
+    difficulty: medium
+    masvs:
+    - MASVS-STORAGE-1
+    mastg_v2:
+    - MASTG-TEST-0207
+    - MASTG-TEST-0299
+    - MASTG-TEST-0302
+    mastg_demo:
+    - MASTG-DEMO-0010
+    maswe:
+    - MASWE-0001
+    owasp_mobile: M9
+    cwe:
+    - CWE-459
+    - CWE-312
+    tools:
+    - objection
+    tools_android:
+    - adb
+    - run-as
+    tools_ios:
+    - ifuse
+    - afcclient
+    summary: Decrypted/sensitive content written to temp/cache dirs and never cleaned up.
+    manual_test: >-
+      browse the app cache/temp dirs and confirm sensitive leftovers.
+    detail: >-
+      An export/decrypt flow writes the decrypted, sensitive content to a
+      predictable temp file in cleartext and never deletes it. This writes a file
+      into the app temp/cache directory on-device; the leftover survives after use
+      and is recoverable via adb or a rooted/jailbroken device, a file browser, or
+      forensic tooling.
+  - id: third_party_sdk_data_leakage
+    title: Third-Party SDK Data Leakage
+    difficulty: medium
+    masvs:
+    - MASVS-STORAGE-2
+    - MASVS-PRIVACY-1
+    mastg_v2:
+    - MASTG-TEST-0318
+    - MASTG-TEST-0319
+    mastg_demo:
+    - MASTG-DEMO-0081
+    maswe:
+    - MASWE-0069
+    owasp_mobile: M9
+    cwe:
+    - CWE-200
+    - CWE-359
+    display_tags:
+    - CWE-200
+    - CWE-359
+    - MASVS-PRIVACY-1
+    tools:
+    - mitmproxy
+    - Burp Suite
+    - Wireshark
+    - MobSF
+    summary: A stand-in analytics SDK phones home more data than its stated purpose.
+    manual_test: >-
+      proxy traffic with mitmproxy and confirm the SDK exfiltrates more than
+      its stated purpose.
+    detail: >-
+      A bundled analytics SDK claims to just count screen views, but every event it
+      sends to its endpoint is enriched with email, ad/device IDs, precise
+      location, installed apps, and contact counts, none of which the feature
+      needs. A pentester sees this in mitmproxy.
+  - id: sensitive_data_in_memory
+    title: Sensitive Data in Memory
+    difficulty: hard
+    masvs:
+    - MASVS-STORAGE-1
+    mastg_v2:
+    - MASTG-TEST-0011
+    - MASTG-TEST-0060
+    maswe:
+    - MASWE-0001
+    owasp_mobile: M9
+    cwe:
+    - CWE-316
+    - CWE-226
+    tools:
+    - objection
+    - frida
+    - r2frida
+    tools_android:
+    - gdb
+    tools_ios:
+    - lldb
+    summary: Passwords/keys are held in long-lived, never-cleared objects, recoverable from a process memory dump.
+    manual_test: >-
+      dump the process memory (fridump / objection / gdb) and recover the
+      retained password/key.
+    detail: >-
+      The password and symmetric key are copied into a process-global,
+      never-cleared store when used. Because those objects stay reachable for the
+      life of the process, a heap/memory dump (fridump, objection, gdb/lldb)
+      recovers the plaintext long after the login flow finished. A secure
+      implementation holds the secret only for the duration of a use and zeroizes
+      its buffer immediately after.
+  - id: insecure_sdcard_external_storage
+    platforms:
+    - android
+    title: Insecure SD-Card / External Storage
+    difficulty: easy
+    masvs:
+    - MASVS-STORAGE-1
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0200
+    - MASTG-TEST-0201
+    - MASTG-TEST-0202
+    mastg_demo:
+    - MASTG-DEMO-0003
+    - MASTG-DEMO-0001
+    maswe:
+    - MASWE-0002
+    owasp_mobile: M9
+    cwe:
+    - CWE-312
+    - CWE-921
+    display_tags:
+    - CWE-312
+    - CWE-921
+    - MASVS-STORAGE-1
+    tools:
+    - adb
+    - run-as
+    - objection
+    - SharedPreferences/XML inspection
+    - sqlite3
+    summary: Writes sensitive files to shared/external storage where any app with storage access can read them.
+    manual_test: >-
+      read the app's file from shared / external storage with a second app or
+      `adb`.
+    detail: >-
+      The secret is written as a cleartext file into shared / external storage. On a
+      real device, external storage is world-readable to any app with storage
+      access (and to adb or any file-manager app), so the file leaks the moment it
+      is written; on Android it goes into the external files directory, elsewhere
+      into app documents. Sensitive data must stay in app-private, encrypted
+      storage.
+  - id: keychain_state_integrity_manipulation
+    platforms:
+    - ios
+    title: Keychain State Integrity Manipulation
+    difficulty: hard
+    masvs:
+    - MASVS-STORAGE-1
+    - MASVS-CRYPTO-2
+    mastg_v2:
+    - MASTG-TEST-0387
+    - MASTG-TEST-0338
+    mastg_demo:
+    - MASTG-DEMO-0150
+    - MASTG-DEMO-0101
+    maswe:
+    - MASWE-0001
+    owasp_mobile: M9
+    cwe:
+    - CWE-345
+    - CWE-565
+    - CWE-472
+    display_tags:
+    - CWE-345
+    - CWE-565
+    - MASVS-STORAGE-1
+    tools:
+    - objection
+    - frida
+    - r2frida
+    - keychain-dumper
+    - plutil
+    - xxd
+    summary: The app TRUSTS a Keychain/Keystore item as authoritative but a local attacker can MODIFY that stored state (not merely read it), so tampering with the item alters what the app authorizes or trusts - an integrity/state-manipulation failure distinct from secret confidentiality (iOS Keychain state-modification CVE-2026-28860 class).
+    manual_test: >-
+      modify a Keychain/Keystore item the app treats as authoritative (e.g. a
+      trust flag/signing key) and confirm the app acts on the tampered value;
+      verify the secure build verifies an integrity tag/attestation and
+      rejects it (iOS Keychain state-modification CVE-2026-28860 class).
+    detail: >-
+      The app treats a Keychain/Keystore item as an authoritative source of truth
+      and acts on it, granting an admin privilege, with no integrity check. A local
+      attacker who can modify the stored item (not merely read it) rewrites the
+      entitlement blob to "role=admin" and is silently escalated. This is an
+      integrity/state-manipulation failure distinct from secret confidentiality
+      (iOS Keychain state-modification CVE-2026-28860 class). On device the trusted
+      entitlement blob and its weak integrity tag are persisted to a
+      Keychain/UserDefaults item, so a local attacker can edit the value via a
+      device backup or a jailbroken device. The secure path recomputes and verifies
+      the MAC over the stored value and rejects the tampered item.
+    references:
+    - CVE-2026-28860 (iOS local attacker can modify Keychain state)|https://support.apple.com/en-euro/126792
+  - id: keychain_access_group_authorization_confusion
+    platforms:
+    - ios
+    title: Keychain Access-Group Authorization Confusion
+    difficulty: hard
+    masvs:
+    - MASVS-STORAGE-1
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0388
+    maswe:
+    - MASWE-0001
+    owasp_mobile: M9
+    cwe:
+    - CWE-522
+    - CWE-284
+    - CWE-668
+    display_tags:
+    - CWE-522
+    - CWE-284
+    - MASVS-STORAGE-1
+    tools:
+    - objection
+    - frida
+    - r2frida
+    - keychain-dumper
+    - codesign
+    summary: Over-broad kSecAttrAccessGroup / a shared access group / synchronizable or wrongly-scoped accessibility flags let another app, extension, or user read Keychain items that should be isolated to this app, so items leak across the intended authorization boundary (iOS Keychain access-authorization CVE-2026-28864 class).
+    manual_test: >-
+      from a different access group / extension read items stored under an
+      over-broad or wildcard `kSecAttrAccessGroup` and confirm cross-group
+      access; verify the secure build scopes items to an exact app-private
+      group and refuses the read (iOS Keychain authorization CVE-2026-28864
+      class).
+    detail: >-
+      A sensitive keychain item is scoped to an access group that is too broad to
+      isolate it, and marked synchronizable, so a different app or extension can
+      still read an item that should be private to the owning app. This is an
+      authorization confusion at the access-group boundary, distinct from weak
+      item-accessibility misuse. The in-app model shows the extreme case (a
+      shared/wildcard group served to any caller); on a real iOS device the same
+      confusion is reproduced with Security.framework by storing the secret
+      synchronizable and NOT scoped to an app-private access group (so it lands in
+      the default app+extensions group), then reading it back across the boundary
+      via SecItemAdd / SecItemCopyMatching. On device the secret is also persisted
+      to a Keychain/UserDefaults item, recoverable in cleartext from an unencrypted
+      device backup or a jailbroken device (SSH/SCP or Filza; keychain-dumper). The
+      secure path rejects the over-broad stored group and requires an exact
+      app-private access-group match, refusing cross-group reads.
+    references:
+    - CVE-2026-28864 (iOS Keychain authorization bypass - cross-user item access)|https://support.apple.com/en-euro/126792
+  - id: backup_archive_integrity_tampering
+    platforms:
+    - android
+    - ios
+    platform_note: Android Auto Backup / adb backup archives; iOS iTunes/Finder & iCloud backups. Restore path is the boundary.
+    title: Backup Archive Integrity Tampering
+    difficulty: hard
+    masvs:
+    - MASVS-STORAGE-2
+    - MASVS-RESILIENCE-3
+    mastg_v2:
+    - MASTG-TEST-0338
+    - MASTG-TEST-0387
+    mastg_demo:
+    - MASTG-DEMO-0101
+    - MASTG-DEMO-0150
+    maswe:
+    - MASWE-0006
+    owasp_mobile: M9
+    cwe:
+    - CWE-345
+    - CWE-565
+    - CWE-494
+    display_tags:
+    - CWE-345
+    - CWE-494
+    - MASVS-STORAGE-2
+    tools:
+    - sqlite3
+    - xxd
+    tools_android:
+    - adb backup
+    - apktool
+    tools_ios:
+    - idevicebackup2
+    - plutil
+    attack_inputs:
+    - tampered backup archive
+    summary: 'The app does not verify the INTEGRITY of a backup archive before restoring it, so an attacker extracts a backup, edits persisted state (entitlements, balances, feature flags, an is_premium/is_admin bit), re-packs it, and restores - and the app trusts the attacker-controlled state. This is the integrity direction of backups (not the read/leak direction): the restore path is the boundary (unsigned-backup tampering CVE-2025-49199 class, OWASP MASTG-BEST-0065).'
+    manual_test: >-
+      pull a backup, flip a persisted flag (e.g. `is_premium`/`is_admin`) or a
+      balance, re-pack, restore, and confirm the app trusts the tampered
+      state; verify the secure build verifies a keyed MAC over the archive and
+      rejects it (CVE-2025-49199, MASTG-BEST-0065).
+    detail: >-
+      The app restores a backup archive of persisted state without verifying its
+      integrity. An attacker extracts the backup, edits security-relevant state
+      (flips is_premium false to true, sets is_admin, raises the account balance),
+      re-packs it, and restores, and the restore path applies the
+      attacker-controlled state verbatim. On device the archive is written to a
+      real file in the app documents container (swept up by a full device backup,
+      recoverable from the device via adb-pullable, or via backup/jailbreak on iOS,
+      and editable), and the unverified restore reads it back from disk. The secure
+      path recomputes a keyed MAC over the archive and refuses any archive whose tag
+      does not verify, while still accepting the genuine backup.
+    references:
+    - CVE-2025-49199 (unsigned backup archive modified and re-uploaded)|https://nvd.nist.gov/vuln/detail/CVE-2025-49199
+    - 'OWASP MASTG-BEST-0065: implementing storage integrity checks|https://mas.owasp.org/MASTG/best-practices/MASTG-BEST-0065/'
+  - id: local_security_state_integrity_tampering
+    platforms:
+    - android
+    - ios
+    platform_note: SharedPreferences/SQLite (Android) or UserDefaults/plist/SQLite (iOS) that gate a security decision.
+    title: Local Security-State Integrity Tampering
+    difficulty: medium
+    masvs:
+    - MASVS-STORAGE-2
+    - MASVS-AUTH-1
+    mastg_v2:
+    - MASTG-TEST-0338
+    - MASTG-TEST-0387
+    mastg_demo:
+    - MASTG-DEMO-0101
+    - MASTG-DEMO-0150
+    maswe:
+    - MASWE-0006
+    owasp_mobile: M9
+    cwe:
+    - CWE-565
+    - CWE-345
+    - CWE-602
+    display_tags:
+    - CWE-565
+    - CWE-602
+    - MASVS-STORAGE-2
+    tools:
+    - sqlite3
+    - xxd
+    tools_android:
+    - adb
+    - SharedPreferences/XML inspection
+    tools_ios:
+    - objection
+    - plutil
+    - plist inspection
+    attack_inputs:
+    - edited preference/db value
+    summary: A security decision (authenticated?, role, jailbreak-check result, purchase entitlement) is driven by a locally-persisted value in UserDefaults/SharedPreferences/SQLite that carries no integrity protection, so an attacker with local access flips the value and the app trusts it - no secret is stolen, the app is made to trust attacker-controlled STATE. The secure path binds security state to a keyed MAC / server authority (OWASP MASTG-BEST-0065 storage-integrity class).
+    manual_test: >-
+      edit a UserDefaults / SharedPreferences / SQLite value that gates a
+      security decision (role / entitlement) and confirm the app trusts it;
+      verify the secure build binds the value to a keyed MAC / server
+      authority and rejects the edit.
+    detail: >-
+      A security decision (role, purchase entitlement) is read straight from a
+      locally-persisted value that carries no integrity protection. An attacker with
+      local access flips the stored value (role=admin, entitlement=premium) and the
+      app trusts it; no secret is stolen, the app is simply made to trust
+      attacker-controlled state. The state is persisted to an on-device SQLite
+      database, so it can be pulled via adb or a rooted/jailbroken device and edited
+      with sqlite3. The secure path binds each value to a keyed MAC and fails closed
+      when the tag does not verify, while still honoring legitimately-written state.
+    references:
+    - 'OWASP MASTG-BEST-0065: implementing storage integrity checks|https://mas.owasp.org/MASTG/best-practices/MASTG-BEST-0065/'
+  - id: auth_state_rollback_restore
+    platforms:
+    - android
+    - ios
+    platform_note: Restoring a stale local session/token blob (backup, snapshot, copied container) revives an old auth state.
+    title: Authentication-State Rollback / Restore
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0338
+    - MASTG-TEST-0387
+    mastg_demo:
+    - MASTG-DEMO-0101
+    - MASTG-DEMO-0150
+    maswe:
+    - MASWE-0006
+    owasp_mobile: M3
+    cwe:
+    - CWE-384
+    - CWE-613
+    - CWE-565
+    display_tags:
+    - CWE-384
+    - CWE-613
+    - MASVS-AUTH-1
+    tools:
+    - mitmproxy
+    - sqlite3
+    tools_android:
+    - adb
+    - adb backup
+    tools_ios:
+    - objection
+    - idevicebackup2
+    attack_inputs:
+    - stale session blob
+    summary: The app treats a locally-persisted session/token as authoritative and never checks freshness/revocation server-side, so restoring an OLD local state (from a backup, snapshot, or copied container) revives an already-ended or revoked session and the app believes the user is still authenticated. The secure path validates the session against a server nonce / revocation list / monotonically-increasing epoch, rejecting rolled-back state.
+    manual_test: >-
+      restore a stale session/token blob (old backup/snapshot) and confirm the
+      app revives the ended/revoked session; verify the secure build validates
+      freshness/revocation server-side and rejects the rolled-back state.
+    detail: >-
+      The app treats a locally-persisted session/token as authoritative and never
+      checks freshness or revocation server-side. Restoring an old local state (from
+      a backup, snapshot, or copied container) revives an already-ended or revoked
+      session, and the app believes the user is still authenticated. On device the
+      session blob is persisted to the key-value backing file (SharedPreferences XML
+      on Android, a UserDefaults plist on iOS) and resume reads it back from disk, so
+      restoring an old adb-pulled/edited file (or rolling back session_epoch) revives
+      a revoked session. The secure path validates the session against the current
+      server epoch and a revocation list, rejecting rolled-back state while accepting
+      the current session.
+    references:
+    - 'OWASP MASVS-AUTH-1 / MASTG session-management: validate session state server-side|https://mas.owasp.org/MASTG/tests/'
+  - id: sensitive_data_in_crash_reports
+    platforms:
+    - android
+    - ios
+    platform_note: Crashlytics/Sentry/os_log crash diagnostics and native tombstones/.ips reports.
+    title: Sensitive Data in Crash Reports
+    difficulty: easy
+    masvs:
+    - MASVS-STORAGE-1
+    - MASVS-PRIVACY-1
+    maswe:
+    - MASWE-0005
+    owasp_mobile: M9
+    cwe:
+    - CWE-200
+    - CWE-532
+    - CWE-201
+    display_tags:
+    - CWE-200
+    - CWE-532
+    - MASVS-STORAGE-1
+    tools:
+    - mitmproxy
+    tools_android:
+    - adb logcat
+    tools_ios:
+    - Console.app
+    - idevicesyslog
+    attack_inputs:
+    - triggered crash
+    summary: 'Secrets, tokens, PII, or full request/response bodies survive into crash / diagnostic reports (Crashlytics/Sentry breadcrumbs, exception messages, attached state, native tombstones) that are written locally and shipped to a third-party crash service, exposing data the developer assumed stayed in memory. Distinct from ordinary logging: the crash pipeline captures and EXFILTRATES app state on failure. The secure path scrubs/allowlists crash payloads.'
+    manual_test: >-
+      trigger a crash and confirm the crash payload shipped to the crash
+      service contains secrets/PII/request bodies; verify the secure build
+      scrubs/allowlists the crash payload before sending.
+    detail: >-
+      When the app crashes, the diagnostics pipeline snapshots the current
+      application state and recent breadcrumbs, then ships that report to a
+      third-party crash service. Developers assume the auth token, the password,
+      and the last request body only ever lived in memory, but the crash reporter
+      captures and exfiltrates exactly that state on failure. The raw crash report
+      (stack trace, breadcrumbs, token/PII) is emitted to the system log and the
+      evidence sink, so the system-log reader (adb logcat on Android,
+      idevicesyslog/Console on iOS) captures exactly what a real crash upload would
+      have shipped. The secure path allowlists non-sensitive fields, redacts
+      tokens/PII, and drops request/response bodies before uploading.
+    references:
+    - 'OWASP MASTG: sensitive data in logs / diagnostics|https://mas.owasp.org/MASTG/techniques/ios/MASTG-TECH-0066/'

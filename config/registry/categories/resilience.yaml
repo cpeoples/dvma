@@ -1,0 +1,326 @@
+# DVMA registry category: resilience
+# Append new modules here, then run: dart run tool/generate.dart
+
+resilience:
+  title: Insufficient Resilience
+  owasp_mobile: M7
+  description: Root/jailbreak, anti-debugging, integrity/tamper, emulator, and Frida detection that are all trivially bypassable, plus a TOCTOU race in auth.
+  vulnerabilities:
+  - id: root_jailbreak_detection_bypass
+    title: Root/Jailbreak Detection Bypass
+    difficulty: medium
+    masvs:
+    - MASVS-RESILIENCE-1
+    mastg_v2:
+    - MASTG-TEST-0324
+    - MASTG-TEST-0325
+    - MASTG-TEST-0240
+    - MASTG-TEST-0241
+    mastg_demo:
+    - MASTG-DEMO-0087
+    - MASTG-DEMO-0088
+    - MASTG-DEMO-0021
+    maswe:
+    - MASWE-0051
+    owasp_mobile: M7
+    cwe:
+    - CWE-693
+    tools:
+    - frida
+    - objection
+    - r2frida
+    summary: Detection result gates on a client-side boolean easily hooked to false.
+    manual_test: >-
+      bypass with objection/Frida.
+    detail: >-
+      A real native check runs on-device (su binaries, Build.TAGS test-keys,
+      installed root managers). But the app collapses the decision to a single
+      client-side boolean, so an attacker hooks the function (frida/objection)
+      or patches the flag to false and the device is reported clean regardless
+      of the real finding. Toggling the frida hook bypasses it.
+  - id: anti_debugging_bypass
+    title: Anti-Debugging Bypass
+    difficulty: hard
+    masvs:
+    - MASVS-RESILIENCE-2
+    mastg_v2:
+    - MASTG-TEST-0352
+    - MASTG-TEST-0353
+    - MASTG-TEST-0401
+    - MASTG-TEST-0402
+    mastg_demo:
+    - MASTG-DEMO-0115
+    - MASTG-DEMO-0116
+    maswe:
+    - MASWE-0064
+    owasp_mobile: M7
+    cwe:
+    - CWE-693
+    tools:
+    - frida
+    - r2frida
+    - r2
+    tools_android:
+    - gdb
+    tools_ios:
+    - lldb
+    summary: Debugger check is a single function trivially patched out.
+    manual_test: >-
+      patch out the debugger check.
+    detail: >-
+      A real native probe calls Debug.isDebuggerConnected() and reads the
+      FLAG_DEBUGGABLE app flag. But the protection still collapses to a single
+      isDebuggerAttached() return value, so an attacker NOPs it or hooks it to
+      false and debugs freely. Toggling the check simulates patching it out.
+  - id: anti_tampering_integrity_bypass
+    title: Anti-Tampering / Integrity Bypass
+    difficulty: hard
+    masvs:
+    - MASVS-RESILIENCE-3
+    mastg_v2:
+    - MASTG-TEST-0338
+    - MASTG-TEST-0387
+    mastg_demo:
+    - MASTG-DEMO-0101
+    - MASTG-DEMO-0150
+    maswe:
+    - MASWE-0057
+    owasp_mobile: M7
+    cwe:
+    - CWE-354
+    tools:
+    - frida
+    - r2frida
+    - r2
+    tools_android:
+    - apktool
+    - apksigner
+    tools_ios:
+    - codesign
+    summary: Integrity check never verifies anything meaningful (always passes).
+    manual_test: >-
+      modify the APK and confirm it runs.
+    detail: >-
+      The running build has a real integrity anchor, its code-signing identity
+      (the APK signing certificate on Android, the embedded code signature on
+      iOS). But the app's integrity check always returns true; it never pins
+      the running build against that identity. So a repackaged, re-signed, or
+      patched build passes verification even when fed any tampered hash.
+  - id: emulator_detection_bypass
+    title: Emulator Detection Bypass
+    difficulty: medium
+    masvs:
+    - MASVS-RESILIENCE-1
+    mastg_v2:
+    - MASTG-TEST-0367
+    - MASTG-TEST-0351
+    mastg_demo:
+    - MASTG-DEMO-0131
+    - MASTG-DEMO-0114
+    maswe:
+    - MASWE-0053
+    owasp_mobile: M7
+    cwe:
+    - CWE-693
+    tools:
+    - frida
+    - r2frida
+    - objection
+    summary: Emulator check reads easily-spoofed build properties.
+    manual_test: >-
+      spoof build props and bypass.
+    detail: >-
+      A real native probe reads Build.FINGERPRINT, MODEL, MANUFACTURER,
+      PRODUCT, and HARDWARE for generic/goldfish/ranchu/sdk/emulator markers.
+      But the app collapses the decision to a client-side boolean, and those
+      properties are trivially spoofed by editing build.prop or hooking the
+      getters. Toggling "spoof props" defeats it.
+  - id: frida_detection_bypass
+    title: Frida Detection Bypass
+    difficulty: hard
+    masvs:
+    - MASVS-RESILIENCE-2
+    mastg_v2:
+    - MASTG-TEST-0341
+    - MASTG-TEST-0354
+    mastg_demo:
+    - MASTG-DEMO-0107
+    - MASTG-DEMO-0118
+    maswe:
+    - MASWE-0065
+    owasp_mobile: M7
+    cwe:
+    - CWE-693
+    tools:
+    - frida
+    - r2frida
+    - objection
+    summary: Frida detection greps for a fixed string easily disabled.
+    manual_test: >-
+      disable the Frida string check.
+    detail: >-
+      A real native probe scans the loaded libraries (dyld images on iOS,
+      /proc/self/maps on Android) for frida-gadget/frida-agent/libfrida and
+      checks the default frida port (27042). But the app collapses the decision
+      to a fixed-substring match or a client-side boolean, so renaming the
+      frida-gadget or moving the port evades it. Toggling "rename gadget"
+      bypasses it.
+  - id: toctou_race_condition
+    title: TOCTOU Race Condition in Auth Check
+    difficulty: hard
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-CODE-4
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M7
+    cwe:
+    - CWE-367
+    display_tags:
+    - CWE-367
+    - MASVS-AUTH-1
+    tools:
+    - frida
+    - r2frida
+    - frida-trace
+    summary: Auth is checked then used with a mutable gap an attacker can win.
+    manual_test: >-
+      win the check-to-use race.
+    detail: >-
+      The withdrawal checks the balance, then debits it in a separate step.
+      Between check and use, a second concurrent withdrawal sees the same stale
+      balance and also succeeds, a double-spend. The exploit wins the race
+      deterministically and persists the corrupted balance to on-disk storage.
+  - id: malware_detection_absent
+    title: Malware / Overlay Co-Resident Detection Not Implemented
+    difficulty: medium
+    masvs:
+    - MASVS-RESILIENCE-1
+    maswe:
+    - MASWE-0055
+    owasp_mobile: M7
+    cwe:
+    - CWE-693
+    display_tags:
+    - MASWE-0055
+    - CWE-693
+    tools:
+    - frida
+    - drozer
+    tools_android:
+    - adb
+    - pm list packages
+    attack_inputs:
+    - co-resident malware
+    summary: The app never checks its runtime environment for known-malicious co-resident apps (accessibility abusers, overlay/tapjacking packages, known trojan package names), so a hostile app can sit alongside it undetected while it handles sensitive data (MASWE-0055).
+    manual_test: >-
+      install a known-bad/sideloaded companion and confirm the app performs no
+      on-device threat check before handling secrets.
+    detail: >-
+      The app handles a sensitive operation without ever screening its runtime
+      environment for known-hostile co-resident apps (accessibility abusers,
+      overlay/tapjacking packages, known trojans). The known-bad catalog and
+      the scan both exist in the code, but nothing wires them into the security
+      gate; the missing control is the weakness.
+  - id: device_attestation_absent
+    title: Device Attestation Not Implemented (Play Integrity / App Attest)
+    difficulty: medium
+    masvs:
+    - MASVS-RESILIENCE-1
+    maswe:
+    - MASWE-0054
+    owasp_mobile: M7
+    cwe:
+    - CWE-693
+    display_tags:
+    - MASWE-0054
+    - CWE-693
+    tools:
+    - frida
+    tools_android:
+    - Play Integrity API
+    tools_ios:
+    - DeviceCheck / App Attest
+    attack_inputs:
+    - emulator / rooted device
+    summary: The app trusts the client environment without requesting a hardware-backed device-integrity verdict (Play Integrity on Android, DeviceCheck/App Attest on iOS), so a rooted, emulated, or tampered device is treated as genuine (MASWE-0054).
+    manual_test: >-
+      confirm the server accepts requests with no hardware key-attestation /
+      DeviceCheck evidence, so a rooted/emulated device is trusted.
+    detail: >-
+      The app performs a sensitive action while trusting the client
+      environment, without requesting a hardware-backed device-integrity
+      verdict (Play Integrity on Android, DeviceCheck / App Attest on iOS). It
+      gathers the real root, emulator, and debugger signals via the native
+      probe, then proceeds regardless: a rooted, emulated, or tampered device
+      is accepted identically to a genuine one; the missing control is the
+      weakness.
+  - id: app_attestation_absent
+    title: App Attestation Not Implemented (server never verifies client)
+    difficulty: medium
+    masvs:
+    - MASVS-RESILIENCE-2
+    maswe:
+    - MASWE-0056
+    owasp_mobile: M7
+    cwe:
+    - CWE-693
+    - CWE-345
+    display_tags:
+    - MASWE-0056
+    - CWE-693
+    tools:
+    - frida
+    - mitmproxy
+    tools_android:
+    - Play Integrity API
+    tools_ios:
+    - App Attest
+    attack_inputs:
+    - repackaged client
+    summary: The backend accepts requests without an app-attestation token proving they come from a genuine, unmodified build, so a repackaged or scripted client is indistinguishable from the real app (MASWE-0056).
+    manual_test: >-
+      MITM the app's API and confirm no app attestation (Play Integrity / App
+      Attest) token is required, so a repackaged/emulated client is served
+      normally.
+    detail: >-
+      The backend accepts requests without an app-attestation token proving
+      they come from a genuine, unmodified build (Play Integrity app
+      recognition on Android, App Attest on iOS). The app reads its real
+      signing certificate, the identity an attestation token would bind
+      against, but attaches nothing to the request, so a repackaged or scripted
+      client is indistinguishable from the real app; the missing control is the
+      weakness.
+  - id: virtualization_detection_absent
+    title: App Virtualization / Cloning Detection Not Implemented
+    difficulty: medium
+    platforms:
+    - android
+    masvs:
+    - MASVS-RESILIENCE-1
+    maswe:
+    - MASWE-0052
+    owasp_mobile: M7
+    cwe:
+    - CWE-693
+    display_tags:
+    - MASWE-0052
+    - CWE-693
+    tools:
+    - frida
+    tools_android:
+    - VirtualApp
+    - work profile
+    - app cloning
+    attack_inputs:
+    - virtual container
+    summary: The app never detects that it is running inside an app-virtualization / cloning container (VirtualApp-style host, dual-app/work-profile clone), where a co-hosted attacker process shares its runtime and can read its memory and files (MASWE-0052, Android-only surface).
+    manual_test: >-
+      run inside an app-cloner / work- profile / virtual space and confirm the
+      app runs with no detection of the virtualized container.
+    detail: >-
+      The app never detects that it is running inside an app-virtualization /
+      cloning container (a VirtualApp-style host, or a dual-app / work-profile
+      clone), where a co-hosted attacker process shares its runtime and can
+      read its memory and files. It reads the real container indicators via the
+      native probe, then runs regardless; the missing control is the weakness.

@@ -1,0 +1,383 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Optional live QR-scanning demo (mobile_scanner). Camera is not
+         required: the demos default to a paste-decoded path, so the feature is
+         declared not-required to keep the app installable on camera-less
+         devices. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- over_privileged_permissions (CWE-250): dangerous permissions the app's features never use; aapt dump permissions / jadx reveal them. INTENTIONALLY VULNERABLE. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <!-- installed_app_enumeration (CWE-359): broad package visibility so the app can enumerate every installed app. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <!-- overlay_phishing / tapjacking (CWE-1021): draw over other apps. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- unsigned_unverified_build_artifact (CWE-494): request install of arbitrary packages. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- system_provider capability declarations. FOR AUTHORIZED
+         SECURITY-TRAINING USE ONLY. These make the modules' native probes query
+         REAL OS state; fully arming each capability still needs a user grant.
+
+         vpn_provider_trust_anchor_abuse (CWE-295 / CWE-297): FOREGROUND_SERVICE
+         is required to run a VpnService as a foreground service. A device-wide
+         VPN provider is the trust anchor for ALL tunneled traffic; if it skips
+         endpoint cert validation it MITMs everything. The tunnel still needs the
+         user to confirm the system VpnService consent dialog. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- companion_device_pairing_confusion (CWE-863 / CWE-1188): lets the app
+         create/read CompanionDeviceManager associations. Treating "paired" as
+         "authorized for every action" grants a spoofed/low-trust device
+         high-privilege capabilities. Creating an association needs the user to
+         pick a device in the system dialog. -->
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_RUN_IN_BACKGROUND" />
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_USE_DATA_IN_BACKGROUND" />
+
+
+    <!-- cross_app_otp_credential_leak: a signature-level permission gating the
+         SECURE broadcast delivery path. Only apps signed with DVMA's key can
+         hold it, so an arbitrary co-resident attacker app cannot receive the
+         permission-scoped broadcast (the unprotected path uses no permission). -->
+    <permission
+        android:name="${applicationId}.permission.RECEIVE_OTP"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="${applicationId}.permission.RECEIVE_OTP" />
+
+    <!-- custom_signature_permission_squatting (CWE-266 / CWE-277): a custom
+         permission declared at protectionLevel="normal" - auto-granted to ANY
+         app that requests it (or squattable by install order). It "guards" the
+         exported .InternalAdminActivity-style admin surface below, so the guard
+         the developer trusts is trivially obtained. The secure fix is
+         protectionLevel="signature" + a caller-signature check. -->
+    <permission
+        android:name="${applicationId}.permission.ADMIN_OP"
+        android:protectionLevel="normal" />
+    <uses-permission android:name="${applicationId}.permission.ADMIN_OP" />
+    <!-- insecure_backups (CWE-530, MASTG allowBackup): allowBackup=true means
+         `adb backup` / auto-backup exfiltrates app-private data. fullBackupContent
+         is left unrestricted on purpose. INTENTIONALLY VULNERABLE.
+         cleartext_traffic_allowed / weak_tls_config (CWE-319): the referenced
+         network_security_config permits cleartext + user CA trust, and
+         usesCleartextTraffic=true makes the flag visible to static analysis. -->
+    <application
+        android:label="dvma"
+        android:name="${applicationName}"
+        android:allowBackup="true"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:icon="@mipmap/launcher_icon">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Specifies an Android theme to apply to this Activity as soon as
+                 the Android process has started. This theme is visible to the user
+                 while the Flutter UI initializes. After that, this theme continues
+                 to determine the Window background behind the Flutter UI. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+
+        <!-- webview_safe_browsing_disabled (CWE-1188/CWE-693, MASTG-TEST-0399):
+             INTENTIONALLY VULNERABLE. Turns OFF Google Safe Browsing for the
+             app's WebViews, stripping the platform interstitial that normally
+             blocks navigation to known malware/phishing hosts. This is the
+             real-device mechanism (the plugin has no runtime toggle); with it
+             false the known-bad URL loads with no warning. -->
+        <meta-data
+            android:name="android.webkit.WebView.EnableSafeBrowsing"
+            android:value="false" />
+
+        <!-- exported_android_components (CWE-926): an Activity exported with no
+             permission guard, so any installed app (or adb/drozer) can start it
+             directly and reach a flow meant to be internal. -->
+        <activity
+            android:name=".AdminActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- custom_signature_permission_squatting: an exported Activity guarded
+             ONLY by the normal-level custom permission declared above, so any
+             app that requests the permission (auto-granted) can reach it. -->
+        <activity
+            android:name=".SquatGuardedActivity"
+            android:exported="true"
+            android:permission="${applicationId}.permission.ADMIN_OP"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- exported_component_arbitrary_url_activity: opens an attacker-named
+             URL/activity with DVMA's identity, no allowlist. -->
+        <activity
+            android:name=".UrlDispatchActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- exported_component_state_manipulation: cancels a notification named
+             by an extra with no ownership check. -->
+        <activity
+            android:name=".StateControlActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- confused_deputy_intent_validation: performs a privileged action
+             after checking only the action string, not the caller. -->
+        <activity
+            android:name=".DeputyActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- intent_redirection: exported proxy forwards a nested intent to an
+             internal-only target with no validation. -->
+        <activity
+            android:name=".ProxyActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+        <activity
+            android:name=".InternalAdminActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- intent_arg_injection_rce: dispatches a privileged op named by an
+             extra with no allowlist. -->
+        <activity
+            android:name=".LauncherActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- activity_alias_exposure: a NOT-exported protected target fronted by
+             an EXPORTED alias, so a caller reaches it through the alias. -->
+        <activity
+            android:name=".ProtectedAdminActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+        <activity-alias
+            android:name=".AdminAlias"
+            android:targetActivity=".ProtectedAdminActivity"
+            android:exported="true" />
+
+        <!-- cross_app_scripting: exported WebView loads a caller-supplied URL
+             (incl. javascript:) with JS enabled and no allowlist. -->
+        <activity
+            android:name=".WebViewActivity"
+            android:exported="true"
+            android:excludeFromRecents="true" />
+
+        <!-- privileged_service_binding_exposure: an exported bindable Messenger
+             service that returns its privileged binder to any caller with no
+             identity/permission check. -->
+        <service
+            android:name=".PrivilegedService"
+            android:exported="true" />
+
+        <!-- android_capability_composition_chain: exported receiver is the
+             first hop; it binds the privileged service and drives the transfer
+             sink, trusting the trigger instead of the original caller. -->
+        <receiver
+            android:name=".ChainEntryReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.dvma.action.CHAIN_TRIGGER" />
+            </intent-filter>
+        </receiver>
+
+        <!-- activity_task_stack_hijacking (StrandHogg): an exported screen with
+             the DEFAULT (package-named) task affinity. A co-resident app that
+             declares the same affinity + allowTaskReparenting can insert its
+             own activity into this task. -->
+        <activity
+            android:name=".HijackTargetActivity"
+            android:exported="true"
+            android:taskAffinity="com.dvma"
+            android:launchMode="standard" />
+
+        <!-- overlay_phishing / tapjacking (CWE-1021): the sensitive "confirm
+             transfer" surface, built WITHOUT filterTouchesWhenObscured / no
+             FLAG_SECURE. When a SYSTEM_ALERT_WINDOW overlay is drawn on top,
+             obscured touches pass straight through to this hidden button
+             (tapjacking) and a look-alike overlay phishes the input. Exported so
+             the confirm surface can be surfaced under test
+             (am start -n ${applicationId}/.OverlayActivity). -->
+        <activity
+            android:name=".OverlayActivity"
+            android:exported="true"
+            android:excludeFromRecents="true" />
+
+        <!-- content_provider_sql_injection (CWE-89),
+             fileprovider_path_traversal / contentprovider_filename_path_traversal
+             / content_uri_resolver_confused_deputy (CWE-22 / CWE-441),
+             grant_uri_permission_abuse / clipdata_uri_grant_leakage /
+             persistable_uri_grant_abuse / file_descriptor_capability_leakage
+             (CWE-266 / CWE-668 / CWE-927 / CWE-402):
+
+             A REAL exported ContentProvider. INTENTIONALLY VULNERABLE.
+             * query() builds SQL by string concatenation of the caller's
+               selection over a seeded SQLite db (secret column), so
+               `adb shell content query`/drozer can UNION out the secret.
+             * openFile() joins the URI path under an export dir with NO
+               canonical confinement, so a `content://.../files/../session.token`
+               URI returns a real ParcelFileDescriptor to app-private files.
+             * grantUriPermissions="true" makes the URI grants
+               (FLAG_GRANT_READ_URI_PERMISSION / persistable / ClipData) real,
+               so a co-resident app the grant is handed to can read the private
+               URI. Exported with NO permission guard on purpose. -->
+        <provider
+            android:name=".VulnerableProvider"
+            android:authorities="${applicationId}.provider.vuln"
+            android:exported="true"
+            android:grantUriPermissions="true" />
+
+        <!-- custom_keyboard_input_interception (CWE-522 / CWE-359 / CWE-829):
+             a REAL, user-enablable custom keyboard / InputMethodService. Guarded
+             by the system BIND_INPUT_METHOD permission (only the system may bind
+             an IME) and advertised with the standard IME intent-filter + the
+             method.xml metadata, so it appears under Settings > Languages and
+             input > On-screen keyboards. Once the user ENABLES and SELECTS it,
+             the IME receives EVERY keystroke typed across other apps - including
+             passwords/OTPs in secure fields - the input-interception boundary.
+             Enabling an IME is a user grant a lab cannot auto-provision; the
+             module reports the real enabled-IME state via Settings.Secure. -->
+        <service
+            android:name=".DvmaKeyboardService"
+            android:label="@string/dvma_ime_label"
+            android:exported="true"
+            android:permission="android.permission.BIND_INPUT_METHOD">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
+
+        <!-- notification_action_authorization_bypass (CWE-862 / CWE-306): the
+             EXPORTED receiver a notification action's PendingIntent trampolines
+             to. It performs the privileged "approve transfer" with no re-auth,
+             and being exported, any app can fire the same trampoline directly
+             (adb: am broadcast -a ${applicationId}.action.APPROVE_TRANSFER
+             -n ${applicationId}/.NotificationTrampolineReceiver). -->
+        <receiver
+            android:name=".NotificationTrampolineReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="${applicationId}.action.APPROVE_TRANSFER" />
+            </intent-filter>
+        </receiver>
+
+        <!-- background_activity_launch_abuse (CWE-284 / CWE-940, Android BAL):
+             an EXPORTED receiver that attempts a REAL startActivity() from a
+             background broadcast context. On older / BAL-exempt platforms the
+             launch surfaces a security-sensitive activity with no foreground
+             task; newer platforms block it. Either outcome is logcat-observable
+             (am broadcast -a ${applicationId}.action.BAL_TRIGGER
+             -n ${applicationId}/.BackgroundLaunchReceiver). -->
+        <receiver
+            android:name=".BackgroundLaunchReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="${applicationId}.action.BAL_TRIGGER" />
+            </intent-filter>
+        </receiver>
+
+        <!-- remoteviews_widget_action_injection (CWE-926 / CWE-862): a genuine
+             home-screen AppWidget whose RemoteViews click handler is driven by a
+             MUTABLE PendingIntent taking transfer parameters from config extras.
+             Tapping the injected action fires the privileged transfer with no
+             re-auth (also exercised via a notification RemoteViews by
+             PlatformIpc for devices where a widget can't be placed). -->
+        <receiver
+            android:name=".DvmaWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="${applicationId}.action.WIDGET_TRANSFER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/dvma_widget_info" />
+        </receiver>
+
+        <!-- notification_listener_authorization_bypass (CWE-862 / CWE-306,
+             Android CVE-2025-22427 / CVE-2025-26442 class): a REAL, user-enablable
+             NotificationListenerService gated by the system
+             BIND_NOTIFICATION_LISTENER_SERVICE permission. Once the user grants
+             notification access it reads the title/text of every posted
+             notification (incl. the sensitive OTP/balance body PlatformIpc
+             posts) and records it. The grant is a user action a lab cannot
+             auto-provision; the declared service + sensitive read is the real
+             artifact, visible under Settings > Notification access. -->
+        <service
+            android:name=".DvmaNotificationListener"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- accessibility_service_privilege_abuse (CWE-284 / CWE-269): a genuine,
+             user-enablable AccessibilityService gated by the system
+             BIND_ACCESSIBILITY_SERVICE permission and advertised with its config
+             xml. Once enabled it holds canRetrieveWindowContent + canPerformGestures,
+             the abusable capability (background launch / UI suppression / gesture
+             injection with no per-action validation). Enabling it is a user grant
+             a lab cannot auto-provision; the module reports the real enabled state
+             via Settings.Secure and it appears under Settings > Accessibility. -->
+        <service
+            android:name=".DvmaAccessibilityService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/dvma_accessibility_config" />
+        </service>
+    </application>
+    <!-- Required to query activities that can process text, see:
+         https://developer.android.com/training/package-visibility and
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
+</manifest>

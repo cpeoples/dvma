@@ -1,0 +1,359 @@
+# DVMA registry category: privacy
+# Append new modules here, then run: dart run tool/generate.dart
+
+privacy:
+  title: Privacy (OWASP Mobile M6)
+  owasp_mobile: M6
+  description: Data accessed with no consent screen, no tracking-transparency prompt, and PII flowing into analytics unfiltered.
+  vulnerabilities:
+  - id: missing_consent_before_data_access
+    title: Missing Consent Before Data Access
+    difficulty: easy
+    masvs:
+    - MASVS-PRIVACY-1
+    - MASVS-PRIVACY-2
+    mastg_v2:
+    - MASTG-TEST-0360
+    - MASTG-TEST-0256
+    mastg_demo:
+    - MASTG-DEMO-0126
+    maswe:
+    - MASWE-0078
+    owasp_mobile: M6
+    cwe:
+    - CWE-359
+    display_tags:
+    - CWE-359
+    - MASVS-PRIVACY-1
+    tools:
+    - mitmproxy
+    - Burp Suite
+    - frida
+    summary: Accesses location/contacts/photos with no consent screen.
+    manual_test: >-
+      confirm data access with no consent screen.
+    detail: >-
+      The app reads contacts, precise location, and the photo library without ever
+      showing a consent screen or explaining why, then writes the harvested data to
+      a real on-disk file. Sensitive data access must be gated on informed,
+      purpose-specific consent.
+  - id: no_tracking_transparency_prompt
+    platforms:
+    - ios
+    title: No Tracking Transparency Prompt
+    difficulty: easy
+    masvs:
+    - MASVS-PRIVACY-3
+    mastg_v2:
+    - MASTG-TEST-0281
+    maswe:
+    - MASWE-0074
+    owasp_mobile: M6
+    cwe:
+    - CWE-359
+    tools:
+    - mitmproxy
+    summary: Cross-app tracking begins with no ATT-equivalent prompt.
+    manual_test: >-
+      confirm tracking with no ATT prompt.
+    detail: >-
+      The app begins cross-app tracking, reading the advertising ID, persisting
+      it, and POSTing it to a tracking endpoint, without ever showing an App
+      Tracking Transparency (or equivalent) prompt or honoring an opt-out. Point
+      the capture base at your listener and the advertising id appears on the
+      wire.
+  - id: pii_in_analytics_events
+    title: PII in Analytics Events
+    difficulty: medium
+    masvs:
+    - MASVS-PRIVACY-1
+    mastg_v2:
+    - MASTG-TEST-0318
+    - MASTG-TEST-0319
+    mastg_demo:
+    - MASTG-DEMO-0081
+    maswe:
+    - MASWE-0069
+    owasp_mobile: M6
+    cwe:
+    - CWE-359
+    - CWE-200
+    tools:
+    - mitmproxy
+    - Burp Suite
+    - Wireshark
+    summary: Raw PII (email, precise location) sent unfiltered in analytics events.
+    manual_test: >-
+      capture analytics events under mitmproxy.
+    detail: >-
+      Analytics events attach raw PII (email, full name, precise location, device
+      id) and send it to the analytics endpoint unfiltered. PII should be
+      stripped, hashed, or aggregated before leaving the device. A pentester reads
+      it in mitmproxy.
+  - id: installed_app_enumeration
+    title: Installed-App Enumeration (Privacy Fingerprint)
+    difficulty: easy
+    masvs:
+    - MASVS-PRIVACY-1
+    - MASVS-PRIVACY-3
+    mastg_v2:
+    - MASTG-TEST-0255
+    - MASTG-TEST-0024
+    maswe:
+    - MASWE-0068
+    owasp_mobile: M6
+    cwe:
+    - CWE-359
+    - CWE-200
+    display_tags:
+    - CWE-359
+    - MASVS-PRIVACY-1
+    tools:
+    - frida
+    - frida-trace
+    tools_android:
+    - jadx
+    - apktool
+    tools_ios:
+    - ipsw
+    - class-dump
+    summary: The app probes which OTHER apps are installed - iOS canOpenURL over a scheme list, Android queryIntentActivities / getInstalledPackages - with no functional need, building a device fingerprint and crossing a privacy boundary (iOS CVE-2026-20641 installed-apps disclosure class).
+    manual_test: >-
+      confirm the app probes a broad scheme/package list (iOS `canOpenURL` /
+      Android `queryIntentActivities`) and builds an installed-app fingerprint
+      with no functional need; verify the secure build checks only its one
+      declared scheme (iOS CVE-2026-20641 class).
+    detail: >-
+      The app probes which other apps are installed (iOS canOpenURL over a scheme
+      list, Android queryIntentActivities / getInstalledPackages) with no
+      functional need. The detected set is a stable device fingerprint that
+      reveals sensitive traits (dating, health, finance, secure-messaging apps)
+      across a privacy boundary (iOS CVE-2026-20641 installed-apps disclosure
+      class). This offline demo holds an installed-app set and a probe list in
+      memory. The secure path only checks the single scheme the app legitimately
+      needs, with a declared purpose, so no broad fingerprint is built.
+    references:
+    - About the security content of iOS 18.7.5 (CVE-2026-20641 installed-apps disclosure)|https://support.apple.com/en-us/126347
+  - id: cross_app_browser_history_access
+    title: Cross-App Browser History Access
+    difficulty: medium
+    masvs:
+    - MASVS-PRIVACY-1
+    - MASVS-STORAGE-2
+    mastg_v2:
+    - MASTG-TEST-0007
+    maswe:
+    - MASWE-0002
+    owasp_mobile: M6
+    cwe:
+    - CWE-200
+    - CWE-359
+    display_tags:
+    - CWE-200
+    - MASVS-PRIVACY-1
+    tools:
+    - frida
+    - sqlite3
+    tools_android:
+    - adb
+    - run-as
+    tools_ios:
+    - ifuse
+    - afcclient
+    summary: The app reads browsing history that belongs to another app / the system browser (a shared or world-readable history store) with no user consent, exposing the user's Safari/browser history across a privacy boundary (iOS CVE-2026-20656 Safari-history access class).
+    manual_test: >-
+      read browsing history belonging to another app / the system browser with
+      no consent; verify the secure build requires explicit consent and
+      scoping (iOS CVE-2026-20656 Safari-history class).
+    detail: >-
+      The app reads browsing history that belongs to another app or the system
+      browser (a shared or world-readable history store) with no user consent,
+      exposing the user's Safari/browser history across a privacy boundary (iOS
+      CVE-2026-20656 Safari-history access class). This offline demo models the
+      other app's history and a permission flag in memory. The secure path
+      requires explicit user consent and scoping, returning nothing without
+      consent and never dumping the other app's private history wholesale.
+    references:
+    - About the security content of iOS 18.7.5 (CVE-2026-20656 Safari history access)|https://support.apple.com/en-us/126347
+  - id: notification_alternate_surface_disclosure
+    title: Notification Content Disclosure via Alternate Surface
+    difficulty: medium
+    masvs:
+    - MASVS-PRIVACY-1
+    - MASVS-PLATFORM-3
+    mastg_v2:
+    - MASTG-TEST-0315
+    mastg_demo:
+    - MASTG-DEMO-0078
+    maswe:
+    - MASWE-0037
+    owasp_mobile: M6
+    cwe:
+    - CWE-200
+    - CWE-359
+    - CWE-284
+    display_tags:
+    - CWE-200
+    - CWE-359
+    - MASVS-PRIVACY-1
+    tools: []
+    tools_android:
+    - adb
+    - scrcpy
+    tools_ios:
+    - idevicescreenshot
+    - QuickTime screen recording
+    summary: Sensitive notification content that is redacted on the lock screen is rendered in full on a secondary presentation surface (desktop / DeX mode, widget, companion display) that skips the redaction / access-control boundary, so someone with access to that surface reads hidden notification contents (Samsung DeX CVE-2026-21006 class).
+    manual_test: >-
+      trigger a notification redacted on the lock screen and confirm its full
+      content renders on a secondary surface (DeX/desktop mode, widget,
+      companion display); verify the secure build applies the same redaction
+      policy on every unauthenticated surface (Samsung DeX CVE-2026-21006
+      class).
+    detail: >-
+      Sensitive notification content that is redacted on the lock screen is
+      rendered in full on a secondary presentation surface (desktop / DeX mode, a
+      home-screen widget, a companion display) that skips the
+      redaction/access-control boundary, so anyone with access to that surface
+      reads the hidden contents (the Samsung DeX CVE-2026-21006 class). This is an
+      offline, deterministic simulation: a notification carries a public (redacted)
+      and a private (full) form, and the vulnerable alternate-surface renderer
+      emits the full private content, ignoring the visibility policy the lock
+      screen honors. The secure path applies the same redaction policy on every
+      unauthenticated surface, so the alternate surface shows only the redacted
+      form until authenticated.
+    references:
+    - CVE-2026-21006 (Samsung DeX hidden notification content disclosure)|https://opencve.alliance.unm.edu/cve/CVE-2026-21006
+  - id: lock_state_confusion_data_exposure
+    platform_note: Android keyguard/notification/widget; iOS lock screen / VoiceOver.
+    title: Lock-State Confusion Data Exposure
+    difficulty: medium
+    masvs:
+    - MASVS-PLATFORM-3
+    - MASVS-PRIVACY-1
+    mastg_v2:
+    - MASTG-TEST-0246
+    maswe:
+    - MASWE-0036
+    owasp_mobile: M6
+    cwe:
+    - CWE-200
+    - CWE-284
+    - CWE-863
+    display_tags:
+    - CWE-200
+    - CWE-284
+    - MASVS-PLATFORM-3
+    tools: []
+    tools_android:
+    - adb
+    - scrcpy
+    tools_ios:
+    - idevicescreenshot
+    summary: Sensitive data or a privileged action is reachable while the device is LOCKED through an accessibility / notification / widget / VoiceOver path that never re-checks the keyguard, so the lock-screen boundary is bypassed and protected content is exposed on a locked device (iOS CVE-2026-20645 / CVE-2026-20661 lock-screen VoiceOver disclosure class).
+    manual_test: >-
+      while the device is LOCKED, reach sensitive content/action through an
+      accessibility / notification / widget / VoiceOver path that never
+      re-checks the keyguard; verify the secure build re-checks lock state and
+      redacts (iOS CVE-2026-20645 / CVE-2026-20661 class).
+    detail: >-
+      Sensitive data is reachable while the device is locked through an alternate
+      path, an accessibility, notification, widget, or VoiceOver surface, that
+      never re-checks the keyguard, so the lock-screen boundary is bypassed and
+      protected content is exposed on a locked device (iOS CVE-2026-20645 /
+      CVE-2026-20661 lock-screen VoiceOver disclosure class). Here the VoiceOver
+      path reads the full wallet balance while the phone is locked, and the same
+      sensitive content is driven onto a real locked surface by posting an actual
+      OS notification (observable via `adb shell dumpsys notification` or the lock
+      screen). The keyguard-confusion decision logic is real; the in-memory model
+      is retained as the offline fallback when no native surface is available. The
+      secure path re-checks the lock state on every path and returns only redacted
+      content while locked.
+    references:
+    - About the security content of iOS 18.7.5 (CVE-2026-20645 / CVE-2026-20661 locked-device disclosure)|https://support.apple.com/en-us/126347
+  - id: privacy_control_alternate_path_bypass
+    platform_note: Android runtime permissions; iOS privacy preferences / TCC.
+    title: Privacy Control Alternate-Path Bypass
+    difficulty: hard
+    masvs:
+    - MASVS-PRIVACY-2
+    - MASVS-PRIVACY-1
+    maswe:
+    - MASWE-0071
+    owasp_mobile: M6
+    cwe:
+    - CWE-284
+    - CWE-668
+    - CWE-200
+    display_tags:
+    - CWE-284
+    - CWE-668
+    - MASVS-PRIVACY-2
+    tools:
+    - frida
+    - frida-trace
+    tools_android:
+    - jadx
+    - adb
+    tools_ios:
+    - ipsw
+    - class-dump
+    summary: App functionality reaches protected data through an ALTERNATE path that sidesteps the platform privacy control (a different API, a shared container / app group, an extension, a cached copy) instead of going through the gated, consent-checked path, so the user's privacy preference is bypassed rather than merely over-requested (iOS CVE-2026-20606 privacy-preference bypass class).
+    manual_test: >-
+      read protected data through an alternate path (a different API, a shared
+      app-group container, a cached copy) that sidesteps the consent gate;
+      verify the secure build funnels all reads through the single
+      consent-checked accessor (iOS CVE-2026-20606 class).
+    detail: >-
+      App functionality reaches protected data (contacts) through an alternate
+      path, a shared app-group cache holding a copy of the same data, that
+      sidesteps the platform privacy control instead of the gated, consent-checked
+      path. The user's privacy preference is bypassed rather than merely
+      over-requested (iOS CVE-2026-20606 privacy-preference bypass class). Here
+      contacts are read from the app-group cache even though consent was never
+      granted. This is an offline, deterministic simulation. The secure path
+      funnels all reads through the single consent-checked accessor so the
+      alternate path is closed.
+    references:
+    - About the security content of iOS 18.7.5 (CVE-2026-20606 privacy-preference bypass)|https://support.apple.com/en-us/126347
+  - id: assistant_locked_device_capability_abuse
+    platforms:
+    - ios
+    title: System Assistant -> Locked-Device Capability Abuse
+    difficulty: medium
+    masvs:
+    - MASVS-AUTH-1
+    - MASVS-PRIVACY-1
+    maswe:
+    - MASWE-0018
+    owasp_mobile: M6
+    cwe:
+    - CWE-863
+    - CWE-284
+    - CWE-200
+    display_tags:
+    - CWE-863
+    - CWE-200
+    - MASVS-AUTH-1
+    tools:
+    - Siri
+    summary: The system assistant surface (Siri / App-Intents / voice shortcuts) exposes sensitive information or performs a privileged capability while the device is LOCKED because the assistant path never re-checks authentication, so a physical attacker reads protected data or triggers an action without unlocking (iOS Siri locked-device disclosure CVE-2026-28856 class).
+    manual_test: >-
+      invoke a Siri/App-Intents/voice capability on a LOCKED device and
+      confirm it exposes sensitive info or runs a privileged action without
+      unlocking; verify the secure build re-checks authentication for
+      sensitive capabilities (iOS Siri locked-device CVE-2026-28856 class).
+    detail: >-
+      The system assistant (Siri / App-Intents / a voice shortcut) exposes
+      sensitive information or performs a privileged capability while the device is
+      locked because the assistant invocation path never re-checks the keyguard. An
+      attacker holding a locked phone triggers the assistant to read the account
+      balance aloud without ever unlocking. This is the assistant / voice-intent
+      surface specifically. On iOS the assistant path is backed by a real App
+      Intent (UnlockFrontDoorIntent) shipped in the app binary that declares no
+      authentication policy, so Siri / App Intents run it from a locked device;
+      off-iOS it uses a deterministic model. The secure path re-checks the lock
+      state on the assistant path and requires unlock/authentication for sensitive
+      capabilities, returning only non-sensitive results while locked.
+    references:
+    - CVE-2026-28856 (iOS Siri locked-device sensitive-information disclosure)|https://support.apple.com/en-euro/126792
