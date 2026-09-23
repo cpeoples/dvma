@@ -13,10 +13,10 @@
     "test:ios:walk": "wdio run ./wdio.ios.conf.js --spec ./test/walk-all-modules.e2e.js"
   },
   "devDependencies": {
-    "@wdio/cli": "^9.31.9",
-    "@wdio/local-runner": "^9.31.9",
-    "@wdio/mocha-framework": "^9.31.9",
-    "@wdio/spec-reporter": "^9.0.0",
+    "@wdio/cli": "^9.32.0",
+    "@wdio/local-runner": "^9.32.0",
+    "@wdio/mocha-framework": "^9.32.0",
+    "@wdio/spec-reporter": "^9.32.0",
     "webdriverio": "^9.0.0"
   },
   "comment_appium_drivers": "Appium itself and its drivers are installed separately (globally or via appium's own plugin manager), NOT as npm project deps. See automation/README.md. Required: appium (>=2), appium-uiautomator2-driver, appium-xcuitest-driver, appium-flutter-driver.",
