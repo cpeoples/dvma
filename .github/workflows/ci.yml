@@ -216,9 +216,8 @@ jobs:
         run: ./gradlew :app:assembleDebugAndroidTest -PdvmaAndroidTest=true --console=plain
 
   # Compiles the iOS XCUITest harness (Runner + RunnerUITests) without signing
-  # or a device, so a break in the XCUITest harness is caught. macOS runners are
-  # slower/costlier, so this runs on push to main and manual dispatch (not on
-  # every PR); the Android instrumentation compile above is the per-PR native gate.
+  # or a device, so a break in the XCUITest harness is caught. This is the iOS
+  # analog of the Android instrumentation compile above and gates every PR.
   # Reproduce locally with:
   #   flutter build ios --simulator --debug
   #   xcodebuild build-for-testing -workspace ios/Runner.xcworkspace \
@@ -227,9 +226,6 @@ jobs:
   compile-xcuitest-ios:
     name: Compile iOS XCUITest harness (no codesign)
     runs-on: macos-latest
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'push'
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -284,13 +280,10 @@ jobs:
         run: flutter test integration_test -d "iPhone 15"
 
   # Release-mode iOS compile matching the unsigned IPA the release workflow
-  # publishes. Gated to push/dispatch (not PRs) since macOS runners are costlier.
+  # publishes. Gates every PR, like the Android release smoke above.
   build-smoke-ios:
     name: Build smoke (iOS release, no codesign)
     runs-on: macos-latest
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'push'
     steps:
       - name: Checkout
         uses: actions/checkout@v7
