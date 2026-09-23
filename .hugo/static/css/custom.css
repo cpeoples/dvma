@@ -330,6 +330,33 @@ table th code {
   justify-content: center;
 }
 
+/* Fit the 9-column category table into the content area without clipping the
+   last column. The table takes the full content width and lets the browser
+   distribute columns; a horizontal scroll is the safety net on very narrow
+   viewports so nothing is ever cut off. Dense chip/text sizing is trimmed so
+   all columns fit on a typical screen without scrolling. */
+.pattern-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.pattern-table table {
+  width: 100%;
+  table-layout: auto;
+}
+.pattern-table table th,
+.pattern-table table td {
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}
+.pattern-table .framework-chip {
+  font-size: 0.68em;
+  padding: 1px 5px;
+}
+.pattern-table .vuln-id,
+.pattern-table code.vuln-id {
+  font-size: 0.72em;
+}
+
 /* Collapsible <details> (e.g. the per-OS install blocks on Getting Started).
    The relearn theme hides the native disclosure triangle, so we draw our own
    caret and make the summary read clearly as a clickable control. */
