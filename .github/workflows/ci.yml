@@ -123,11 +123,8 @@ jobs:
             flutter build apk --debug
             flutter test integration_test
 
-  # Compile smoke: builds a release APK (unsigned) so the release-mode Dart AOT
-  # and tree-shake passes used for tagged releases run on every push, instead of
-  # first being exercised when a v* tag triggers .github/workflows/release.yml.
-  # R8/shrinking stays off by design (see android/app/build.gradle.kts), and
-  # signing still happens only on a tagged release with the ANDROID_* secrets.
+  # Release-mode compile so a v* tag isn't the first place a release build runs
+  # (see .github/workflows/release.yml). Unsigned; signing needs the tag secrets.
   build-smoke-android:
     name: Build smoke (release APK, unsigned)
     runs-on: ubuntu-latest
@@ -151,10 +148,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # No key.properties present, so the release build type falls back to the
-      # debug signing key (see android/app/build.gradle.kts) while still running
-      # the full release Dart AOT compile.
-      - name: Build release APK (AOT compile smoke, unsigned)
+      - name: Build release APK (unsigned; debug-key fallback)
         run: flutter build apk --release
 
   # Compiles the standalone companion attacker app. Proves a contributor has not
@@ -281,11 +275,8 @@ jobs:
       - name: Run integration tests on simulator
         run: flutter test integration_test -d "iPhone 15"
 
-  # iOS release-mode compile smoke. A tagged release publishes an unsigned IPA
-  # via `flutter build ios --release --no-codesign` (see release.yml), so run
-  # that same release AOT compile here to catch a break before the tag. macOS
-  # runners are costlier, so this is gated to push/dispatch like the XCUITest
-  # compile above, not every PR.
+  # Release-mode iOS compile matching the unsigned IPA the release workflow
+  # publishes. Gated to push/dispatch (not PRs) since macOS runners are costlier.
   build-smoke-ios:
     name: Build smoke (iOS release, no codesign)
     runs-on: macos-latest
@@ -306,5 +297,5 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build iOS release (AOT compile smoke, no code signing)
+      - name: Build iOS release (no code signing)
         run: flutter build ios --release --no-codesign
