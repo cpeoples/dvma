@@ -281,10 +281,17 @@ jobs:
       - name: Run integration tests on simulator
         run: flutter test integration_test -d "iPhone 15"
 
+  # iOS release-mode compile smoke. A tagged release publishes an unsigned IPA
+  # via `flutter build ios --release --no-codesign` (see release.yml), so run
+  # that same release AOT compile here to catch a break before the tag. macOS
+  # runners are costlier, so this is gated to push/dispatch like the XCUITest
+  # compile above, not every PR.
   build-smoke-ios:
-    name: Build smoke (iOS, no codesign)
+    name: Build smoke (iOS release, no codesign)
     runs-on: macos-latest
-    if: github.event_name == 'workflow_dispatch'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push'
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -299,5 +306,5 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build iOS (compile smoke, no code signing)
-        run: flutter build ios --debug --no-codesign
+      - name: Build iOS release (AOT compile smoke, no code signing)
+        run: flutter build ios --release --no-codesign
