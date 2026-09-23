@@ -25,12 +25,14 @@ val dvmaAppId: String = run {
         ?: error("config/app.json is missing an \"app_id\" entry")
 }
 
-// Optional release signing config, read from android/key.properties (gitignored;
-// see key.properties.example). Absent on dev machines and PR CI, where the
-// release build falls back to the debug key so `flutter run --release` still
-// works. Present on tagged-release CI, which materializes key.properties from
-// repo secrets before building. Loaded here so the buildTypes block below can
-// pick it only when real credentials exist.
+// Optional release signing config, read from android/app/key.properties
+// (gitignored; see android/key.properties.example). Absent on dev machines and
+// PR CI, where the release build falls back to the debug key so
+// `flutter run --release` still works. Present on tagged-release CI, which
+// materializes key.properties from repo secrets before building. Loaded here so
+// the buildTypes block below can pick it only when real credentials exist.
+// storeFile inside it is resolved relative to this app/ dir (see the signing
+// config below), so a bare filename sits beside key.properties.
 val keyProps = Properties().apply {
     val f = rootProject.file("app/key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
@@ -110,7 +112,7 @@ android {
         // back to the debug key there.
         if (hasReleaseSigning) {
             create("release") {
-                storeFile = rootProject.file(keyProps.getProperty("storeFile"))
+                storeFile = file(keyProps.getProperty("storeFile"))
                 storePassword = keyProps.getProperty("storePassword")
                 keyAlias = keyProps.getProperty("keyAlias")
                 keyPassword = keyProps.getProperty("keyPassword")
