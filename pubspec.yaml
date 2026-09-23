@@ -24,7 +24,7 @@ dependencies:
   # hazard-amber accent, severity color scale, Inter + JetBrains Mono type).
   # google_fonts pulls Inter (UI/body) and JetBrains Mono (technical data)
   # without bundling binaries. See lib/core/theme/.
-  google_fonts: ^6.2.1
+  google_fonts: ^8.2.1
 
   # Insecure-by-demo storage. shared_preferences backs the plaintext storage
   # vulns; path_provider exposes app dirs for temp-file / backup leakage demos.
@@ -39,7 +39,7 @@ dependencies:
 
   # Auth module: JWT alg:none / weak-secret demos.
   dart_jsonwebtoken: ^2.14.0
-  local_auth: ^2.3.0
+  local_auth: ^3.0.2
 
   # Network module: cleartext HTTP, weak TLS, bypassable pinning demos.
   http: ^1.2.2
@@ -50,12 +50,12 @@ dependencies:
   # cleartext/mixed-content load in the insecure_webview_networking demo).
   webview_flutter_android: ^4.13.0
   app_links: ^6.3.2
-  mobile_scanner: ^7.4.0
+  mobile_scanner: ^7.4.2
 
   # Storage/platform: clipboard leakage + archive (zip-slip / path traversal).
   archive: ^4.0.0
 
-  sqflite: ^2.3.3+2
+  sqflite: ^2.4.4
 
 dev_dependencies:
   flutter_test:
