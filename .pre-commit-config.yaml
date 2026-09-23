@@ -151,3 +151,10 @@ repos:
         language: system
         files: '^(config/app\.json|config/flavors/|ios/Runner\.xcodeproj/|companion/)'
         pass_filenames: false
+
+      - id: versions-sync
+        name: toolchain versions match gradle/libs.versions.toml
+        entry: python3 automation/scripts/check_versions.py
+        language: python
+        files: '^(gradle/libs\.versions\.toml|.*gradle-wrapper\.properties|\.tool-versions|\.github/workflows/(ci|release)\.yml|ios/Runner\.xcodeproj/project\.pbxproj)$'
+        pass_filenames: false

@@ -140,17 +140,40 @@ shows both).
 
 ## Toolchain versions (single source of truth)
 
-Android toolchain and dependency versions live in one place,
-`gradle/libs.versions.toml`, read by both the app (`android/`) and the companion
-attacker (`companion/dvma-attacker/`): AGP, Kotlin, `compileSdk`/`minSdk`/
-`targetSdk`, the JVM bytecode target, and the `androidx.test` stack. Bump a
-version there and both Gradle builds follow.
+Almost every Android version lives in one file, **`gradle/libs.versions.toml`**,
+read by both the app (`android/`) and the companion attacker
+(`companion/dvma-attacker/`). Its `[versions]` keys are:
 
-A few versions can't read that file because their tools require their own
-format, so they're pinned in their native location and kept in step by hand:
+| Key | Controls |
+| --- | --- |
+| `agp` | Android Gradle Plugin (both projects) |
+| `kotlin` | Kotlin Gradle plugin (both projects) |
+| `compileSdk`, `minSdk`, `targetSdk` | SDK levels |
+| `jvmTarget` | Java/Kotlin bytecode target |
+| `androidxTest*` | the opt-in Espresso/UiAutomator deps |
+| `androidxCoreKtx`, `androidxAppcompat` | companion runtime deps |
+| `gradle`, `iosDeploymentTarget`, `swift` | reference only (see below) |
 
-| Version | Lives in | Notes |
+Edit the key and both Gradle builds follow. No Android version is authored
+anywhere else.
+
+### The three versions the catalog can't apply itself
+
+These tools need their own file format, so the catalog only *records* them and
+you edit them in the file below:
+
+| Version | Edit here | Kept in step by |
 | --- | --- | --- |
-| Gradle wrapper | `android/gradle/wrapper/gradle-wrapper.properties` and the companion's wrapper | Keep both on the `gradle` version noted in the catalog. |
-| Flutter SDK | `.tool-versions` | CI's `FLUTTER_VERSION` is checked against this in the lint job, so they can't drift. |
-| iOS deployment target / Swift | `ios/Runner.xcodeproj` | Mirrored as `iosDeploymentTarget` / `swift` in the catalog for reference. |
+| Gradle wrapper | `android/gradle/wrapper/gradle-wrapper.properties` **and** `companion/dvma-attacker/gradle/wrapper/gradle-wrapper.properties` (both, identical) | Match the catalog's `gradle` key; Dependabot is told to ignore the wrapper so it can't re-drift them. |
+| Flutter SDK | `.tool-versions` | `env.FLUTTER_VERSION` in `.github/workflows/ci.yml` and `release.yml`; the lint job fails if they disagree. |
+| iOS deployment target / Swift | `ios/Runner.xcodeproj/project.pbxproj` (`IPHONEOS_DEPLOYMENT_TARGET`, `SWIFT_VERSION`) | Mirror the catalog's `iosDeploymentTarget` / `swift` keys. |
+
+### Bumping coupled versions
+
+- **AGP:** change `agp` in the catalog, then set the matching Gradle version in
+  **both** wrapper files (AGP 9.1 needs Gradle 9.3.1; see the
+  [AGP/Gradle table](https://developer.android.com/build/releases/about-agp)),
+  update the `gradle` key to match, and confirm the AGP is within what the pinned
+  Flutter supports.
+- **Flutter:** change `.tool-versions`, then set the same value in
+  `env.FLUTTER_VERSION` in `ci.yml` and `release.yml` (CI enforces the match).

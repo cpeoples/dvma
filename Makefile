@@ -18,14 +18,14 @@
 
 .DEFAULT_GOAL := check
 .PHONY: check test check-all ci-local fix generate docs precommit \
-        format analyze drift appid schema standards companion androidtest help
+        format analyze drift appid schema standards versions companion androidtest help
 
 help:
 	@grep -E '^# ' $(firstword $(MAKEFILE_LIST)) | sed 's/^# \{0,1\}//' | sed '/^$$/q'
 
 # --- Fast gate (mirrors the fast half of CI) ---------------------------------
 
-check: format analyze drift appid schema standards
+check: format analyze drift appid schema standards versions
 	@echo "make check: OK"
 
 format:
@@ -49,6 +49,11 @@ schema:
 # mas.owasp.org page (no invented or dangling standard ids).
 standards:
 	python3 automation/scripts/standards_mapping_audit.py --check
+
+# Gradle wrapper, Flutter (ci vs .tool-versions) and iOS target/Swift all match
+# gradle/libs.versions.toml (the versions the catalog can't set itself).
+versions:
+	python3 automation/scripts/check_versions.py
 
 # --- Deeper gates ------------------------------------------------------------
 
