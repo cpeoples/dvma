@@ -85,6 +85,22 @@ jobs:
           cp build/app/outputs/bundle/release/app-release.aab "build/dvma-${version}.aab"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
+      # Companion attacker app (com.dvma.attacker): a separate, standalone APK
+      # that drives DVMA's cross-app modules (OTP leak, exported-component
+      # invocation, broadcast spoofing, service binding, task hijacking) which
+      # can't be shown by DVMA alone. Shipped as a debug APK on purpose: it's a
+      # training fixture, not a Play-distributed app, so a debug build installs
+      # on any device/emulator with no signing setup. See companion/README.md.
+      - name: Build companion attacker (debug APK)
+        working-directory: companion/dvma-attacker
+        run: ./gradlew :app:assembleDebug --console=plain
+
+      - name: Stage companion APK with app name and version
+        run: |
+          version="${{ steps.android_artifacts.outputs.version }}"
+          cp companion/dvma-attacker/app/build/outputs/apk/debug/app-debug.apk \
+            "build/dvma-attacker-${version}.apk"
+
       - name: Scrub signing material
         if: always()
         run: rm -f android/app/dvma-release.jks android/app/key.properties
@@ -95,6 +111,7 @@ jobs:
           files: |
             build/dvma-${{ steps.android_artifacts.outputs.version }}.apk
             build/dvma-${{ steps.android_artifacts.outputs.version }}.aab
+            build/dvma-attacker-${{ steps.android_artifacts.outputs.version }}.apk
 
   # iOS: build + sign a distributable .ipa. Auto-SKIPS when the Apple secrets
   # are absent, so this workflow never hard-fails before you have a paid Apple
