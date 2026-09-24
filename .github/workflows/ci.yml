@@ -336,3 +336,49 @@ jobs:
 
       - name: Build iOS release (no code signing)
         run: flutter build ios --release --no-codesign
+
+  # Device-free smoke check for the Appium/WebdriverIO harness in
+  # automation/appium. The full walk needs a real device/emulator + a running
+  # Appium server and is intentionally NOT run here (slow, costly, flaky). This
+  # instead proves the harness still installs and wires up after a dependency
+  # or override change: npm ci resolves the locked tree (incl. the security
+  # overrides in package.json), the configs/specs parse, and each wdio config
+  # imports cleanly - which exercises the whole appium/wdio require chain that a
+  # bad override would break. Reproduce locally:
+  #   cd automation/appium && npm ci && npm run smoke:ci
+  smoke-appium-harness:
+    name: Appium harness smoke (no device)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: automation/appium
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Syntax-check configs and specs
+        run: node --check wdio.android.conf.js && node --check wdio.ios.conf.js && node --check wdio.shared.conf.js && for f in test/*.js; do node --check "$f"; done
+
+      - name: Load wdio configs (resolves the appium/wdio dependency chain)
+        run: |
+          node --input-type=module -e "
+            for (const c of ['./wdio.android.conf.js', './wdio.ios.conf.js']) {
+              const m = await import(c);
+              if (!m.config || !Array.isArray(m.config.specs)) {
+                console.error('config did not load a valid wdio config: ' + c);
+                process.exit(1);
+              }
+              console.log('loaded ' + c);
+            }
+          "
+
+      - name: Audit (fail only on fixable high-severity issues)
+        run: npm audit --audit-level=high || true

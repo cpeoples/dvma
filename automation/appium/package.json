@@ -10,7 +10,8 @@
     "test:android:smoke": "wdio run ./wdio.android.conf.js --spec ./test/smoke.e2e.js",
     "test:ios:smoke": "wdio run ./wdio.ios.conf.js --spec ./test/smoke.e2e.js",
     "test:android:walk": "wdio run ./wdio.android.conf.js --spec ./test/walk-all-modules.e2e.js",
-    "test:ios:walk": "wdio run ./wdio.ios.conf.js --spec ./test/walk-all-modules.e2e.js"
+    "test:ios:walk": "wdio run ./wdio.ios.conf.js --spec ./test/walk-all-modules.e2e.js",
+    "smoke:ci": "node --check wdio.android.conf.js && node --check wdio.ios.conf.js && node --check wdio.shared.conf.js && node --input-type=module -e \"for (const c of ['./wdio.android.conf.js','./wdio.ios.conf.js']) { const m = await import(c); if (!m.config || !Array.isArray(m.config.specs)) process.exit(1); }\""
   },
   "devDependencies": {
     "@wdio/cli": "^9.32.0",
@@ -22,5 +23,10 @@
   "comment_appium_drivers": "Appium itself and its drivers are installed separately (globally or via appium's own plugin manager), NOT as npm project deps. See automation/README.md. Required: appium (>=2), appium-uiautomator2-driver, appium-xcuitest-driver, appium-flutter-driver.",
   "dependencies": {
     "appium": "^3.7.0"
+  },
+  "comment_overrides": "Force patched versions of transitive deps that Appium/wdio still pull in vulnerable. These packages are dev-only test tooling and never ship in the app, but pinning the fixed versions keeps the dependency audit clean. extract-zip is deliberately not overridden: every published version (incl. the latest 2.0.1) is flagged for the symlink-traversal advisory with no fix available upstream, so it stays until Appium swaps it out.",
+  "overrides": {
+    "serialize-javascript": "^7.1.2",
+    "morgan": "^1.12.1"
   }
 }
