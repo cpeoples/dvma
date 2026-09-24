@@ -10,17 +10,17 @@
 
 <!-- BADGES_START - stripped from the Hugo docs build; see .hugo/scripts/build_docs.py -->
 <p align="center">
-  <a href="https://github.com/cpeoples/dvma/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/cpeoples/dvma/ci.yml?branch=main&label=CI&style=flat-square&logo=github&logoColor=white" alt="CI" /></a>&nbsp;
-  <a href="https://cpeoples.github.io/dvma/"><img src="https://img.shields.io/github/actions/workflow/status/cpeoples/dvma/docs.yml?branch=main&label=Docs&style=flat-square&logo=readthedocs&logoColor=white" alt="Docs" /></a>&nbsp;
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/cpeoples/dvma?label=License&style=flat-square" alt="License" /></a>&nbsp;
-  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.47-blue?style=flat-square&logo=flutter&logoColor=white" alt="Flutter" /></a>&nbsp;
-  <a href="https://developer.android.com"><img src="https://img.shields.io/badge/Android-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android" /></a>&nbsp;
-  <a href="https://developer.apple.com/ios/"><img src="https://img.shields.io/badge/iOS-000000?style=flat-square&logo=apple&logoColor=white" alt="iOS" /></a>&nbsp;
-  <a href="config/registry/categories"><img src="https://img.shields.io/badge/Modules-218-blue?style=flat-square&logo=flutter&logoColor=white" alt="Vulnerable modules" /></a>&nbsp;
-  <a href="https://mas.owasp.org/MASVS/"><img src="https://img.shields.io/badge/OWASP-MASVS%20%2F%20MASTG-000000?style=flat-square&logo=owasp&logoColor=white" alt="OWASP MASVS/MASTG" /></a>&nbsp;
-  <a href="https://owasp.org/www-project-mobile-top-10/"><img src="https://img.shields.io/badge/OWASP-Mobile%20Top%2010-000000?style=flat-square&logo=owasp&logoColor=white" alt="OWASP Mobile Top 10" /></a>&nbsp;
-  <a href="https://cwe.mitre.org/"><img src="https://img.shields.io/badge/Mapped-CWE-8a2be2?style=flat-square" alt="CWE-mapped" /></a>&nbsp;
-  <a href="https://genai.owasp.org/"><img src="https://img.shields.io/badge/OWASP-LLM%20%26%20Agentic%20Top%2010-412991?style=flat-square&logo=owasp&logoColor=white" alt="OWASP LLM & Agentic Top 10" /></a>
+  <a href="https://github.com/cpeoples/dvma/actions/workflows/ci.yml" target="_blank" rel="noopener"><img src="https://img.shields.io/github/actions/workflow/status/cpeoples/dvma/ci.yml?branch=main&label=CI&style=flat-square&logo=github&logoColor=white" alt="CI" /></a>&nbsp;
+  <a href="https://cpeoples.github.io/dvma/" target="_blank" rel="noopener"><img src="https://img.shields.io/github/actions/workflow/status/cpeoples/dvma/docs.yml?branch=main&label=Docs&style=flat-square&logo=readthedocs&logoColor=white" alt="Docs" /></a>&nbsp;
+  <a href="LICENSE" target="_blank" rel="noopener"><img src="https://img.shields.io/github/license/cpeoples/dvma?label=License&style=flat-square" alt="License" /></a>&nbsp;
+  <a href="https://flutter.dev" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/Flutter-3.47-blue?style=flat-square&logo=flutter&logoColor=white" alt="Flutter" /></a>&nbsp;
+  <a href="https://developer.android.com" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/Android-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android" /></a>&nbsp;
+  <a href="https://developer.apple.com/ios/" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/iOS-000000?style=flat-square&logo=apple&logoColor=white" alt="iOS" /></a>&nbsp;
+  <a href="config/registry/categories" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/Modules-218-blue?style=flat-square&logo=flutter&logoColor=white" alt="Vulnerable modules" /></a>&nbsp;
+  <a href="https://mas.owasp.org/MASVS/" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/OWASP-MASVS%20%2F%20MASTG-000000?style=flat-square&logo=owasp&logoColor=white" alt="OWASP MASVS/MASTG" /></a>&nbsp;
+  <a href="https://owasp.org/www-project-mobile-top-10/" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/OWASP-Mobile%20Top%2010-000000?style=flat-square&logo=owasp&logoColor=white" alt="OWASP Mobile Top 10" /></a>&nbsp;
+  <a href="https://cwe.mitre.org/" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/Mapped-CWE-8a2be2?style=flat-square" alt="CWE-mapped" /></a>&nbsp;
+  <a href="https://genai.owasp.org/" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/OWASP-LLM%20%26%20Agentic%20Top%2010-412991?style=flat-square&logo=owasp&logoColor=white" alt="OWASP LLM & Agentic Top 10" /></a>
 </p>
 <!-- BADGES_END -->
 
