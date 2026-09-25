@@ -136,10 +136,7 @@ class _AiOutputToIntentUrlScreenState extends State<AiOutputToIntentUrlScreen> {
             label: 'VULN URL from model output',
             value: _vuln!.url ?? '(none)',
           ),
-          EvidencePanel(
-            label: 'model backend',
-            value: _vuln!.backend,
-          ),
+          EvidencePanel(label: 'model backend', value: _vuln!.backend),
           EvidencePanel(
             label: 'VULN launched?',
             value: _vuln!.launched

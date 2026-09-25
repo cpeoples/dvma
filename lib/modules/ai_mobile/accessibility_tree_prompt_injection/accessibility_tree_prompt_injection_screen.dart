@@ -93,10 +93,7 @@ class _AccessibilityTreePromptInjectionScreenState
             label: 'VULN prompt (all node text concatenated)',
             value: _vuln!.prompt,
           ),
-          EvidencePanel(
-            label: 'model backend',
-            value: _vuln!.response.backend,
-          ),
+          EvidencePanel(label: 'model backend', value: _vuln!.response.backend),
           EvidencePanel(
             label: 'VULN agent action',
             value: _vuln!.action.description,

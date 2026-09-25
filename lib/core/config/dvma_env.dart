@@ -38,7 +38,12 @@ typedef NetworkEndpoints = ({
 /// bearer key (empty when the endpoint is keyless). [models] is an optional
 /// comma-separated rotation list; when set, each model is tried in order so a
 /// backend that starts refusing (or rate-limiting) falls through to the next.
-typedef LlmBackend = ({String endpoint, String model, String models, String key});
+typedef LlmBackend = ({
+  String endpoint,
+  String model,
+  String models,
+  String key,
+});
 
 /// Live-LLM wiring for the AI modules: the master switch plus each backend in
 /// the fallback chain (custom endpoint -> OpenRouter -> keyless Pollinations).

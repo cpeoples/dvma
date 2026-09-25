@@ -133,10 +133,7 @@ class _AiOutputToWebviewXssScreenState
             label: 'VULN loaded HTML (model output, unescaped)',
             value: _vuln!.html,
           ),
-          EvidencePanel(
-            label: 'model backend',
-            value: _vuln!.backend,
-          ),
+          EvidencePanel(label: 'model backend', value: _vuln!.backend),
           EvidencePanel(
             label: 'VULN scripts present in loaded HTML',
             value: _vuln!.executedScripts.isEmpty

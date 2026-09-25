@@ -395,14 +395,15 @@ abstract class OpenAiCompatLlm implements LiveLlm {
   static String _resetHint(String body) {
     try {
       final json = jsonDecode(body) as Map<String, dynamic>;
-      final headers = ((json['error'] as Map<String, dynamic>?)?['metadata']
-          as Map<String, dynamic>?)?['headers'] as Map<String, dynamic>?;
+      final headers =
+          ((json['error'] as Map<String, dynamic>?)?['metadata']
+                  as Map<String, dynamic>?)?['headers']
+              as Map<String, dynamic>?;
       final raw = headers?['X-RateLimit-Reset'];
       final epochMs = raw is num ? raw.toInt() : int.tryParse('$raw');
       if (epochMs == null) return '';
-      final delta = DateTime.fromMillisecondsSinceEpoch(
-        epochMs,
-      ).difference(DateTime.now());
+      final delta = DateTime.fromMillisecondsSinceEpoch(epochMs)
+          .difference(DateTime.now());
       if (delta.isNegative) return '';
       final h = delta.inHours;
       final m = delta.inMinutes % 60;

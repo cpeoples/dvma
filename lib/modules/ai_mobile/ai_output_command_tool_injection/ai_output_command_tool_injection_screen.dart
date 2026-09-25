@@ -94,10 +94,7 @@ class _AiOutputCommandToolInjectionScreenState
             label: 'VULN tool call from model',
             value: _vuln!.call?.raw ?? '(none)',
           ),
-          EvidencePanel(
-            label: 'model backend',
-            value: _vuln!.backend,
-          ),
+          EvidencePanel(label: 'model backend', value: _vuln!.backend),
           EvidencePanel(
             label: 'VULN executed (pre-validation)?',
             value: _vuln!.executed

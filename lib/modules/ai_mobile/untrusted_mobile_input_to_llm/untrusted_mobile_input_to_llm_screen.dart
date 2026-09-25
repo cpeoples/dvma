@@ -103,10 +103,7 @@ class _UntrustedMobileInputToLlmScreenState
             label: 'VULN assistant response',
             value: _vuln!.response.text,
           ),
-          EvidencePanel(
-            label: 'model backend',
-            value: _vuln!.response.backend,
-          ),
+          EvidencePanel(label: 'model backend', value: _vuln!.response.backend),
           if (_vuln!.response.toolCall != null)
             EvidencePanel(
               label: 'VULN tool call fired (no confirmation!)',
