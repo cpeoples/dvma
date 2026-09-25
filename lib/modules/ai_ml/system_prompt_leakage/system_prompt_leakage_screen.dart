@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/evidence_sink.dart';
 import '../../../core/theme/dvma_colors.dart';
 import '../../../core/vuln_demo_scaffold.dart';
+import '../llm_key_action.dart';
 import '../mock_llm.dart';
 
 /// System Prompt Leakage.
@@ -45,6 +46,7 @@ class _SystemPromptLeakageScreenState extends State<SystemPromptLeakageScreen> {
       'system-prompt',
       'input: ${_input.text}\n'
           'response: ${result.text}\n'
+          'backend: ${result.backend}\n'
           'leaked: ${(leaked != null && leaked.isNotEmpty) ? leaked : "(model refused - no secret in reply)"}',
     );
   }
@@ -55,6 +57,7 @@ class _SystemPromptLeakageScreenState extends State<SystemPromptLeakageScreen> {
       vulnId: SystemPromptLeakageScreen.vulnId,
       title: 'System Prompt Leakage',
       difficulty: DvmaDifficulty.easy,
+      actions: const [LlmKeyAction()],
       explanation:
           'The assistant has no protection around its system prompt, which '
           'contains a hardcoded INTERNAL_SECRET. A simple request makes it '
@@ -68,6 +71,7 @@ class _SystemPromptLeakageScreenState extends State<SystemPromptLeakageScreen> {
         DemoActionButton(label: 'Send', onPressed: _send),
         if (_result != null) ...[
           EvidencePanel(label: 'assistant response', value: _result!.text),
+          EvidencePanel(label: 'model backend', value: _result!.backend),
           if (_result!.leakedSecret != null &&
               _result!.leakedSecret!.isNotEmpty)
             EvidencePanel(

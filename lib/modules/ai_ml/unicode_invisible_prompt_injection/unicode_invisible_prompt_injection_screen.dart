@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/evidence_sink.dart';
 import '../../../core/theme/dvma_colors.dart';
 import '../../../core/vuln_demo_scaffold.dart';
+import '../llm_key_action.dart';
 import '../mock_llm.dart';
 import 'unicode_prompt_injection.dart';
 
@@ -52,6 +53,7 @@ class _UnicodeInvisiblePromptInjectionScreenState
       'unicode-injection',
       'visible: $_visible\n'
           'hidden: ${UnicodePromptInjection.revealHidden(_payload)}\n'
+          'backend: ${result.backend}\n'
           'toolCall: ${result.toolCall ?? "(none - model returned prose)"}',
     );
   }
@@ -62,6 +64,7 @@ class _UnicodeInvisiblePromptInjectionScreenState
       vulnId: UnicodeInvisiblePromptInjectionScreen.vulnId,
       title: 'Invisible / Unicode Prompt Injection',
       difficulty: DvmaDifficulty.medium,
+      actions: const [LlmKeyAction()],
       explanation:
           'A shared note looks benign but hides an instruction using zero-width '
           'characters and an RTL override. The app\'s sanitizer only touches '
@@ -89,6 +92,7 @@ class _UnicodeInvisiblePromptInjectionScreenState
         ),
         if (_result != null) ...[
           EvidencePanel(label: 'assistant response', value: _result!.text),
+          EvidencePanel(label: 'model backend', value: _result!.backend),
           if (_result!.toolCall != null)
             EvidencePanel(
               label: 'tool call (no confirmation!)',

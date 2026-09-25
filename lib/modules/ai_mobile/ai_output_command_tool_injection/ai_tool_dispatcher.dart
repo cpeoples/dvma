@@ -75,6 +75,7 @@ class AiToolDispatcher {
         executed: false,
         reason: 'no tool call in model output',
         runtime: runtime,
+        backend: result.backend,
       );
     }
     // Executed with the app's privileges, pre-validation, over the wire.
@@ -84,6 +85,7 @@ class AiToolDispatcher {
       executed: true,
       reason: 'executed model tool call with no validation ($sideEffect)',
       runtime: runtime,
+      backend: result.backend,
     );
   }
 
@@ -194,6 +196,7 @@ class ToolDispatch {
     required this.executed,
     required this.reason,
     required this.runtime,
+    this.backend = 'offline-mock',
   });
 
   /// The parsed tool call (if any).
@@ -207,4 +210,7 @@ class ToolDispatch {
 
   /// The runtime that recorded any execution.
   final ToolRuntime runtime;
+
+  /// Which live backend produced the tool call (`offline-mock` offline).
+  final String backend;
 }

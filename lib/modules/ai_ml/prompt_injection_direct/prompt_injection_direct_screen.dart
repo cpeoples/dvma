@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/evidence_sink.dart';
 import '../../../core/theme/dvma_colors.dart';
 import '../../../core/vuln_demo_scaffold.dart';
+import '../llm_key_action.dart';
 import '../mock_llm.dart';
 
 /// Direct Prompt Injection.
@@ -49,6 +50,7 @@ class _PromptInjectionDirectScreenState
       'prompt-injection',
       'input: ${_input.text}\n'
           'leaked: ${(leaked != null && leaked.isNotEmpty) ? leaked : "(none)"}\n'
+          'backend: ${result.backend}\n'
           'toolCall: ${result.toolCall ?? "(none - model returned prose)"}',
     );
   }
@@ -59,6 +61,7 @@ class _PromptInjectionDirectScreenState
       vulnId: PromptInjectionDirectScreen.vulnId,
       title: 'Direct Prompt Injection',
       difficulty: DvmaDifficulty.easy,
+      actions: const [LlmKeyAction()],
       explanation:
           'The in-app assistant concatenates untrusted user input with its '
           'system prompt and has no guardrails. Injected instructions override '
@@ -73,6 +76,7 @@ class _PromptInjectionDirectScreenState
         DemoActionButton(label: 'Send to assistant', onPressed: _send),
         if (_result != null) ...[
           EvidencePanel(label: 'assistant response', value: _result!.text),
+          EvidencePanel(label: 'model backend', value: _result!.backend),
           if (_result!.toolCall != null)
             EvidencePanel(
               label: 'tool call (no confirmation!)',

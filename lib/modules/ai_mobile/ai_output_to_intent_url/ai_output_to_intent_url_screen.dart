@@ -6,6 +6,7 @@ import '../../../core/native/platform_ipc_bridge.dart';
 import '../../../core/theme/dvma_colors.dart';
 import '../../../core/vuln_demo_scaffold.dart';
 import '../../../core/webview_demo_host.dart';
+import '../../ai_ml/llm_key_action.dart';
 import 'ai_intent_launcher.dart';
 
 /// AI Output Used as Intent / URL (navigation & redirection).
@@ -108,6 +109,7 @@ class _AiOutputToIntentUrlScreenState extends State<AiOutputToIntentUrlScreen> {
       vulnId: AiOutputToIntentUrlScreen.vulnId,
       title: 'AI Output Used as Intent / URL',
       difficulty: DvmaDifficulty.medium,
+      actions: const [LlmKeyAction()],
       explanation:
           'The assistant output (attacker-steered via the prompt) is fed '
           'directly into a URL launcher / startActivity() with NO allowlist and '
@@ -133,6 +135,10 @@ class _AiOutputToIntentUrlScreenState extends State<AiOutputToIntentUrlScreen> {
           EvidencePanel(
             label: 'VULN URL from model output',
             value: _vuln!.url ?? '(none)',
+          ),
+          EvidencePanel(
+            label: 'model backend',
+            value: _vuln!.backend,
           ),
           EvidencePanel(
             label: 'VULN launched?',

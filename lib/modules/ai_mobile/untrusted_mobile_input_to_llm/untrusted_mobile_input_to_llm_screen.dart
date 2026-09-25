@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/evidence_sink.dart';
 import '../../../core/theme/dvma_colors.dart';
 import '../../../core/vuln_demo_scaffold.dart';
+import '../../ai_ml/llm_key_action.dart';
 import 'mobile_input_prompt_builder.dart';
 
 /// Untrusted Mobile Input -> LLM Prompt (deep link / clipboard / QR).
@@ -69,6 +70,7 @@ class _UntrustedMobileInputToLlmScreenState
       vulnId: UntrustedMobileInputToLlmScreen.vulnId,
       title: 'Untrusted Mobile Input -> LLM Prompt',
       difficulty: DvmaDifficulty.medium,
+      actions: const [LlmKeyAction()],
       explanation:
           'Content arriving over a mobile trust boundary (a deep-link query '
           'param, the clipboard, a scanned QR code, a notification) is '
@@ -100,6 +102,10 @@ class _UntrustedMobileInputToLlmScreenState
           EvidencePanel(
             label: 'VULN assistant response',
             value: _vuln!.response.text,
+          ),
+          EvidencePanel(
+            label: 'model backend',
+            value: _vuln!.response.backend,
           ),
           if (_vuln!.response.toolCall != null)
             EvidencePanel(

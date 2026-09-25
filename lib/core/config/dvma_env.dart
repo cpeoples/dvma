@@ -35,8 +35,10 @@ typedef NetworkEndpoints = ({
 });
 
 /// One OpenAI-compatible chat backend: where to POST, which model, and the
-/// bearer key (empty when the endpoint is keyless).
-typedef LlmBackend = ({String endpoint, String model, String key});
+/// bearer key (empty when the endpoint is keyless). [models] is an optional
+/// comma-separated rotation list; when set, each model is tried in order so a
+/// backend that starts refusing (or rate-limiting) falls through to the next.
+typedef LlmBackend = ({String endpoint, String model, String models, String key});
 
 /// Live-LLM wiring for the AI modules: the master switch plus each backend in
 /// the fallback chain (custom endpoint -> OpenRouter -> keyless Pollinations).
@@ -119,6 +121,7 @@ abstract final class DvmaEnv {
     custom: (
       endpoint: String.fromEnvironment('DVMA_LLM_ENDPOINT', defaultValue: ''),
       model: String.fromEnvironment('DVMA_LLM_MODEL', defaultValue: ''),
+      models: '',
       key: String.fromEnvironment('DVMA_LLM_KEY', defaultValue: ''),
     ),
     openRouter: (
@@ -129,9 +132,19 @@ abstract final class DvmaEnv {
         'DVMA_OPENROUTER_MODEL',
         defaultValue: 'liquid/lfm-2.5-2.6b:free',
       ),
+      // Optional rotation list (comma-separated model ids). When set, each is
+      // tried in order for every request, so if the primary starts refusing or
+      // rate-limiting the call falls through to the next. Empty = use [model]
+      // alone. Example free candidates change often; see
+      // https://openrouter.ai/collections/free-models
+      models: String.fromEnvironment(
+        'DVMA_OPENROUTER_MODELS',
+        defaultValue: '',
+      ),
       // Empty by default: OpenRouter is only used when a key is supplied at
-      // build time; otherwise we fall through to the keyless Pollinations
-      // endpoint below. No credential is committed to source.
+      // build time or entered at runtime; otherwise we fall through to the
+      // keyless Pollinations endpoint below. No credential is committed to
+      // source, and none is baked into release builds.
       key: String.fromEnvironment('DVMA_OPENROUTER_KEY', defaultValue: ''),
     ),
     pollinationsEndpoint: 'https://text.pollinations.ai/openai',

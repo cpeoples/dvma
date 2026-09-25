@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/evidence_sink.dart';
 import '../../../core/theme/dvma_colors.dart';
 import '../../../core/vuln_demo_scaffold.dart';
+import '../llm_key_action.dart';
 import '../mock_llm.dart';
 
 /// Indirect Prompt Injection (scanned QR/image/file).
@@ -49,6 +50,7 @@ class _PromptInjectionIndirectScreenState
       PromptInjectionIndirectScreen.vulnId,
       'prompt-injection',
       'scanned: ${_scanned.text}\n'
+          'backend: ${result.backend}\n'
           'toolCall: ${result.toolCall ?? "(none - model returned prose)"}',
     );
   }
@@ -59,6 +61,7 @@ class _PromptInjectionIndirectScreenState
       vulnId: PromptInjectionIndirectScreen.vulnId,
       title: 'Indirect Prompt Injection',
       difficulty: DvmaDifficulty.medium,
+      actions: const [LlmKeyAction()],
       explanation:
           'Content decoded from a scanned QR/image/shared file is fed to the '
           'assistant as trusted context without sanitization. Hidden '
@@ -78,6 +81,7 @@ class _PromptInjectionIndirectScreenState
         ),
         if (_result != null) ...[
           EvidencePanel(label: 'assistant response', value: _result!.text),
+          EvidencePanel(label: 'model backend', value: _result!.backend),
           if (_result!.toolCall != null)
             EvidencePanel(
               label: 'tool call (from hidden instructions!)',

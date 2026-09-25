@@ -5,6 +5,7 @@ import '../../../core/evidence_sink.dart';
 import '../../../core/theme/dvma_colors.dart';
 import '../../../core/vuln_demo_scaffold.dart';
 import '../../../core/webview_demo_host.dart';
+import '../../ai_ml/llm_key_action.dart';
 import 'ai_webview_sink.dart';
 
 /// AI Output Rendered in WebView (XSS / local-file read).
@@ -103,6 +104,7 @@ class _AiOutputToWebviewXssScreenState
       vulnId: AiOutputToWebviewXssScreen.vulnId,
       title: 'AI Output Rendered in WebView (XSS)',
       difficulty: DvmaDifficulty.hard,
+      actions: const [LlmKeyAction()],
       explanation:
           'The assistant output (which an attacker steered via the prompt) is '
           'injected into a WebView through loadHtmlString with NO output '
@@ -130,6 +132,10 @@ class _AiOutputToWebviewXssScreenState
           EvidencePanel(
             label: 'VULN loaded HTML (model output, unescaped)',
             value: _vuln!.html,
+          ),
+          EvidencePanel(
+            label: 'model backend',
+            value: _vuln!.backend,
           ),
           EvidencePanel(
             label: 'VULN scripts present in loaded HTML',

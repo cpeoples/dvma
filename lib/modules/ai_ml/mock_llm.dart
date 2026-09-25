@@ -98,10 +98,11 @@ class MockLlm {
     if (live == null) return run(userInput);
     _callCount++;
     try {
-      final text = await live.complete(
+      final result = await live.complete(
         systemPrompt: systemPrompt,
         userInput: userInput,
       );
+      final text = result.text;
       // Reuse the same insecure post-processing so a live model that emits a
       // tool call / leaks the secret is surfaced identically to the mock.
       final leaked = _extractSecret(text);
@@ -109,11 +110,21 @@ class MockLlm {
         text: text,
         toolCall: _extractToolCall(text),
         leakedSecret: leaked.isEmpty ? null : leaked,
+        backend: result.backend,
       );
-    } catch (_) {
+    } catch (e) {
       // Any network/backend failure degrades gracefully to the offline mock so
-      // the demo never hard-fails when a key is missing/expired/offline.
-      return run(userInput);
+      // the demo never hard-fails when a key is missing/expired/offline. Tag it
+      // with the reason (e.g. a 429 free-tier cap) so the evidence panel shows
+      // why it fell back rather than an unexplained offline run.
+      final reason = e is LiveLlmException ? ' (${e.toString()})' : '';
+      final fallback = run(userInput);
+      return MockLlmResult(
+        text: fallback.text,
+        toolCall: fallback.toolCall,
+        leakedSecret: fallback.leakedSecret,
+        backend: 'offline-mock$reason',
+      );
     }
   }
 
@@ -156,7 +167,12 @@ class MockLlm {
 
 /// Result of a [MockLlm] run.
 class MockLlmResult {
-  MockLlmResult({required this.text, this.toolCall, this.leakedSecret});
+  MockLlmResult({
+    required this.text,
+    this.toolCall,
+    this.leakedSecret,
+    this.backend = 'offline-mock',
+  });
 
   /// The model's text response.
   final String text;
@@ -166,12 +182,46 @@ class MockLlmResult {
 
   /// The leaked secret, if the response exposed it.
   final String? leakedSecret;
+
+  /// Which backend produced this result: the live backend's [LiveLlm.label]
+  /// (e.g. `openrouter (…)`, `pollinations (keyless)`, a custom endpoint) or
+  /// `offline-mock` when no live backend was configured or every one failed.
+  /// Surfaced in the evidence panel so a trainee never mistakes a keyless or
+  /// offline fallback for a genuine hosted-model leak.
+  final String backend;
+}
+
+/// The outcome of a live backend call: the raw completion [text] plus the
+/// [backend] label of whichever backend actually produced it (important for
+/// [FallbackLlm], where the winner isn't known until a call succeeds).
+typedef LiveResult = ({String text, String backend});
+
+/// Raised when a live backend returns a non-2xx response. Carries the backend
+/// [label] and a short [reason] (e.g. `HTTP 429: free-tier daily limit`) so the
+/// evidence panel can explain *why* a call fell back to the offline mock.
+class LiveLlmException implements Exception {
+  LiveLlmException({
+    required this.backendLabel,
+    required this.statusCode,
+    required this.reason,
+  });
+
+  final String backendLabel;
+  final int statusCode;
+  final String reason;
+
+  @override
+  String toString() => '$backendLabel: $reason';
 }
 
 /// A pluggable live LLM backend. Implement [complete] to return a raw model
 /// completion for the given system + user prompt.
 abstract class LiveLlm {
-  Future<String> complete({
+  /// Human-readable identifier for which backend answered, surfaced in the
+  /// evidence panel (e.g. `openrouter (liquid/lfm-2.5-2.6b:free)`).
+  String get label;
+
+  Future<LiveResult> complete({
     required String systemPrompt,
     required String userInput,
   });
@@ -218,6 +268,18 @@ class LlmConfig {
       _live = null;
       return;
     }
+    // OpenRouter model rotation: DVMA_OPENROUTER_MODELS (comma-separated) tries
+    // each model in order per request, so a model that starts refusing or
+    // rate-limiting falls through to the next. Empty list = the single
+    // DVMA_OPENROUTER_MODEL. Each entry carries its own backend label, so the
+    // evidence panel still reports exactly which model answered.
+    final openRouterModels = cfg.openRouter.models
+        .split(',')
+        .map((m) => m.trim())
+        .where((m) => m.isNotEmpty)
+        .toList();
+    if (openRouterModels.isEmpty) openRouterModels.add(cfg.openRouter.model);
+
     final chain = <LiveLlm>[
       if (cfg.custom.endpoint.isNotEmpty)
         CustomLlm(
@@ -226,11 +288,12 @@ class LlmConfig {
           apiKey: cfg.custom.key.isEmpty ? null : cfg.custom.key,
         ),
       if (cfg.openRouter.key.isNotEmpty)
-        OpenRouterLlm(
-          apiKey: cfg.openRouter.key,
-          model: cfg.openRouter.model,
-          endpoint: Uri.parse(cfg.openRouter.endpoint),
-        ),
+        for (final model in openRouterModels)
+          OpenRouterLlm(
+            apiKey: cfg.openRouter.key,
+            model: model,
+            endpoint: Uri.parse(cfg.openRouter.endpoint),
+          ),
       // Keyless real endpoint, always present so a real call is attempted even
       // with zero configuration.
       PollinationsLlm(endpoint: Uri.parse(cfg.pollinationsEndpoint)),
@@ -249,12 +312,19 @@ abstract class OpenAiCompatLlm implements LiveLlm {
   String? get model;
   Map<String, String> get headers => const {};
 
+  /// Short backend name (e.g. `openrouter`, `pollinations`, `custom`); combined
+  /// with [model] to form [label].
+  String get backendName;
+
+  @override
+  String get label => model == null ? backendName : '$backendName ($model)';
+
   /// Some keyless tiers reject a distinct `system` role; when true the system
   /// prompt is folded into the user turn as a bracketed preamble instead.
   bool get foldSystemIntoUser => false;
 
   @override
-  Future<String> complete({
+  Future<LiveResult> complete({
     required String systemPrompt,
     required String userInput,
   }) async {
@@ -279,7 +349,11 @@ abstract class OpenAiCompatLlm implements LiveLlm {
       body: jsonEncode(payload),
     );
     if (resp.statusCode != 200) {
-      throw Exception('$runtimeType ${resp.statusCode}: ${resp.body}');
+      throw LiveLlmException(
+        backendLabel: label,
+        statusCode: resp.statusCode,
+        reason: _reasonFor(resp.statusCode, resp.body),
+      );
     }
     final json = jsonDecode(resp.body) as Map<String, dynamic>;
     final choices = json['choices'] as List<dynamic>?;
@@ -287,7 +361,56 @@ abstract class OpenAiCompatLlm implements LiveLlm {
         ? choices.first as Map<String, dynamic>
         : null;
     final message = first?['message'] as Map<String, dynamic>?;
-    return (message?['content'] as String?) ?? '';
+    return (text: (message?['content'] as String?) ?? '', backend: label);
+  }
+
+  /// Map an HTTP failure to a short, human reason for the evidence panel. Free
+  /// tiers most often 429 on a daily/per-minute cap; surface that explicitly so
+  /// a fallback to the offline mock reads as "rate-limited" rather than an
+  /// unexplained offline run.
+  static String _reasonFor(int status, String body) {
+    final lower = body.toLowerCase();
+    switch (status) {
+      case 429:
+        final resetsIn = _resetHint(body);
+        if (lower.contains('free') && lower.contains('day')) {
+          return 'HTTP 429: free-tier daily limit$resetsIn';
+        }
+        return 'HTTP 429: rate limited$resetsIn';
+      case 401:
+      case 403:
+        return 'HTTP $status: key rejected';
+      case 402:
+        return 'HTTP 402: out of credits';
+      case 404:
+        return 'HTTP 404: model unavailable';
+      default:
+        return 'HTTP $status';
+    }
+  }
+
+  /// Extract OpenRouter's `X-RateLimit-Reset` (epoch millis, nested under
+  /// `error.metadata.headers`) and render it as a relative " (resets in 3h)"
+  /// hint. Returns an empty string when the field is absent or unparseable.
+  static String _resetHint(String body) {
+    try {
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final headers = ((json['error'] as Map<String, dynamic>?)?['metadata']
+          as Map<String, dynamic>?)?['headers'] as Map<String, dynamic>?;
+      final raw = headers?['X-RateLimit-Reset'];
+      final epochMs = raw is num ? raw.toInt() : int.tryParse('$raw');
+      if (epochMs == null) return '';
+      final delta = DateTime.fromMillisecondsSinceEpoch(
+        epochMs,
+      ).difference(DateTime.now());
+      if (delta.isNegative) return '';
+      final h = delta.inHours;
+      final m = delta.inMinutes % 60;
+      final when = h > 0 ? '${h}h ${m}m' : '${m}m';
+      return ' (resets in $when)';
+    } catch (_) {
+      return '';
+    }
   }
 }
 
@@ -300,23 +423,31 @@ class FallbackLlm implements LiveLlm {
 
   final List<LiveLlm> backends;
 
+  /// The chain's collective label; the *actual* winner's label is carried on
+  /// each [LiveResult], so callers report which backend truly answered.
   @override
-  Future<String> complete({
+  String get label => backends.map((b) => b.label).join(' -> ');
+
+  @override
+  Future<LiveResult> complete({
     required String systemPrompt,
     required String userInput,
   }) async {
     Object? lastError;
     for (final b in backends) {
       try {
-        final text = await b.complete(
+        final result = await b.complete(
           systemPrompt: systemPrompt,
           userInput: userInput,
         );
-        if (text.trim().isNotEmpty) return text;
+        if (result.text.trim().isNotEmpty) return result;
       } catch (e) {
         lastError = e;
       }
     }
+    // Preserve a typed backend failure so the caller can report its reason;
+    // only wrap when the last failure wasn't already one.
+    if (lastError is LiveLlmException) throw lastError;
     throw Exception('all live backends failed: $lastError');
   }
 }
@@ -335,6 +466,9 @@ class PollinationsLlm extends OpenAiCompatLlm {
 
   @override
   final String? model;
+
+  @override
+  String get backendName => 'pollinations (keyless)';
 
   // The anonymous tier is happiest with a single user turn.
   @override
@@ -357,6 +491,9 @@ class OpenRouterLlm extends OpenAiCompatLlm {
 
   @override
   final Uri endpoint;
+
+  @override
+  String get backendName => 'openrouter';
 
   @override
   Map<String, String> get headers => {
@@ -383,6 +520,9 @@ class CustomLlm extends OpenAiCompatLlm {
   final String? model;
 
   final String? apiKey;
+
+  @override
+  String get backendName => 'custom';
 
   @override
   Map<String, String> get headers =>

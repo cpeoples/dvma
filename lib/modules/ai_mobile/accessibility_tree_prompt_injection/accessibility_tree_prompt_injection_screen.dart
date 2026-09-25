@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/evidence_sink.dart';
 import '../../../core/theme/dvma_colors.dart';
 import '../../../core/vuln_demo_scaffold.dart';
+import '../../ai_ml/llm_key_action.dart';
 import 'a11y_perception.dart';
 
 /// Accessibility Tree -> Indirect Prompt Injection.
@@ -65,6 +66,7 @@ class _AccessibilityTreePromptInjectionScreenState
       vulnId: AccessibilityTreePromptInjectionScreen.vulnId,
       title: 'Accessibility Tree -> Indirect Prompt Injection',
       difficulty: DvmaDifficulty.hard,
+      actions: const [LlmKeyAction()],
       explanation:
           'An on-device AI agent perceives the screen through the Android '
           'ACCESSIBILITY TREE / visible UI text and feeds it into its prompt '
@@ -90,6 +92,10 @@ class _AccessibilityTreePromptInjectionScreenState
           EvidencePanel(
             label: 'VULN prompt (all node text concatenated)',
             value: _vuln!.prompt,
+          ),
+          EvidencePanel(
+            label: 'model backend',
+            value: _vuln!.response.backend,
           ),
           EvidencePanel(
             label: 'VULN agent action',

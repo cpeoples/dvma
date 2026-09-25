@@ -66,7 +66,7 @@ void main() {
       expect(vuln.agentHijacked, isTrue);
       expect(vuln.action.performed, isTrue);
       expect(vuln.response.toolCall, isNotNull);
-      expect(vuln.prompt, contains('IGNORE PREVIOUS INSTRUCTIONS'));
+      expect(vuln.prompt, contains('SYSTEM OVERRIDE'));
 
       // SECURE: perceived UI is quoted as untrusted DATA and imperative nodes
       // are screened out, so the agent is never redirected.
@@ -75,7 +75,7 @@ void main() {
       expect(secure.action.performed, isFalse);
       expect(secure.response.toolCall, isNull);
       // The injected instruction was stripped from the built prompt.
-      expect(secure.prompt.contains('transfer funds'), isFalse);
+      expect(secure.prompt.contains('send_message'), isFalse);
     });
 
     test('benign-only tree never triggers an action', () {

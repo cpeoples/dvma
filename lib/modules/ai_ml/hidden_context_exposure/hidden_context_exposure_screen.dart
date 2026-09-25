@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/evidence_sink.dart';
 import '../../../core/theme/dvma_colors.dart';
 import '../../../core/vuln_demo_scaffold.dart';
+import '../llm_key_action.dart';
 import '../mock_llm.dart';
 import 'hidden_context_store.dart';
 
@@ -72,6 +73,7 @@ class _HiddenContextExposureScreenState
       'hidden-context',
       'currentUser: $_currentUser\n'
           'assembledContext (no partitioning): $assembled\n'
+          'backend: ${result.backend}\n'
           'response: ${result.text}',
     );
   }
@@ -82,6 +84,7 @@ class _HiddenContextExposureScreenState
       vulnId: HiddenContextExposureScreen.vulnId,
       title: 'Hidden Context Exposure',
       difficulty: DvmaDifficulty.medium,
+      actions: const [LlmKeyAction()],
       explanation:
           'The assistant assembles its context from a single flat store that '
           'mixes records from every user and internal secrets with no owner or '
@@ -100,6 +103,8 @@ class _HiddenContextExposureScreenState
           ),
         if (_result != null)
           EvidencePanel(label: 'assistant response', value: _result!.text),
+        if (_result != null)
+          EvidencePanel(label: 'model backend', value: _result!.backend),
         if (_secureAssembled != null)
           EvidencePanel(
             label: 'what a partitioned store would expose',

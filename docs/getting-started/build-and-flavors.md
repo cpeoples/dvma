@@ -65,6 +65,31 @@ flutter run -d <udid|"iPhone 17"> --dart-define-from-file=config/flavors/full.js
 Once your target is booted/connected, use the platform-specific install flow
 below.
 
+### First run: one-command bootstrap (recommended)
+
+If you don't already have a device booted, two helper scripts take you from a
+fresh checkout to the app running. Each resolves the SDK/tooling, boots a device
+(creating an Android AVD on first run), waits for it to finish booting, then
+runs the `full` flavor on it:
+
+```sh
+automation/scripts/bootstrap_emulator.sh    # Android emulator
+automation/scripts/bootstrap_simulator.sh   # iOS Simulator (macOS + Xcode)
+```
+
+Both are **self-healing**. A just-crashed Android emulator leaves stale lock
+files behind (`hardware-qemu.ini.lock`, `multiinstance.lock`) that make the next
+launch die a few seconds in; the script clears them and cold-boots. If the first
+`flutter run` fails on a half-written build cache (the Android *"package
+identifier or launch activity not found"* / *"No application found for
+TargetPlatform"* errors, or an iOS build/pod desync), the script cleans the
+Flutter cache (and reinstalls CocoaPods on iOS) and retries once before
+surfacing a real error.
+
+Useful overrides: `FLAVOR=config/flavors/dev.json`, `SKIP_RUN=1` (boot only),
+`AVD=<name>` / `API=<level>` (Android), `DEVICE_NAME="iPhone 15"` / `UDID=<udid>`
+(iOS).
+
 **All configuration lives under `config/`**, there are no scattered `.env`
 files or per-module config. Flavors are `--dart-define-from-file` JSON files:
 
@@ -112,6 +137,7 @@ anywhere without a code change:
 | `DVMA_LLM_KEY` | *(none)* | Bearer token for the custom endpoint (local servers usually need none). |
 | `DVMA_OPENROUTER_KEY` | *(empty)* | OpenRouter API key. Empty by default - no credential is committed to source. Supply your own throwaway key via `--dart-define`; a key in source would itself be a DVMA anti-pattern. |
 | `DVMA_OPENROUTER_MODEL` | `liquid/lfm-2.5-2.6b:free` | Small free model that reliably exhibits the prompt-injection behavior the demos need. |
+| `DVMA_OPENROUTER_MODELS` | *(empty)* | Optional comma-separated rotation list. When set, each model is tried in order per request, so if the primary is rate-limited (429) or down, the call falls through to the next before dropping to the keyless tier. Empty = use `DVMA_OPENROUTER_MODEL` alone. |
 
 ```sh
 # Run every module against a local Ollama instead of any hosted model:
@@ -119,6 +145,23 @@ flutter run --dart-define-from-file=config/flavors/dev.json \
   --dart-define=DVMA_LLM_ENDPOINT=http://localhost:11434/v1/chat/completions \
   --dart-define=DVMA_LLM_MODEL=llama3.2:1b
 ```
+
+For the most reliable live demo, supply your own OpenRouter key at build time.
+With no key the modules fall back to the keyless Pollinations tier, which is
+rate-limited and more likely to refuse - when every live backend is exhausted
+the call drops to the offline mock. A free-tier key on the default
+`liquid/lfm-2.5-2.6b:free` model leaks and obeys injection far more
+consistently:
+
+```sh
+flutter run --dart-define-from-file=config/flavors/dev.json \
+  --dart-define=DVMA_OPENROUTER_KEY=sk-or-...
+```
+
+Each AI module's evidence panel shows a **model backend** line (`openrouter
+(…)`, `pollinations (keyless)`, or `offline-mock`), so you can always tell which
+backend actually answered and whether a demo fell back rather than hitting the
+model you intended.
 
 ## Per-platform modules (Android vs iOS)
 

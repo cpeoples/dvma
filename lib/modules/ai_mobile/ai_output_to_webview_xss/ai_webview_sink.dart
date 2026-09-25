@@ -44,7 +44,8 @@ class AiWebViewSink {
   /// the model reflected executes in the app's real WebView origin. The
   /// in-memory scan still records what would run (for tests / no-device hosts).
   Future<WebViewLoad> renderInsecureLive(String userRequest) async {
-    final modelOutput = (await _llm.complete(userRequest)).text;
+    final result = await _llm.complete(userRequest);
+    final modelOutput = result.text;
     final html = '<html><body><div>$modelOutput</div></body></html>';
     final webView = InMemoryWebView();
     webView.loadHtmlString(html);
@@ -53,6 +54,7 @@ class AiWebViewSink {
       html: html,
       executedScripts: webView.executedScripts,
       escaped: false,
+      backend: result.backend,
     );
   }
 
@@ -116,6 +118,7 @@ class WebViewLoad {
     required this.html,
     required this.executedScripts,
     required this.escaped,
+    this.backend = 'offline-mock',
   });
 
   /// The raw model output that was placed into the page.
@@ -129,6 +132,10 @@ class WebViewLoad {
 
   /// Whether the output was HTML-escaped before loading.
   final bool escaped;
+
+  /// Which live backend produced [modelOutput] (`offline-mock` for the
+  /// deterministic offline paths).
+  final String backend;
 
   /// Whether any script executed (i.e. the XSS fired).
   bool get scriptExecuted => executedScripts.isNotEmpty;

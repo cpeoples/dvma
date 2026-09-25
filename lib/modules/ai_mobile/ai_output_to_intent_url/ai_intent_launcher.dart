@@ -53,7 +53,8 @@ class AiIntentLauncher {
   /// attacker host with no allowlist/confirmation. Degrades to the offline mock
   /// when no backend answers.
   Future<LaunchOutcome> launchInsecureLive(String userRequest) async {
-    final url = extractUrl((await _llm.complete(userRequest)).text);
+    final result = await _llm.complete(userRequest);
+    final url = extractUrl(result.text);
     final launcher = IntentLauncher();
     if (url == null) {
       return LaunchOutcome(
@@ -61,6 +62,7 @@ class AiIntentLauncher {
         launched: false,
         reason: 'no url in model output',
         launcher: launcher,
+        backend: result.backend,
       );
     }
     launcher.launch(url);
@@ -69,6 +71,7 @@ class AiIntentLauncher {
       launched: true,
       reason: 'launched verbatim from model output (no allowlist/confirm)',
       launcher: launcher,
+      backend: result.backend,
     );
   }
 
@@ -126,10 +129,15 @@ class AiIntentLauncher {
   /// http(s), javascript:, and custom app schemes (e.g. `dvma://`).
   static String? extractUrl(String text) {
     final match = RegExp(
-      r'((?:https?|javascript|dvma|intent):[^\s"<>]+)',
+      // Stop at whitespace, quotes/angle brackets, and the punctuation a model
+      // commonly wraps a URL in (backticks, parens, brackets) so those don't
+      // get swallowed into the token (e.g. a trailing ` becoming %60).
+      r'((?:https?|javascript|dvma|intent):[^\s"<>`()\[\]]+)',
       caseSensitive: false,
     ).firstMatch(text);
-    return match?.group(1);
+    // Also trim trailing sentence punctuation the class above can't catch
+    // mid-token (a URL legitimately ends before a closing . , ; : ! ?).
+    return match?.group(1)?.replaceFirst(RegExp(r'[.,;:!?]+$'), '');
   }
 }
 
@@ -147,6 +155,7 @@ class LaunchOutcome {
     required this.launched,
     required this.reason,
     required this.launcher,
+    this.backend = 'offline-mock',
   });
 
   /// The URL extracted from the model output (if any).
@@ -160,4 +169,7 @@ class LaunchOutcome {
 
   /// The launcher that recorded any navigation.
   final IntentLauncher launcher;
+
+  /// Which live backend produced the model output (`offline-mock` offline).
+  final String backend;
 }

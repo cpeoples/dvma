@@ -23,10 +23,14 @@ class VulnDemoScaffold extends StatelessWidget {
     required this.explanation,
     required this.children,
     this.vulnId,
+    this.actions,
   });
 
   final String title;
   final DvmaDifficulty difficulty;
+
+  /// Optional app-bar actions (e.g. the AI modules' live-model key control).
+  final List<Widget>? actions;
 
   /// The registry id for this module, used to tag the screen root with a
   /// stable automation identifier (`demo_screen_<vulnId>`) and to resolve the
@@ -48,7 +52,7 @@ class VulnDemoScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scaffold = Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(title: Text(title), actions: actions),
       body: ListView(
         padding: const EdgeInsets.all(DvmaSpacing.lg),
         children: [
