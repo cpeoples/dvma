@@ -922,8 +922,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Preflightcommand -v adb      >/dev/null 2>&1 ||
-die "adb not on PATH (install Android platform-tools)"
+# Preflight
+command -v adb      >/dev/null 2>&1 || die "adb not on PATH (install Android platform-tools)"
 command -v fastboot >/dev/null 2>&1 || die "fastboot not on PATH (install Android platform-tools)"
 command -v unzip    >/dev/null 2>&1 || die "unzip not on PATH"
 command -v curl     >/dev/null 2>&1 || die "curl not on PATH"

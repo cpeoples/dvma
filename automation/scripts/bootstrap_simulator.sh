@@ -29,6 +29,10 @@
 #   UDID          target simulator udid            (default: booted, else by name)
 #   FLAVOR        dart-define-from-file            (default config/flavors/full.json)
 #   SKIP_RUN      set to 1 to boot only, skip `flutter run`
+#   STOP_DEVICE   set to 1 to shut the Simulator down and exit (teardown only):
+#                 `STOP_DEVICE=1 bootstrap_simulator.sh`
+#   KILL_ON_EXIT  set to 1 to shut the Simulator down when the run ends (Ctrl+C /
+#                 q). Default leaves it booted so a re-run reuses it.
 #   KEEP_EXISTING set to 1 to leave an already-attached `flutter run` alone
 #   BUNDLE_ID     app bundle id for the paste-policy pre-allow (default com.dvma)
 #   BOOT_TIMEOUT  seconds to wait for boot         (default 240)
@@ -63,6 +67,27 @@ device_state() {
   xcrun simctl list devices -j 2>/dev/null | UDID="$1" python3 -c 'import json,sys,os;u=os.environ["UDID"];d=json.load(sys.stdin).get("devices",{});
 print(next((x["state"] for v in d.values() for x in v if x["udid"]==u), "Unknown"))' 2>/dev/null || echo Unknown
 }
+
+# Shut the Simulator down: shut down the booted device(s) and quit the
+# Simulator.app window. `simctl shutdown` is a no-op on an already-off device.
+stop_device() {
+  if [[ -n "${UDID:-}" ]]; then
+    xcrun simctl shutdown "$UDID" >/dev/null 2>&1 || true
+  else
+    xcrun simctl shutdown booted >/dev/null 2>&1 || true
+  fi
+  osascript -e 'quit app "Simulator"' >/dev/null 2>&1 || true
+  ok "Simulator shut down"
+}
+
+# Standalone teardown: `STOP_DEVICE=1 bootstrap_simulator.sh` shuts the
+# Simulator down and exits without booting or running anything.
+if [[ "${STOP_DEVICE:-}" == "1" && "${SKIP_RUN:-}" != "1" ]]; then
+  say "Stopping Simulator (STOP_DEVICE=1)"
+  UDID="${UDID:-$(resolve_udid || true)}"
+  stop_device
+  exit 0
+fi
 
 say "Resolving Simulator"
 UDID="$(resolve_udid || true)"
@@ -169,6 +194,13 @@ fi
 run_flutter() {
   flutter run -d "$UDID" --dart-define-from-file="$FLAVOR"
 }
+
+# When KILL_ON_EXIT=1, shut the Simulator down once the run ends (Ctrl+C, `q`,
+# or a build failure). Default leaves it booted so re-running the script reuses
+# it and skips the cold boot.
+if [[ "${KILL_ON_EXIT:-}" == "1" ]]; then
+  trap 'echo; stop_device' EXIT
+fi
 
 # First attempt. On the first failure, recover from the two iOS-specific
 # stale-state causes a newcomer hits: a half-written Flutter build cache and an

@@ -90,6 +90,11 @@ Useful overrides: `FLAVOR=config/flavors/dev.json`, `SKIP_RUN=1` (boot only),
 `AVD=<name>` / `API=<level>` (Android), `DEVICE_NAME="iPhone 15"` / `UDID=<udid>`
 (iOS).
 
+Both scripts leave the device booted when the run ends (Ctrl+C or `q`) so the
+next run reuses it and skips the cold boot. To shut the device down, run either
+script with `STOP_DEVICE=1` (teardown only), or pass `KILL_ON_EXIT=1` on a run
+to stop it automatically when you quit.
+
 **All configuration lives under `config/`**, there are no scattered `.env`
 files or per-module config. Flavors are `--dart-define-from-file` JSON files:
 

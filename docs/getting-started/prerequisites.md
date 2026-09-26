@@ -133,6 +133,26 @@ plan to target.
    `unauthorized` or `offline`). If it flaps, try a different cable/port and
    `adb kill-server && adb start-server`.
 
+### Brand-new or factory-reset device (first boot)
+
+A fresh phone - out of the box, or straight after a factory reset / full
+re-flash - boots into the **Setup Wizard**, and the wizard **blocks the Settings
+app entirely**. You cannot reach *About phone* to reveal Developer options until
+setup is finished, and a factory reset also **wipes the previous USB-debugging
+authorization**, so this must be redone even on a phone you'd used before.
+
+1. **Finish or skip the Setup Wizard first.** Pick a language, then on the Wi-Fi
+   step choose **Set up offline** / **Skip** (staying offline avoids the Google
+   sign-in and is fastest). Skip PIN/biometrics and restore. This lands you on
+   the home screen, where Settings becomes reachable.
+2. **Reveal Developer options.** Settings → **About phone** → tap **Build
+   number** 7× (you'll see "You are now a developer"; it may ask for your PIN).
+   - Samsung (One UI): About phone → **Software information** → **Build number** 7×.
+   - Xiaomi (MIUI): About phone → **MIUI version** 7×.
+3. **Turn on the toggles.** Settings → System → **Developer options** → **USB
+   debugging** (and **OEM unlocking** if you'll root/unlock).
+4. Then follow steps 3-4 above to authorize the host.
+
 ## iOS device (physical)
 
 1. **Developer Mode** (iOS 16+): Settings → Privacy & Security → **Developer

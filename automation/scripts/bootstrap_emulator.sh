@@ -29,6 +29,10 @@
 #   API           system-image API level   (default 34)
 #   FLAVOR        dart-define-from-file     (default config/flavors/full.json)
 #   SKIP_RUN      set to 1 to boot only, skip `flutter run`
+#   STOP_DEVICE   set to 1 to shut the emulator down and exit (teardown only):
+#                 `STOP_DEVICE=1 bootstrap_emulator.sh`
+#   KILL_ON_EXIT  set to 1 to shut the emulator down when the run ends (Ctrl+C /
+#                 q). Default leaves it booted so a re-run reuses it.
 #   KEEP_EXISTING set to 1 to leave an already-attached `flutter run` alone
 #                 (default: adopt the device by ending the orphaned session)
 #   BOOT_TIMEOUT  seconds to wait for boot (default 240)
@@ -75,6 +79,27 @@ SDKMANAGER="$(find_tool sdkmanager cmdline-tools/latest/bin tools/bin || true)"
 [[ -n "$ADB" ]] || die "adb not found under $SDK/platform-tools" "getting-started/prerequisites/#android"
 [[ -n "$EMU" ]] || die "emulator not found under $SDK/emulator" "getting-started/prerequisites/#android"
 note "sdk: $SDK"
+
+# Shut the emulator down. `adb emu kill` asks the running instance to
+# quit; fall back to killing the qemu process if the console is unresponsive.
+stop_device() {
+  local serial
+  serial="$("$ADB" devices | awk 'NR>1 && $2=="device" && $1 ~ /^emulator-/ {print $1; exit}')"
+  if [[ -n "$serial" ]]; then
+    "$ADB" -s "$serial" emu kill >/dev/null 2>&1 || true
+  fi
+  pkill -f "qemu.*${AVD_NAME}" >/dev/null 2>&1 || true
+  ok "emulator '$AVD_NAME' shut down"
+}
+
+# Standalone teardown: `STOP_DEVICE=1 bootstrap_emulator.sh` shuts the emulator
+# down and exits without booting or running anything.
+if [[ "${STOP_DEVICE:-}" == "1" && "${SKIP_RUN:-}" != "1" ]]; then
+  say "Stopping emulator (STOP_DEVICE=1)"
+  "$ADB" start-server >/dev/null 2>&1 || true
+  stop_device
+  exit 0
+fi
 
 # Create the AVD on first run if it doesn't exist yet.
 if ! "$EMU" -list-avds 2>/dev/null | grep -qx "$AVD_NAME"; then
@@ -189,6 +214,13 @@ run_flutter() {
     flutter run --dart-define-from-file="$FLAVOR"
   fi
 }
+
+# When KILL_ON_EXIT=1, shut the emulator down once the run ends (Ctrl+C, `q`, or
+# a build failure). Default leaves it booted so re-running the script reuses it
+# and skips the ~2-minute cold boot.
+if [[ "${KILL_ON_EXIT:-}" == "1" ]]; then
+  trap 'echo; stop_device' EXIT
+fi
 
 # First attempt. If the build trips over a half-written build cache (the
 # "package identifier or launch activity not found" / "No application found for
