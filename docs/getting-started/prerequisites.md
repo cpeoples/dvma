@@ -145,13 +145,26 @@ authorization**, so this must be redone even on a phone you'd used before.
    step choose **Set up offline** / **Skip** (staying offline avoids the Google
    sign-in and is fastest). Skip PIN/biometrics and restore. This lands you on
    the home screen, where Settings becomes reachable.
-2. **Reveal Developer options.** Settings → **About phone** → tap **Build
-   number** 7× (you'll see "You are now a developer"; it may ask for your PIN).
+2. **Reveal Developer options.**
+   1. Open **Settings** and scroll down to **About phone**.
+   2. Scroll to the bottom to find **Build number**.
+   3. Tap **Build number** 7× rapidly (an on-screen countdown appears).
+   4. Enter your PIN / password / pattern if prompted.
+   5. You'll see **"You are now a developer!"**
+   6. Go back to **Settings → System**; **Developer options** is just above
+      **Reset options**.
    - Samsung (One UI): About phone → **Software information** → **Build number** 7×.
    - Xiaomi (MIUI): About phone → **MIUI version** 7×.
 3. **Turn on the toggles.** Settings → System → **Developer options** → **USB
-   debugging** (and **OEM unlocking** if you'll root/unlock).
+   debugging**.
 4. Then follow steps 3-4 above to authorize the host.
+
+> **Rooting/unlocking? Enable OEM unlocking first.** In **Developer options**,
+> turn on **OEM unlocking** *before* you try `fastboot flashing unlock` - the
+> bootloader unlock is refused without it. The toggle is often **greyed out
+> until the device is connected to the internet** (it checks the unlock is
+> permitted), so join Wi-Fi once if it won't enable. This is separate from USB
+> debugging, and unlocking the bootloader later **wipes the device**.
 
 ## iOS device (physical)
 
