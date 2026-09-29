@@ -100,7 +100,7 @@ reboots with no taps. Verify anytime with `adb shell su -c id` (expect
 > ```
 >
 > It locates controls **structurally** - by Magisk's own view ids
-> (`com.topjohnwu.magisk:id/…`) and the non-localized package name
+> (`com.topjohnwu.magisk:id/...`) and the non-localized package name
 > `com.android.shell`, then taps the switch nearest that row - so it isn't tied to
 > screen coordinates or the UI language. It's still **best-effort**: if a future
 > Magisk changes those ids/layout it can't match, in which case it prints the two
@@ -128,6 +128,48 @@ reboots with no taps. Verify anytime with `adb shell su -c id` (expect
 automation/scripts/root_pixel.sh --fetch-magisk --fetch-image --boot-test
 ```
 
+## Advanced: `--avbgraft` zero-tap mode (no taps, even after a wipe)
+
+The flow above still needs **one** first-root tap (or best-effort `--auto-finalize`)
+because Magisk asks a human to approve the ADB shell's first `su`. The
+**`--avbgraft`** mode removes that last tap so a freshly wiped device boots
+straight into working root over adb with **zero** on-screen interaction.
+
+It does this by re-signing the factory image under your own AVB key (so a patched
+boot is allowed to run), pre-authorizing this host's adb key inside the image
+(promptless adb), and baking a first-boot seed into the re-signed **system**
+partition that grants the ADB shell `su` automatically. Because the seed lives on
+`system` and not `/data`, it survives a factory wipe.
+
+```bash
+# One-shot, fully hands-off root (fetches the matching factory image, re-signs,
+# patches boot, flashes everything in one bootloader session, boots once):
+automation/scripts/root_pixel.sh --avbgraft --fetch-image --yes
+```
+
+**What it produces:** a device that is debuggable, adb pre-authorized, Setup
+Wizard cleared, and rooted with `adb shell su -c id` returning `uid=0(root)` on
+the first boot, with nobody touching the screen. Verified end-to-end on the
+Pixel 6a (`bluejay`), including across a `--wipe` and a subsequent reboot.
+
+> **This mode needs Docker.** It delegates the image re-signing to the sibling
+> [`avbgraft`](https://github.com/cpeoples/avbgraft) project, which runs in a
+> container (`avbroot` + `debugfs`). The default root mode and `--recover` do
+> **not** need Docker. The script auto-locates `avbgraft` next to the `dvma`
+> checkout, or point at it with `--avbgraft-dir`.
+
+> **Trade-off: the device is no longer re-lockable.** `--avbgraft` flashes a
+> permissive top-level `vbmeta` (verity + verification disabled) so the patched
+> boot can run. The rest of the chain stays honest under your custom key, but you
+> cannot re-lock the bootloader afterward. Use this only on an **unlocked test
+> device you can wipe**.
+
+By default `--avbgraft` **preserves `/data`** so an already-granted device keeps
+its persisted su grant. Add **`--wipe`** to also factory-wipe during the flash;
+the baked seed re-establishes the grant on the next boot with no tap. Everything
+else (baking the adb key, skipping the wizard, baking the zero-tap seed) is on by
+default and can be turned off individually (see the flags below).
+
 ## Classic patch-only (you supply both inputs)
 
 ```bash
@@ -148,6 +190,13 @@ automation/scripts/root_pixel.sh --apk Magisk-v30.7.apk --image boot.img --boot-
 | `--flash` | **DESTRUCTIVE.** Flash the patched image and verify root. Typed confirm unless `--yes`. |
 | `--auto-finalize` | After flashing, best-effort UI automation of Magisk's one-time enablement (confirm "additional setup", turn on the `com.android.shell` su switch), then persist. Structure-based; falls back to guided manual steps. |
 | `--recover[=BUILD]` | **DESTRUCTIVE.** Re-download + verify the full factory zip and run its `flash-all` to restore stock. Typed confirm unless `--yes`. |
+| `--avbgraft` | **ADVANCED, DESTRUCTIVE.** Zero-tap root: re-sign the factory image under your own AVB key, pre-authorize adb, bake the su-grant seed into `system`, flash in one session, boot once. Needs Docker. Makes the device non-re-lockable. |
+| `--wipe` | With `--avbgraft`, also factory-wipe `/data` during the flash (default preserves `/data`). The baked seed re-grants su on the next boot. |
+| `--no-zero-tap-seed` | With `--avbgraft`, skip baking the su-grant seed. A fresh `--wipe` then needs the one-time in-app grant. |
+| `--no-bake-adb-key` | With `--avbgraft`, do not pre-authorize this host's adb key in the image (adb then shows the first-connect prompt). |
+| `--no-skip-wizard` | With `--avbgraft`, leave the Setup Wizard in place instead of clearing it over adb. |
+| `--avbgraft-dir PATH` | Path to the `avbgraft` project (defaults to a sibling of the `dvma` checkout). |
+| `--avbgraft-key PATH` | Reuse an existing AVB signing key (PEM) instead of generating one. |
 | `--yes` / `-y` | Skip the interactive confirmation (unattended). |
 | `--serial SERIAL` | Target this exact device (`adb -s`). Required when more than one device is connected. |
 | `--keep-downloads[=DIR]` | Keep + **reuse** the fetched Magisk APK and factory image (persistent cache, default `./dvma-downloads`; skips re-download when the cached image verifies). |
