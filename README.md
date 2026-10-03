@@ -2,7 +2,7 @@
 
 <img src="docs/assets/dvma-logo.svg" alt="DVMA, Damn Vulnerable Mobile App" width="480">
 
-# Damn Vulnerable Mobile App
+# DVMA, Damn Vulnerable Mobile App
 
 **A single-codebase, intentionally vulnerable Flutter app that builds to real native iOS and Android binaries for mobile security training and pentest practice.**
 

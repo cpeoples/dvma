@@ -733,11 +733,12 @@ def build_index() -> None:
     body = preamble + "".join(sections[h] for h in _HOME_SECTIONS if h in sections)
     front = (
         "---\n"
-        'title: "Damn Vulnerable Mobile App"\n'
+        'title: "DVMA, Damn Vulnerable Mobile App for Flutter"\n'
         'linkTitle: "DVMA"\n'
-        'description: "A single-codebase, intentionally vulnerable Flutter app '
-        "for mobile security training. Maps to OWASP Mobile Top 10 (2024), "
-        'MASVS/MASTG, and the OWASP Top 10 for LLM/GenAI (2025)."\n'
+        'description: "DVMA (Damn Vulnerable Mobile App) is a single Flutter '
+        "codebase that builds real native iOS and Android binaries with 200+ "
+        "intentionally vulnerable modules, mapped to the OWASP Mobile Top 10, "
+        'MASVS/MASTG, and the OWASP Top 10 for LLM and Agentic AI."\n'
         "weight: 1\n"
         "alwaysopen: true\n"
         f'lastmod: "{BUILD_TS}"\n'

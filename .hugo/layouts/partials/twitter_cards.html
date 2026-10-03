@@ -1,0 +1,29 @@
+{{- /* Project override of the relearn theme twitter_cards.html.
+       The site has no per-page image resources, so the stock partial always
+       emitted twitter:card=summary. We ship an explicit social card
+       (static/images/og-card.png, wired as og:image in custom-header.html),
+       so always advertise the large card and point twitter:image at it. */}}
+{{- $ogImage := printf "%simages/og-card.png" .Site.Home.Permalink }}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{{ $ogImage }}">
+
+{{- with (partial "title.gotmpl" (dict "page" . "fullyQualified" true "reverse" true) | plainify) }}
+    <meta name="twitter:title" content="{{ . }}">
+{{- end }}
+
+{{- with trim (or .Description .Summary | plainify | htmlUnescape | replaceRE `\r` " ") "\n\r\t " }}
+    <meta name="twitter:description" content="{{ . }}">
+{{- end }}
+
+{{- $twitterSite := "" }}
+{{- with site.Params.social }}
+  {{- if reflect.IsMap . }}
+    {{- with .twitter }}
+      {{- $content := . }}
+      {{- if not (strings.HasPrefix . "@") }}
+        {{- $content = printf "@%v" . }}
+      {{- end }}
+    <meta name="twitter:site" content="{{ $content }}"/>
+    {{- end }}
+  {{- end }}
+{{- end }}

@@ -1,6 +1,6 @@
 baseURL = "/"
 defaultContentLanguage = "en"
-title = "DVMA - Damn Vulnerable Mobile App"
+title = "DVMA Docs"
 theme = "hugo-theme-relearn"
 
 uglyURLs = false

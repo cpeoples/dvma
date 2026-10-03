@@ -1,6 +1,17 @@
 <!-- Google Search Console site verification. -->
 <meta name="google-site-verification" content="ZwtXu4I3Awbxnd1dDpGjRBlCxxOHHW5Eplsw6rG8ujs" />
 
+<!-- Social sharing card. og:image is set here (the relearn theme only emits one
+     when a page carries an image resource, which the generated pages do not).
+     twitter:card is overridden to summary_large_image in the twitter_cards.html
+     partial so there is no duplicate/conflicting tag. Absolute URL so it
+     resolves when the repo, docs, or external posts are shared. -->
+{{- $ogImage := printf "%simages/og-card.png" .Site.Home.Permalink }}
+<meta property="og:image" content="{{ $ogImage }}" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="DVMA, Damn Vulnerable Mobile App: one Flutter codebase building real native iOS and Android binaries." />
+
 <!-- Curated site map for LLM crawlers (llmstxt.org). -->
 <link rel="alternate" type="text/markdown" href="{{ "llms.txt" | relURL }}" title="llms.txt" />
 
