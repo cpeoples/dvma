@@ -15,6 +15,12 @@ disableKinds = ["taxonomy", "term"]
 
 [params]
 
+  # Emit clean directory URLs (e.g. /dvma/) instead of the theme's default
+  # explicit /dvma/index.html form in og:url and other permalinks. Combined with
+  # the self-referencing canonical in custom-header.html, this stops Search
+  # Console from flagging /path/ and /path/index.html as duplicates.
+  disableExplicitIndexURLs = true
+
   themeVariant = ["relearn-dark", "relearn-light"]
   themeVariantAuto = ["relearn-dark", "relearn-light"]
   themeVariantDefault = "relearn-dark"

@@ -1,6 +1,14 @@
 <!-- Google Search Console site verification. -->
 <meta name="google-site-verification" content="ZwtXu4I3Awbxnd1dDpGjRBlCxxOHHW5Eplsw6rG8ujs" />
 
+<!-- Self-referencing canonical. The relearn theme emits none, and GitHub Pages
+     serves identical content at both /path/ and /path/index.html, which Search
+     Console flags as "Duplicate without user-selected canonical". .Permalink is
+     the clean directory URL (uglyURLs off + disableExplicitIndexURLs set), so
+     this names the one URL Google should index. og:url already matches this
+     clean form via the disableExplicitIndexURLs param, so the signals agree. -->
+<link rel="canonical" href="{{ .Permalink }}" />
+
 <!-- Social sharing card. og:image is set here (the relearn theme only emits one
      when a page carries an image resource, which the generated pages do not).
      twitter:card is overridden to summary_large_image in the twitter_cards.html
