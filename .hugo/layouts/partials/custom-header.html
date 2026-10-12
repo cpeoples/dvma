@@ -4,9 +4,8 @@
 <!-- Self-referencing canonical. The relearn theme emits none, and GitHub Pages
      serves identical content at both /path/ and /path/index.html, which Search
      Console flags as "Duplicate without user-selected canonical". .Permalink is
-     the clean directory URL (uglyURLs off + disableExplicitIndexURLs set), so
-     this names the one URL Google should index. og:url already matches this
-     clean form via the disableExplicitIndexURLs param, so the signals agree. -->
+     the clean directory URL (uglyURLs is off), so this names the one URL Google
+     should index, collapsing the /index.html duplicate into one indexable page. -->
 <link rel="canonical" href="{{ .Permalink }}" />
 
 <!-- Social sharing card. og:image is set here (the relearn theme only emits one
