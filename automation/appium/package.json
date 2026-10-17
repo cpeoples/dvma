@@ -24,10 +24,11 @@
   "dependencies": {
     "appium": "^3.7.0"
   },
-  "comment_overrides": "Force patched versions of transitive deps that Appium/wdio still pull in vulnerable. These packages are dev-only test tooling and never ship in the app, but pinning the fixed versions keeps the dependency audit clean. extract-zip has no fixed release (every version incl. 2.0.1 is flagged for symlink traversal), so instead of overriding it directly we pin its only parent @puppeteer/browsers to 3.x, which dropped the extract-zip dependency entirely; @wdio/utils requests ^2.2.0 but works with 3.x since it only uses the browser-download path we never exercise.",
+  "comment_overrides": "Force patched versions of transitive deps that Appium/wdio still pull in vulnerable. These packages are dev-only test tooling and never ship in the app, but pinning the fixed versions keeps the dependency audit clean. extract-zip has no fixed release (every version incl. 2.0.1 is flagged for symlink traversal), so instead of overriding it directly we pin its only parent @puppeteer/browsers to 3.x, which dropped the extract-zip dependency entirely; @wdio/utils requests ^2.2.0 but works with 3.x since it only uses the browser-download path we never exercise. shell-quote 1.11.0 fixes a quote() command-injection advisory (GHSA-pqg4-j6r4-53mv); @appium/support still hard-pins 1.10.0, and 1.11.0 is semver-compatible with the ^1.8.1 consumers.",
   "overrides": {
     "serialize-javascript": "^7.1.2",
     "morgan": "^1.12.1",
-    "@puppeteer/browsers": "^3.2.3"
+    "@puppeteer/browsers": "^3.2.3",
+    "shell-quote": "^1.11.0"
   }
 }
