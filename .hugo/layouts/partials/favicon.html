@@ -1,3 +1,10 @@
-{{- /* Use the DVMA hazard icon as the site favicon. */ -}}
-<link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
-<link rel="mask-icon" href="/images/favicon.svg" color="#E8A33D">
+{{- /* DVMA hazard icon as the site favicon. Paths go through relURL so they
+       carry the deploy baseURL (e.g. /dvma/); a root-absolute /images/... 404s
+       on a project Pages site. The .ico/.png/apple-touch fallbacks cover
+       clients that do not render the SVG icon. */ -}}
+<link rel="icon" href="{{ "images/favicon.svg" | relURL }}" type="image/svg+xml">
+<link rel="mask-icon" href="{{ "images/favicon.svg" | relURL }}" color="#E8A33D">
+<link rel="icon" href="{{ "images/favicon.ico" | relURL }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ "images/favicon-32.png" | relURL }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ "images/favicon-16.png" | relURL }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ "images/apple-touch-icon.png" | relURL }}">
